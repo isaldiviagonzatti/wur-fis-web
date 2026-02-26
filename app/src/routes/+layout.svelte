@@ -51,16 +51,16 @@
 <div class="flex h-screen overflow-hidden bg-background text-foreground">
 	<!-- Left sidebar -->
 	<aside
-		class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-all duration-200 {collapsed
+		class="flex flex-col text-foreground transition-all duration-200 {collapsed
 			? 'w-14'
 			: 'w-50'}"
 	>
 		<!-- Logo / title -->
 		<div style="height: 3rem; display: flex; align-items: center; justify-content: {collapsed ? 'center' : 'flex-start'}; padding: 0 1rem; overflow: hidden;">
 			{#if collapsed}
-				<a href="/" class="text-sm font-semibold leading-tight text-muted-foreground hover:text-foreground transition-colors" style="opacity: 1; transition: opacity 150ms ease;">FIS</a>
+				<a href="/" class="text-sm font-semibold leading-tight transition-colors {$page.url.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}" style="opacity: 1; transition: opacity 150ms ease;">FIS</a>
 			{:else}
-				<a href="/" class="text-sm font-semibold leading-tight text-muted-foreground hover:text-foreground transition-colors" style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;">Foodshed Information Service</a>
+				<a href="/" class="text-sm font-semibold leading-tight transition-colors {$page.url.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}" style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;">Foodshed Information Service</a>
 			{/if}
 		</div>
 
@@ -156,7 +156,7 @@
 		</main>
 
 		<!-- Footer -->
-		<footer class="shrink-0 border-t border-border/60 px-6 py-2">
+		<footer class="shrink-0 px-6 py-2">
 			<div class="flex items-center justify-between gap-4">
 				<!-- Logos -->
 				<div class="flex items-center gap-6">

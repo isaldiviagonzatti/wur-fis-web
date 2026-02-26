@@ -32,7 +32,7 @@
 <div class="flex flex-col h-full">
 	<!-- Secondary tabs -->
 	<Tabs value="forecast" class="flex flex-col flex-1 overflow-hidden">
-		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem; border-bottom: 1px solid var(--border);">
+		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem;">
 			<TabsList>
 				<TabsTrigger value="forecast">Current Forecast</TabsTrigger>
 				<TabsTrigger value="hindcasts">Hindcasts</TabsTrigger>
@@ -41,9 +41,9 @@
 		</div>
 
 		<!-- Current Forecast tab -->
-		<TabsContent value="forecast" class="flex flex-col flex-1 overflow-hidden m-0 p-0">
+		<TabsContent value="forecast" class="m-0 flex-1 overflow-auto p-0">
 			<!-- Controls bar -->
-			<div class="shrink-0 border-b border-border px-4 py-1.5 overflow-x-auto overflow-y-hidden">
+			<div class="shrink-0 px-4 py-1.5 overflow-x-auto overflow-y-hidden">
 				<div class="flex min-w-max items-center gap-2">
 					<div class="flex items-center gap-1.5">
 						<span class="text-xs text-muted-foreground font-medium">Crop</span>
@@ -102,17 +102,14 @@
 				</div>
 			</div>
 
-			<!-- Map area (65% height) + chart panel below -->
-			<div class="flex flex-col flex-1 overflow-hidden">
-				<!-- Map -->
-				<div class="relative border-b border-border overflow-hidden" style="flex: 0 0 65%;">
+			<div class="space-y-3 px-4 py-3">
+				<div class="relative h-[55vh] min-h-[360px] max-h-[760px] overflow-hidden rounded-md border border-border">
 					<Map bind:map />
 				</div>
 
-				<!-- Chart panel (remaining height) -->
-				<div class="flex-1 overflow-auto px-4 py-3">
-					<p class="text-xs font-medium text-muted-foreground mb-2">Selected region — density plot</p>
-					<div class="flex items-center justify-center h-32 rounded-md border border-dashed border-border bg-muted/10">
+				<div>
+					<p class="mb-2 text-xs font-medium text-muted-foreground">Selected region — density plot</p>
+					<div class="flex h-32 items-center justify-center rounded-md border border-dashed border-border bg-muted/10">
 						<p class="text-xs text-muted-foreground">
 							Select a region on the map to show the yield distribution
 						</p>
