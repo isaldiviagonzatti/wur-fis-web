@@ -7,12 +7,12 @@
 </script>
 
 <div class="mx-auto max-w-3xl px-6 py-10">
-	<h2 class="text-2xl font-bold tracking-tight mb-2">Methodology</h2>
-	<p class="text-muted-foreground mb-6">
+	<h2 class="text-3xl font-bold tracking-tight mb-3">Methodology</h2>
+	<p class="text-muted-foreground mb-8">
 		Technical and scientific documentation for the Foodshed Information Service.
 	</p>
 
-	<Separator class="mb-6" />
+	<Separator class="mb-8" />
 
 	<div class="flex flex-col gap-4">
 		<Card>

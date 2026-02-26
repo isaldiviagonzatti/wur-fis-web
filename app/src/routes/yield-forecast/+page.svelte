@@ -13,6 +13,17 @@
 	let country = $state('ghana');
 	let adminLevel = $state('admin1');
 	let skillOverlay = $state(false);
+
+	const cropLabels = {
+		maize: 'Maize',
+		sorghum: 'Sorghum'
+	};
+
+	const countryLabels = {
+		ghana: 'Ghana',
+		kenya: 'Kenya',
+		zimbabwe: 'Zimbabwe'
+	};
 </script>
 
 <div class="flex flex-col h-full">
@@ -32,9 +43,9 @@
 			<div class="flex flex-wrap items-center gap-2 border-b border-border px-4 py-1.5">
 				<div class="flex items-center gap-1.5">
 					<span class="text-xs text-muted-foreground font-medium">Crop</span>
-					<Select bind:value={crop}>
+					<Select type="single" bind:value={crop}>
 						<SelectTrigger size="sm" class="w-28" style="font-size: 0.75rem; cursor: pointer;">
-							{crop.charAt(0).toUpperCase() + crop.slice(1)}
+							{cropLabels[crop] ?? 'Select crop'}
 						</SelectTrigger>
 						<SelectContent style="width: var(--bits-select-anchor-width);">
 							<SelectItem value="maize" label="Maize" />
@@ -45,9 +56,9 @@
 
 				<div class="flex items-center gap-1.5">
 					<span class="text-xs text-muted-foreground font-medium">Country</span>
-					<Select bind:value={country}>
+					<Select type="single" bind:value={country}>
 						<SelectTrigger size="sm" class="w-28" style="font-size: 0.75rem; cursor: pointer;">
-							{country.charAt(0).toUpperCase() + country.slice(1)}
+							{countryLabels[country] ?? 'Select country'}
 						</SelectTrigger>
 						<SelectContent style="width: var(--bits-select-anchor-width);">
 							<SelectItem value="ghana" label="Ghana" />
@@ -61,7 +72,7 @@
 
 				<div class="flex items-center gap-1">
 					<span class="text-xs text-muted-foreground font-medium mr-1">Admin</span>
-					{#each ['country', 'admin1', 'admin2'] as level}
+					{#each ['country', 'admin1', 'admin2'] as level (level)}
 						<button
 							onclick={() => (adminLevel = level)}
 							class="cursor-pointer px-2 py-0.5 rounded text-xs border transition-colors {adminLevel === level
