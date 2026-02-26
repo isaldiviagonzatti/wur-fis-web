@@ -10,8 +10,8 @@
 
 <div class="flex flex-col h-full">
 	<Tabs value="gis" class="flex flex-col flex-1 overflow-hidden">
-		<div class="border-b border-border px-4 pt-3">
-			<TabsList class="h-9">
+		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem; border-bottom: 1px solid var(--border);">
+			<TabsList>
 				<TabsTrigger value="gis">GIS Data</TabsTrigger>
 				<TabsTrigger value="guide">User Guide</TabsTrigger>
 			</TabsList>

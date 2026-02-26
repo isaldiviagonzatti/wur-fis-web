@@ -18,8 +18,8 @@
 <div class="flex flex-col h-full">
 	<!-- Secondary tabs -->
 	<Tabs value="forecast" class="flex flex-col flex-1 overflow-hidden">
-		<div class="border-b border-border px-4 pt-3">
-			<TabsList class="h-9">
+		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem; border-bottom: 1px solid var(--border);">
+			<TabsList>
 				<TabsTrigger value="forecast">Current Forecast</TabsTrigger>
 				<TabsTrigger value="hindcasts">Hindcasts</TabsTrigger>
 				<TabsTrigger value="guide">User Guide</TabsTrigger>
@@ -29,7 +29,7 @@
 		<!-- Current Forecast tab -->
 		<TabsContent value="forecast" class="flex flex-col flex-1 overflow-hidden m-0 p-0">
 			<!-- Controls bar -->
-			<div class="flex flex-wrap items-center gap-3 border-b border-border px-4 py-2 bg-muted/30">
+			<div class="flex flex-wrap items-center gap-3 border-b border-border px-4 py-2">
 				<div class="flex items-center gap-2">
 					<span class="text-xs text-muted-foreground font-medium">Crop</span>
 					<Select bind:value={crop}>
@@ -78,11 +78,11 @@
 				<button
 					onclick={() => (skillOverlay = !skillOverlay)}
 					class="cursor-pointer flex items-center gap-1.5 px-2 py-0.5 rounded text-xs border transition-colors {skillOverlay
-						? 'bg-muted text-foreground border-foreground/30'
+						? 'bg-primary text-primary-foreground border-primary'
 						: 'border-border text-muted-foreground hover:bg-accent'}"
 				>
 					<Gauge size={13} />
-					Skill overlay {skillOverlay ? 'on' : 'off'}
+					Skill overlay
 				</button>
 			</div>
 

@@ -119,3 +119,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+[data-slot="select-content"],
+[data-bits-tooltip-content] {
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+}
