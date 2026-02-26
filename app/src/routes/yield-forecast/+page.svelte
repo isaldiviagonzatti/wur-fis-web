@@ -12,10 +12,11 @@
 
 	let map = $state(null);
 
-	let crop = $state('maize');
-	let country = $state('ghana');
+	let crop = $state('');
+	let country = $state('');
 	let adminLevel = $state('admin1');
 	let skillOverlay = $state(false);
+	let previousCountry = '';
 
 	const cropLabels = {
 		maize: 'Maize',
@@ -27,6 +28,44 @@
 		kenya: 'Kenya',
 		zimbabwe: 'Zimbabwe'
 	};
+
+	const countryViews = {
+		ghana: { center: [-1.02, 7.95], zoom: 5 },
+		kenya: { center: [37.91, 0.15], zoom: 5 },
+		zimbabwe: { center: [29.15, -19.02], zoom: 5 }
+	};
+
+	$effect(() => {
+		if (!map || !country) {
+			return;
+		}
+
+		if (country === previousCountry) {
+			return;
+		}
+
+		previousCountry = country;
+		const targetView = countryViews[country];
+		if (!targetView) {
+			return;
+		}
+
+		const fly = () => {
+			map.flyTo({
+				center: targetView.center,
+				zoom: targetView.zoom,
+				duration: 900,
+				essential: true
+			});
+		};
+
+		if (!map.isStyleLoaded()) {
+			map.once('load', fly);
+			return;
+		}
+
+		fly();
+	});
 </script>
 
 <div class="flex flex-col h-full">
@@ -61,7 +100,7 @@
 					<div class="flex items-center gap-1.5">
 						<span class="text-xs text-muted-foreground font-medium">Country</span>
 						<Select type="single" bind:value={country}>
-							<SelectTrigger size="sm" class="w-28">
+							<SelectTrigger size="sm" class="w-32">
 								{countryLabels[country] ?? 'Select country'}
 							</SelectTrigger>
 							<SelectContent style="width: var(--bits-select-anchor-width);">

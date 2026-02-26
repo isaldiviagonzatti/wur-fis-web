@@ -14,7 +14,6 @@ Interactive web dashboard for food insecurity seasonal indicators. Visualizes pr
 
 ```
 app/        SvelteKit frontend
-archive/    Old Panel + HoloViews dashboard
 ```
 
 ## Frontend dev
