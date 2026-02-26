@@ -7,7 +7,7 @@ Interactive web dashboard for food insecurity seasonal indicators. Visualizes pr
 - **Frontend**: SvelteKit + shadcn-svelte + Tailwind CSS + MapLibre GL JS
 - **Charts**: LayerChart (D3-based)
 - **Data storage**: Cloudflare R2 — all static artifacts served from here (zero egress)
-- **Hosting**: Vercel
+- **Hosting target**: Cloudflare Pages (static)
 - **Data pipeline**: Python scripts run on HPC → artifacts pushed to R2 via `rclone`
 
 ## Structure

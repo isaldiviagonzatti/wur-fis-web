@@ -6,7 +6,8 @@
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
 	import Gitlab from '@lucide/svelte/icons/gitlab';
-	import Map from '@lucide/svelte/icons/map';
+	import TrendingUp from '@lucide/svelte/icons/trending-up';
+	import SquaresIntersect from '@lucide/svelte/icons/squares-intersect';
 	import Layers from '@lucide/svelte/icons/layers';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -21,8 +22,8 @@
 	});
 
 	const navItems = [
-		{ href: '/yield-forecast', label: 'Yield Forecast', icon: Map },
-		{ href: '/foodshed', label: 'Foodshed Scenarios', icon: Layers },
+		{ href: '/yield-forecast', label: 'Yield Forecast', icon: TrendingUp },
+		{ href: '/foodshed', label: 'Foodshed Scenarios', icon: SquaresIntersect },
 		{ href: '/methodology', label: 'Methodology', icon: BookOpen }
 	];
 </script>
