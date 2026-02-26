@@ -170,3 +170,4 @@ cython_debug/
 
 test.py
 submit_job.sh
+plan.md

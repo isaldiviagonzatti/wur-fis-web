@@ -8,6 +8,9 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/components/ui/card';
 	import Gauge from '@lucide/svelte/icons/gauge';
+	import Map from '$lib/components/Map.svelte';
+
+	let map = $state(null);
 
 	let crop = $state('maize');
 	let country = $state('ghana');
@@ -99,18 +102,9 @@
 
 			<!-- Map area (65% height) + chart panel below -->
 			<div class="flex flex-col flex-1 overflow-hidden">
-				<!-- Map placeholder -->
-				<div class="relative bg-muted/20 border-b border-border" style="flex: 0 0 65%;">
-					<div class="absolute inset-0 flex items-center justify-center">
-						<div class="text-center text-muted-foreground">
-							<p class="text-sm font-medium">Map — MapLibre GL JS</p>
-							<p class="text-xs mt-1">
-								Showing <strong>{crop}</strong> · <strong>{country}</strong> · <strong>{adminLevel}</strong>
-								{#if skillOverlay}<span class="text-amber-600 dark:text-amber-400"> · skill overlay active</span>{/if}
-							</p>
-							<p class="text-xs text-muted-foreground/60 mt-3">Click a region to load the chart below</p>
-						</div>
-					</div>
+				<!-- Map -->
+				<div class="relative border-b border-border overflow-hidden" style="flex: 0 0 65%;">
+					<Map bind:map />
 				</div>
 
 				<!-- Chart panel (remaining height) -->
