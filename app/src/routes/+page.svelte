@@ -7,24 +7,24 @@
 	import { Separator } from '$lib/components/ui/separator';
 </script>
 
-<div class="mx-auto max-w-3xl px-6 py-10">
+<div class="mx-auto max-w-4xl px-8 py-12">
 	<!-- Hero -->
-	<div class="mb-8">
+	<div class="mb-10">
 		<div class="flex items-center gap-2 mb-2">
 			<Badge variant="secondary">Beta</Badge>
 			<span class="text-xs text-muted-foreground">Seasonal forecasts updated monthly</span>
 		</div>
-		<h2 class="text-3xl font-bold tracking-tight mb-3">Foodshed Information Service</h2>
+		<h2 class="text-3xl font-semibold tracking-tight mb-3">Foodshed Information Service</h2>
 		<p class="text-lg text-muted-foreground leading-relaxed">
 			An interactive dashboard providing seasonal food security indicators for Sub-Saharan Africa.
 			Explore crop yield forecasts, spatial food system data, and methodological resources.
 		</p>
 	</div>
 
-	<Separator class="mb-8" />
+	<Separator class="mb-10" />
 
 	<!-- Cards -->
-	<div class="grid gap-4 sm:grid-cols-2">
+	<div class="grid gap-5 sm:grid-cols-2">
 		<Card>
 			<CardHeader>
 				<CardTitle>Yield Forecast</CardTitle>
@@ -38,7 +38,7 @@
 				</p>
 			</CardContent>
 			<CardFooter>
-				<a href="/yield-forecast" class="text-sm font-medium underline underline-offset-4">
+				<a href="/yield-forecast" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4">
 					Open Yield Forecast →
 				</a>
 			</CardFooter>
@@ -56,7 +56,7 @@
 				</p>
 			</CardContent>
 			<CardFooter>
-				<a href="/foodshed" class="text-sm font-medium underline underline-offset-4">
+				<a href="/foodshed" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4">
 					Open Foodshed Scenarios →
 				</a>
 			</CardFooter>
@@ -74,7 +74,7 @@
 				</p>
 			</CardContent>
 			<CardFooter>
-				<a href="/methodology" class="text-sm font-medium underline underline-offset-4">
+				<a href="/methodology" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4">
 					Read Methodology →
 				</a>
 			</CardFooter>

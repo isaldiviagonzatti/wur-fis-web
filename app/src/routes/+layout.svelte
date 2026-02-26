@@ -9,7 +9,6 @@
 	import Map from '@lucide/svelte/icons/map';
 	import Layers from '@lucide/svelte/icons/layers';
 	import BookOpen from '@lucide/svelte/icons/book-open';
-	import Info from '@lucide/svelte/icons/info';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
 	let { children } = $props();
@@ -22,7 +21,6 @@
 	});
 
 	const navItems = [
-		{ href: '/', label: 'About', icon: Info },
 		{ href: '/yield-forecast', label: 'Yield Forecast', icon: Map },
 		{ href: '/foodshed', label: 'Foodshed Scenarios', icon: Layers },
 		{ href: '/methodology', label: 'Methodology', icon: BookOpen }
@@ -31,6 +29,12 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+		rel="stylesheet"
+	/>
 </svelte:head>
 
 {#snippet tooltipContent(label)}
@@ -49,35 +53,33 @@
 	<aside
 		class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-all duration-200 {collapsed
 			? 'w-14'
-			: 'w-44'}"
+			: 'w-50'}"
 	>
 		<!-- Logo / title -->
-		<div style="height: 3rem; display: flex; align-items: center; justify-content: {collapsed ? 'center' : 'flex-start'}; padding: 0 1rem; border-bottom: 1px solid var(--border); overflow: hidden;">
+		<div style="height: 3rem; display: flex; align-items: center; justify-content: {collapsed ? 'center' : 'flex-start'}; padding: 0 1rem; overflow: hidden;">
 			{#if collapsed}
-				<span class="text-sm font-semibold leading-tight" style="opacity: 1; transition: opacity 150ms ease;">FIS</span>
+				<a href="/" class="text-sm font-semibold leading-tight text-muted-foreground hover:text-foreground transition-colors" style="opacity: 1; transition: opacity 150ms ease;">FIS</a>
 			{:else}
-				<span class="text-sm font-semibold leading-tight" style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;">Foodshed Information Service</span>
+				<a href="/" class="text-sm font-semibold leading-tight text-muted-foreground hover:text-foreground transition-colors" style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;">Foodshed Information Service</a>
 			{/if}
 		</div>
 
 		<!-- Nav links -->
-		<nav class="flex flex-col gap-1 p-2 flex-1">
-			{#each navItems as item}
-				{@const active =
-					item.href === '/'
-						? $page.url.pathname === '/'
-						: $page.url.pathname.startsWith(item.href)}
+		<nav class="flex flex-col gap-0.5 p-2 flex-1">
+			{#each navItems as item (item.href)}
+				{@const active = $page.url.pathname.startsWith(item.href)}
 				<Tooltip.Root>
 					<Tooltip.Trigger asChild>
 						{#snippet child({ props })}
-							<a
-								href={item.href}
-								{...props}
-								class="flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground {collapsed
-									? 'justify-center'
+								<a
+									href={item.href}
+									title={item.label}
+									{...props}
+									class="flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors {collapsed
+										? 'justify-center'
 									: ''} {active
-									? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-									: 'text-sidebar-foreground'}"
+									? 'text-foreground font-medium'
+									: 'text-muted-foreground hover:text-foreground'}"
 							>
 								<item.icon size={16} class="shrink-0" />
 								{#if !collapsed}
@@ -94,18 +96,18 @@
 		</nav>
 
 		<!-- Bottom controls -->
-		<div class="flex flex-col gap-1 border-t border-border p-2">
+		<div class="flex flex-col gap-0.5 p-2">
 			<!-- Dark mode toggle -->
 			<Tooltip.Root>
 				<Tooltip.Trigger asChild>
 					{#snippet child({ props })}
-						<button
-							{...props}
-							onclick={() => (dark = !dark)}
-							class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground {collapsed
-								? 'justify-center'
-								: ''}"
-						>
+							<button
+								{...props}
+								onclick={() => (dark = !dark)}
+								class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:text-foreground {collapsed
+									? 'justify-center'
+									: ''}"
+							>
 							{#if dark}
 								<Sun size={16} class="shrink-0" />
 							{:else}
@@ -125,13 +127,13 @@
 			<Tooltip.Root>
 				<Tooltip.Trigger asChild>
 					{#snippet child({ props })}
-						<button
-							{...props}
-							onclick={() => (collapsed = !collapsed)}
-							class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground {collapsed
-								? 'justify-center'
-								: ''}"
-						>
+							<button
+								{...props}
+								onclick={() => (collapsed = !collapsed)}
+								class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:text-foreground {collapsed
+									? 'justify-center'
+									: ''}"
+							>
 							<ChevronLeft size={16} class="shrink-0 transition-transform {collapsed ? 'rotate-180' : ''}" />
 							{#if !collapsed}
 								<span>Collapse</span>
@@ -154,7 +156,7 @@
 		</main>
 
 		<!-- Footer -->
-		<footer class="shrink-0 border-t border-border bg-muted/40 px-6 py-2">
+		<footer class="shrink-0 border-t border-border/60 px-6 py-2">
 			<div class="flex items-center justify-between gap-4">
 				<!-- Logos -->
 				<div class="flex items-center gap-6">
@@ -166,13 +168,13 @@
 					</a>
 				</div>
 
-				<!-- Contact + GitHub -->
+				<!-- Contact + GitLab -->
 				<div class="flex items-center gap-4">
 					<p class="text-xs text-muted-foreground">
-						Contact: <a href="mailto:fis@wur.nl" class="underline underline-offset-2">fis@wur.nl</a>
+						Contact: <a href="mailto:ignacio.saldiviagonzatti@wur.nl" class="underline underline-offset-2">ignacio.saldiviagonzatti@wur.nl</a>
 					</p>
 					<a
-						href="https://github.com/your-org/fis-web"
+						href="https://git.wur.nl/phd-isaldiviagonzatti/fis-web"
 						target="_blank"
 						rel="noopener"
 						title="GitLab repository"

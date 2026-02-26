@@ -16,9 +16,8 @@
 	bind:ref
 	{value}
 	data-slot="select-item"
-	style="cursor: pointer;"
 	class={cn(
-		"data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[selected]:bg-muted data-[selected]:font-medium relative flex w-full !cursor-pointer items-center gap-2 rounded-sm py-1.5 px-3 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+		"data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[selected]:bg-muted data-[selected]:font-medium relative flex w-full cursor-pointer items-center gap-2 rounded-sm px-2.5 py-1 text-xs outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
 		className
 	)}
 	{...restProps}
