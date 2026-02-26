@@ -9,7 +9,7 @@
 	import Map from '@lucide/svelte/icons/map';
 	import Layers from '@lucide/svelte/icons/layers';
 	import BookOpen from '@lucide/svelte/icons/book-open';
-	import CircleDot from '@lucide/svelte/icons/circle-dot';
+	import Info from '@lucide/svelte/icons/info';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
 	let { children } = $props();
@@ -22,7 +22,7 @@
 	});
 
 	const navItems = [
-		{ href: '/', label: 'About', icon: CircleDot },
+		{ href: '/', label: 'About', icon: Info },
 		{ href: '/yield-forecast', label: 'Yield Forecast', icon: Map },
 		{ href: '/foodshed', label: 'Foodshed Scenarios', icon: Layers },
 		{ href: '/methodology', label: 'Methodology', icon: BookOpen }
@@ -49,14 +49,14 @@
 	<aside
 		class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-all duration-200 {collapsed
 			? 'w-14'
-			: 'w-52'}"
+			: 'w-44'}"
 	>
 		<!-- Logo / title -->
-		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem; border-bottom: 1px solid var(--border);">
-			{#if !collapsed}
-				<span class="text-sm font-semibold leading-tight">Foodshed Information Service</span>
+		<div style="height: 3rem; display: flex; align-items: center; justify-content: {collapsed ? 'center' : 'flex-start'}; padding: 0 1rem; border-bottom: 1px solid var(--border); overflow: hidden;">
+			{#if collapsed}
+				<span class="text-sm font-semibold leading-tight" style="opacity: 1; transition: opacity 150ms ease;">FIS</span>
 			{:else}
-				<span class="text-sm font-semibold leading-tight">FIS</span>
+				<span class="text-sm font-semibold leading-tight" style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;">Foodshed Information Service</span>
 			{/if}
 		</div>
 
@@ -73,7 +73,9 @@
 							<a
 								href={item.href}
 								{...props}
-								class="flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground {active
+								class="flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground {collapsed
+									? 'justify-center'
+									: ''} {active
 									? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
 									: 'text-sidebar-foreground'}"
 							>
@@ -100,7 +102,9 @@
 						<button
 							{...props}
 							onclick={() => (dark = !dark)}
-							class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+							class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground {collapsed
+								? 'justify-center'
+								: ''}"
 						>
 							{#if dark}
 								<Sun size={16} class="shrink-0" />
@@ -124,7 +128,9 @@
 						<button
 							{...props}
 							onclick={() => (collapsed = !collapsed)}
-							class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+							class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground {collapsed
+								? 'justify-center'
+								: ''}"
 						>
 							<ChevronLeft size={16} class="shrink-0 transition-transform {collapsed ? 'rotate-180' : ''}" />
 							{#if !collapsed}

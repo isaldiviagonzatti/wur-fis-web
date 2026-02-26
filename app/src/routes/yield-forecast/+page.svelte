@@ -29,27 +29,27 @@
 		<!-- Current Forecast tab -->
 		<TabsContent value="forecast" class="flex flex-col flex-1 overflow-hidden m-0 p-0">
 			<!-- Controls bar -->
-			<div class="flex flex-wrap items-center gap-3 border-b border-border px-4 py-2">
-				<div class="flex items-center gap-2">
+			<div class="flex flex-wrap items-center gap-2 border-b border-border px-4 py-1.5">
+				<div class="flex items-center gap-1.5">
 					<span class="text-xs text-muted-foreground font-medium">Crop</span>
 					<Select bind:value={crop}>
-						<SelectTrigger class="h-7 w-32 text-xs">
+						<SelectTrigger size="sm" class="w-28" style="font-size: 0.75rem; cursor: pointer;">
 							{crop.charAt(0).toUpperCase() + crop.slice(1)}
 						</SelectTrigger>
-						<SelectContent>
+						<SelectContent style="width: var(--bits-select-anchor-width);">
 							<SelectItem value="maize" label="Maize" />
 							<SelectItem value="sorghum" label="Sorghum" />
 						</SelectContent>
 					</Select>
 				</div>
 
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-1.5">
 					<span class="text-xs text-muted-foreground font-medium">Country</span>
 					<Select bind:value={country}>
-						<SelectTrigger class="h-7 w-32 text-xs">
+						<SelectTrigger size="sm" class="w-28" style="font-size: 0.75rem; cursor: pointer;">
 							{country.charAt(0).toUpperCase() + country.slice(1)}
 						</SelectTrigger>
-						<SelectContent>
+						<SelectContent style="width: var(--bits-select-anchor-width);">
 							<SelectItem value="ghana" label="Ghana" />
 							<SelectItem value="kenya" label="Kenya" />
 							<SelectItem value="zimbabwe" label="Zimbabwe" />
@@ -57,7 +57,7 @@
 					</Select>
 				</div>
 
-				<Separator orientation="vertical" class="h-5" />
+				<Separator orientation="vertical" class="h-4" />
 
 				<div class="flex items-center gap-1">
 					<span class="text-xs text-muted-foreground font-medium mr-1">Admin</span>
@@ -73,15 +73,15 @@
 					{/each}
 				</div>
 
-				<Separator orientation="vertical" class="h-5" />
+				<Separator orientation="vertical" class="h-4" />
 
 				<button
 					onclick={() => (skillOverlay = !skillOverlay)}
-					class="cursor-pointer flex items-center gap-1.5 px-2 py-0.5 rounded text-xs border transition-colors {skillOverlay
+					class="cursor-pointer flex items-center gap-1 px-2 py-0.5 rounded text-xs border transition-colors {skillOverlay
 						? 'bg-primary text-primary-foreground border-primary'
 						: 'border-border text-muted-foreground hover:bg-accent'}"
 				>
-					<Gauge size={13} />
+					<Gauge size={12} />
 					Skill overlay
 				</button>
 			</div>
