@@ -13,6 +13,9 @@ cache:
 
 deploy_pages:
   stage: deploy
+  tags:
+    - k8s
+    - instance
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
   before_script:
