@@ -22,10 +22,10 @@ deploy_pages:
     - corepack enable
     - corepack prepare pnpm@10.30.2 --activate
     - pnpm config set store-dir "$PNPM_CACHE_FOLDER"
-    - pnpm -C app install --frozen-lockfile
+    - pnpm install --frozen-lockfile
   script:
     - test -n "$CLOUDFLARE_ACCOUNT_ID" || (echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1)
     - test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing CLOUDFLARE_API_TOKEN"; exit 1)
     - test -n "$CLOUDFLARE_PAGES_PROJECT" || (echo "Missing CLOUDFLARE_PAGES_PROJECT"; exit 1)
-    - pnpm -C app build
-    - npx wrangler pages deploy app/build --project-name "$CLOUDFLARE_PAGES_PROJECT" --branch "$CI_COMMIT_REF_NAME"
+    - pnpm build
+    - npx wrangler pages deploy build --project-name "$CLOUDFLARE_PAGES_PROJECT" --branch "$CI_COMMIT_REF_NAME"

@@ -11,14 +11,14 @@ Interactive frontend for food insecurity seasonal indicators. The app consumes p
 
 ## Structure
 
-```
-app/        SvelteKit frontend
+```text
+src/        SvelteKit routes and UI components
+static/     Static assets
 ```
 
 ## Frontend dev
 
 ```bash
-cd app
 pnpm install
 pnpm dev
 ```
