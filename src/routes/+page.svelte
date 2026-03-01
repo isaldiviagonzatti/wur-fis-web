@@ -23,8 +23,6 @@
 		</p>
 	</div>
 
-	<p class="text-sm text-muted-foreground leading-relaxed mt-4">FIS fills a gap between hazard monitoring systems (e.g. ASAP, GEOGLAM Crop Monitor, TAMSAT-ALERT) and food-security outlooks (e.g. FEWS NET). Existing systems describe current conditions or qualitative anomalies; FIS provides quantitative, crop-specific probabilistic yield forecasts issued months before harvest, supporting short-term adaptation decisions across the food supply chain.</p>
-
 	<Separator class="mb-8 mt-8" />
 
 	<!-- SAFE4ALL context -->

@@ -75,7 +75,7 @@
 
 		<Card>
 			<CardHeader>
-				<CardTitle>Limitations and Caveats</CardTitle>
+				<CardTitle>Limitations</CardTitle>
 				<CardDescription>Known constraints and uncertainties</CardDescription>
 			</CardHeader>
 			<CardContent>
