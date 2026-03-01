@@ -12,7 +12,7 @@
 	<Tabs value="gis" class="flex flex-col flex-1 overflow-hidden">
 		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem; border-bottom: 1px solid var(--border);">
 			<TabsList>
-				<TabsTrigger value="gis">GIS Data</TabsTrigger>
+				<TabsTrigger value="gis">Foodshed Maps</TabsTrigger>
 				<TabsTrigger value="guide">User Guide</TabsTrigger>
 			</TabsList>
 		</div>
@@ -23,14 +23,15 @@
 			</div>
 			<Card>
 				<CardHeader>
-					<CardTitle>Foodshed GIS Data</CardTitle>
-					<CardDescription>Spatial foodshed boundaries and scenario outputs</CardDescription>
+					<CardTitle>Foodshed Maps</CardTitle>
+					<CardDescription>Present-day and long-term scenario foodsheds</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<p class="text-sm text-muted-foreground">
-						Interactive maps showing foodshed delineations, supply catchments, and
-						scenario-based projections of food system configurations under climate change.
-						This section is currently under development.
+						Interactive maps of present-day foodsheds for Ghana, Kenya, and Zimbabwe showing
+						how domestic crop production, trade flows, and food demand combine to determine
+						food availability. Long-term foodshed scenarios under SSP2-4.5 and SSP3-7.0
+						(2040-2050 and 2080-2100 horizons) are under development.
 					</p>
 					<p class="text-xs text-muted-foreground/60 mt-4">— Placeholder —</p>
 				</CardContent>
@@ -45,8 +46,7 @@
 				</CardHeader>
 				<CardContent>
 					<p class="text-sm text-muted-foreground">
-						Background on the foodshed concept, methodological approach, scenario assumptions,
-						and guidance on interpreting the spatial outputs.
+						Background on the foodshed concept (geographic area from which a population derives its food supply), the capacity-based self-sufficiency framework used here, scenario assumptions (SSP2/SSP3), and guidance on reading the food availability indicators.
 					</p>
 					<p class="text-xs text-muted-foreground/60 mt-4">— Placeholder —</p>
 				</CardContent>

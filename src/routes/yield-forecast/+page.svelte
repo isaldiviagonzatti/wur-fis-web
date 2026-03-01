@@ -166,8 +166,9 @@
 				</CardHeader>
 				<CardContent>
 					<p class="text-sm text-muted-foreground">
-						Hindcast skill metrics (RPSS, correlation, reliability) for each crop, country,
-						and lead time. Visualisations and spatial skill maps will be shown here.
+						30-year hindcasts (1994--2023) evaluated at lead times of 0-2 months before sowing.
+						Skill metrics include CRPSS, RPSS, Spearman correlation, and ROC--AUC for below- and
+						above-normal yield events — shown as spatial maps and summary plots per crop and country.
 					</p>
 					<p class="text-xs text-muted-foreground/60 mt-4">— Placeholder —</p>
 				</CardContent>
@@ -183,9 +184,10 @@
 				</CardHeader>
 				<CardContent>
 					<p class="text-sm text-muted-foreground">
-						Step-by-step guidance on selecting crops and regions, interpreting the density
-						plot (historical vs. forecast distribution), and understanding the skill overlay.
-						Full documentation will appear here.
+						Guidance on selecting crop, country, and administrative level, reading the yield
+						anomaly distribution (forecast ensemble vs. climatological reference); and interpreting
+						the skill overlay. Skill is assessed relative to a climatological benchmark — positive
+						skill means the forecast is more informative than a no-skill tercile forecast.
 					</p>
 					<p class="text-xs text-muted-foreground/60 mt-4">— Placeholder —</p>
 				</CardContent>
