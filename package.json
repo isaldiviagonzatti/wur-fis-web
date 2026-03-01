@@ -1,5 +1,5 @@
 {
-	"name": "app",
+	"name": "fis-web",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -26,6 +26,7 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"maplibre-gl": "^5.19.0"
+		"maplibre-gl": "^5.19.0",
+		"pmtiles": "^4.4.0"
 	}
 }

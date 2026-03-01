@@ -5,6 +5,7 @@
 -->
 <script>
 	import { BASEMAP_STYLE_URL, MAP_DEFAULTS } from '$lib/map-config.js';
+	import { ADMIN_PMTILES_URL } from '$lib/data-config.js';
 
 	let { map = $bindable(null) } = $props();
 
@@ -15,9 +16,13 @@
 		(async () => {
 			const maplibre = await import('maplibre-gl');
 			await import('maplibre-gl/dist/maplibre-gl.css');
+			const { Protocol } = await import('pmtiles');
 			if (isDestroyed) {
 				return;
 			}
+
+			const protocol = new Protocol();
+			maplibre.addProtocol('pmtiles', protocol.tile);
 
 			mapInstance = new maplibre.Map({
 				container: node,
@@ -37,6 +42,33 @@
 				attributionControl?.classList.remove('maplibregl-compact-show');
 
 				mapInstance.setProjection({ type: 'vertical-perspective' });
+
+				mapInstance.addSource('admin1', {
+					type: 'vector',
+					url: `pmtiles://${ADMIN_PMTILES_URL}`
+				});
+
+				mapInstance.addLayer({
+					id: 'admin1-fill',
+					type: 'fill',
+					source: 'admin1',
+					'source-layer': 'admin1',
+					paint: {
+						'fill-color': '#4a90d9',
+						'fill-opacity': 0.15
+					}
+				});
+
+				mapInstance.addLayer({
+					id: 'admin1-outline',
+					type: 'line',
+					source: 'admin1',
+					'source-layer': 'admin1',
+					paint: {
+						'line-color': '#2c5f8a',
+						'line-width': 1
+					}
+				});
 			});
 
 			map = mapInstance;
