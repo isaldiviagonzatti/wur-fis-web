@@ -7,7 +7,17 @@
 	import { BASEMAP_STYLE_URL, MAP_DEFAULTS } from '$lib/map-config.js';
 	import { ADMIN_PMTILES_URL } from '$lib/data-config.js';
 
-	let { map = $bindable(null) } = $props();
+	let { map = $bindable(null), adminLevel = 'admin1' } = $props();
+
+	const ADMIN1_LAYERS = ['admin1-fill', 'admin1-outline'];
+
+	$effect(() => {
+		if (!map) return;
+		const visible = adminLevel === 'admin1' ? 'visible' : 'none';
+		for (const id of ADMIN1_LAYERS) {
+			if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible);
+		}
+	});
 
 	function mountMap(node) {
 		let isDestroyed = false;
@@ -48,11 +58,14 @@
 					url: `pmtiles://${ADMIN_PMTILES_URL}`
 				});
 
+				const admin1Visibility = adminLevel === 'admin1' ? 'visible' : 'none';
+
 				mapInstance.addLayer({
 					id: 'admin1-fill',
 					type: 'fill',
 					source: 'admin1',
 					'source-layer': 'admin1',
+					layout: { visibility: admin1Visibility },
 					paint: {
 						'fill-color': '#4a90d9',
 						'fill-opacity': 0.15
@@ -64,14 +77,16 @@
 					type: 'line',
 					source: 'admin1',
 					'source-layer': 'admin1',
+					layout: { visibility: admin1Visibility },
 					paint: {
 						'line-color': '#2c5f8a',
 						'line-width': 1
 					}
 				});
-			});
 
-			map = mapInstance;
+				// Expose instance only after layers are ready so $effect can call getLayer()
+				map = mapInstance;
+			});
 		})();
 
 		return {

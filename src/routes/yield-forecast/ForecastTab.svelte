@@ -117,7 +117,7 @@
 
 <div class="space-y-3 px-4 py-3">
 	<div class="relative h-[55vh] min-h-[360px] max-h-[760px] overflow-hidden rounded-md border border-border">
-		<Map bind:map />
+		<Map bind:map {adminLevel} />
 	</div>
 
 	<div>

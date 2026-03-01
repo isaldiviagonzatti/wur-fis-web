@@ -16,7 +16,7 @@
 
 	let { children } = $props();
 
-	let dark = $state(true);
+	let dark = $state(false);
 	let collapsed = $state(false);
 	let collapseTimer;
 	const AUTO_COLLAPSE_DELAY_MS = 400;

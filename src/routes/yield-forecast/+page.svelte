@@ -10,7 +10,7 @@
 
 	let crop = $state('');
 	let country = $state('');
-	let adminLevel = $state('admin1');
+	let adminLevel = $state('country');
 	let skillOverlay = $state(false);
 </script>
 
