@@ -145,10 +145,31 @@
   *::-webkit-scrollbar-corner {
     background: transparent;
   }
+  html,
+  body {
+    min-height: 100%;
+  }
   body {
     @apply bg-background text-foreground;
+    margin: 0;
     font-family: "Inter", var(--font-sans);
   }
+}
+
+.app-shell {
+  min-height: 100vh;
+  min-height: 100svh;
+  height: 100dvh;
+}
+
+@supports not (height: 100dvh) {
+  .app-shell {
+    height: 100vh;
+  }
+}
+
+.safe-bottom {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
 }
 
 @keyframes fadeIn {

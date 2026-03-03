@@ -10,7 +10,6 @@
 	import Gitlab from '@lucide/svelte/icons/gitlab';
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import SquaresIntersect from '@lucide/svelte/icons/squares-intersect';
-	import Layers from '@lucide/svelte/icons/layers';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
@@ -21,11 +20,17 @@
 	let collapseTimer;
 	const AUTO_COLLAPSE_DELAY_MS = 400;
 
-	$effect(() => {
-		document.documentElement.classList.toggle('dark', dark);
-	});
+	function applyDarkMode(value) {
+		document.documentElement.classList.toggle('dark', value);
+	}
+
+	function toggleDarkMode() {
+		dark = !dark;
+		applyDarkMode(dark);
+	}
 
 	onMount(() => {
+		applyDarkMode(dark);
 		afterNavigate(({ to }) => {
 			const path = to?.url.pathname;
 			if (!path || path === '/') return;
@@ -65,7 +70,7 @@
 {/snippet}
 
 <Tooltip.Provider delayDuration={300}>
-<div class="flex h-screen overflow-hidden bg-background text-foreground">
+<div class="app-shell flex overflow-hidden bg-background text-foreground">
 	<!-- Left sidebar -->
 	<aside
 		class="flex flex-col text-foreground transition-all duration-200 {collapsed
@@ -113,14 +118,14 @@
 		</nav>
 
 		<!-- Bottom controls -->
-		<div class="flex flex-col gap-0.5 p-2">
+		<div class="safe-bottom flex flex-col gap-0.5 p-2">
 			<!-- Dark mode toggle -->
 			<Tooltip.Root>
 				<Tooltip.Trigger asChild>
 					{#snippet child({ props })}
 								<button
 									{...props}
-									onclick={() => (dark = !dark)}
+									onclick={toggleDarkMode}
 									class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:text-foreground {collapsed
 										? 'justify-center'
 										: ''}"
@@ -173,22 +178,36 @@
 		</main>
 
 		<!-- Footer -->
-		<footer class="shrink-0 px-6 py-2">
-			<div class="flex items-center justify-between gap-4">
+		<footer class="safe-bottom shrink-0 border-t border-border px-3 py-2 sm:px-6">
+			<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 				<!-- Logos -->
-				<div class="flex items-center gap-6">
-					<a href="https://www.wur.nl" target="_blank" rel="noopener">
-						<img src="/wur-logo.svg" alt="Wageningen University & Research" class="h-7 w-auto" />
+				<div class="flex items-center gap-3 sm:gap-6">
+					<a href="https://www.wur.nl" target="_blank" rel="noopener" class="shrink-0">
+						<img
+							src="/wur-logo.svg"
+							alt="Wageningen University & Research"
+							class="h-6 w-auto shrink-0 sm:h-7"
+						/>
 					</a>
-					<a href="https://www.safe4allafrica.eu/" target="_blank" rel="noopener">
-						<img src="/safe4all-logo-vertical.svg" alt="SAFE4ALL" class="h-7 w-auto" />
+					<a href="https://www.safe4allafrica.eu/" target="_blank" rel="noopener" class="shrink-0">
+						<img
+							src="/safe4all-logo-vertical.svg"
+							alt="SAFE4ALL"
+							class="h-7 w-auto shrink-0 sm:h-8"
+						/>
 					</a>
 				</div>
 
 				<!-- Contact + GitLab -->
-				<div class="flex items-center gap-4">
-					<p class="text-xs text-muted-foreground">
-						Contact: <a href="mailto:ignacio.saldiviagonzatti@wur.nl" class="underline underline-offset-2">ignacio.saldiviagonzatti@wur.nl</a>
+				<div class="flex min-w-0 items-center gap-3 sm:gap-4">
+					<p class="min-w-0 text-[10px] leading-tight text-muted-foreground sm:text-xs">
+						Contact:
+						<a
+							href="mailto:ignacio.saldiviagonzatti@wur.nl"
+							class="break-all underline underline-offset-2"
+						>
+							ignacio.saldiviagonzatti@wur.nl
+						</a>
 					</p>
 					<a
 						href="https://git.wur.nl/phd-isaldiviagonzatti/fis-web"
@@ -197,7 +216,7 @@
 						title="GitLab repository"
 						class="text-muted-foreground hover:text-foreground transition-colors"
 					>
-						<Gitlab size={16} />
+						<Gitlab class="h-4 w-4 sm:h-5 sm:w-5" />
 					</a>
 				</div>
 			</div>
