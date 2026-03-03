@@ -1,31 +1,33 @@
-image: node:20
+# Because the GitLab hosted at WUR cannot connect to Cloudflare, we deploy the frontend manually using the Cloudflare CLI (wrangler) on our local machines. However, shared runners from GitLab WUR are not available yet. In the meantime, the deployment is done via mirroring to GitHub, where the repo is connected directly to Cloudflare Pages. Once the GitLab hosted at WUR has shared runners available, we can switch back to deploying directly from GitLab.
 
-stages:
-  - deploy
+# image: node:20
 
-variables:
-  PNPM_CACHE_FOLDER: .pnpm-store
+# stages:
+#   - deploy
 
-cache:
-  key: "${CI_COMMIT_REF_SLUG}"
-  paths:
-    - .pnpm-store/
+# variables:
+#   PNPM_CACHE_FOLDER: .pnpm-store
 
-deploy_pages:
-  stage: deploy
-  tags:
-    - k8s
-    - instance
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
-  before_script:
-    - corepack enable
-    - corepack prepare pnpm@10.30.2 --activate
-    - pnpm config set store-dir "$PNPM_CACHE_FOLDER"
-    - pnpm install --frozen-lockfile
-  script:
-    - test -n "$CLOUDFLARE_ACCOUNT_ID" || (echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1)
-    - test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing CLOUDFLARE_API_TOKEN"; exit 1)
-    - test -n "$CLOUDFLARE_PAGES_PROJECT" || (echo "Missing CLOUDFLARE_PAGES_PROJECT"; exit 1)
-    - pnpm build
-    - npx wrangler pages deploy build --project-name "$CLOUDFLARE_PAGES_PROJECT" --branch "$CI_COMMIT_REF_NAME"
+# cache:
+#   key: "${CI_COMMIT_REF_SLUG}"
+#   paths:
+#     - .pnpm-store/
+
+# deploy_pages:
+#   stage: deploy
+#   tags:
+#     - k8s
+#     - instance
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+#   before_script:
+#     - corepack enable
+#     - corepack prepare pnpm@10.30.2 --activate
+#     - pnpm config set store-dir "$PNPM_CACHE_FOLDER"
+#     - pnpm install --frozen-lockfile
+#   script:
+#     - test -n "$CLOUDFLARE_ACCOUNT_ID" || (echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1)
+#     - test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing CLOUDFLARE_API_TOKEN"; exit 1)
+#     - test -n "$CLOUDFLARE_PAGES_PROJECT" || (echo "Missing CLOUDFLARE_PAGES_PROJECT"; exit 1)
+#     - pnpm build
+#     - npx wrangler pages deploy build --project-name "$CLOUDFLARE_PAGES_PROJECT" --branch "$CI_COMMIT_REF_NAME"
