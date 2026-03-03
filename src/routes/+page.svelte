@@ -5,6 +5,7 @@
 	import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Separator } from '$lib/components/ui/separator';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 </script>
 
 <div class="mx-auto max-w-4xl px-8 py-12">
@@ -53,8 +54,12 @@
 				</p>
 			</CardContent>
 			<CardFooter>
-				<a href="/yield-forecast" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4">
-					Open Yield Forecast →
+				<a
+					href="/yield-forecast"
+					class="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4"
+				>
+					<span>Open Yield Forecast</span>
+					<ArrowRight class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 				</a>
 			</CardFooter>
 		</Card>
@@ -72,8 +77,12 @@
 				</p>
 			</CardContent>
 			<CardFooter>
-				<a href="/foodshed" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4">
-					Open Foodshed Scenarios →
+				<a
+					href="/foodshed"
+					class="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4"
+				>
+					<span>Open Foodshed Scenarios</span>
+					<ArrowRight class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 				</a>
 			</CardFooter>
 		</Card>
@@ -90,8 +99,12 @@
 				</p>
 			</CardContent>
 			<CardFooter>
-				<a href="/methodology" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4">
-					Read Methodology →
+				<a
+					href="/methodology"
+					class="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4"
+				>
+					<span>Read Methodology</span>
+					<ArrowRight class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 				</a>
 			</CardFooter>
 		</Card>

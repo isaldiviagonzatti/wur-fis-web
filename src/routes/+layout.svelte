@@ -16,7 +16,7 @@
 	let { children } = $props();
 
 	let dark = $state(false);
-	let collapsed = $state(false);
+	let collapsed = $state(true);
 	let collapseTimer;
 	const AUTO_COLLAPSE_DELAY_MS = 400;
 
@@ -174,53 +174,57 @@
 	<div class="flex flex-1 flex-col overflow-hidden">
 		<!-- Page content -->
 		<main class="flex-1 overflow-auto">
-			{@render children()}
-		</main>
-
-		<!-- Footer -->
-		<footer class="safe-bottom shrink-0 border-t border-border px-3 py-2 sm:px-6">
-			<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-				<!-- Logos -->
-				<div class="flex items-center gap-3 sm:gap-6">
-					<a href="https://www.wur.nl" target="_blank" rel="noopener" class="shrink-0">
-						<img
-							src="/wur-logo.svg"
-							alt="Wageningen University & Research"
-							class="h-6 w-auto shrink-0 sm:h-7"
-						/>
-					</a>
-					<a href="https://www.safe4allafrica.eu/" target="_blank" rel="noopener" class="shrink-0">
-						<img
-							src="/safe4all-logo-vertical.svg"
-							alt="SAFE4ALL"
-							class="h-7 w-auto shrink-0 sm:h-8"
-						/>
-					</a>
+			<div class="flex min-h-full flex-col">
+				<div class="flex-1">
+					{@render children()}
 				</div>
 
-				<!-- Contact + GitLab -->
-				<div class="flex min-w-0 items-center gap-3 sm:gap-4">
-					<p class="min-w-0 text-[10px] leading-tight text-muted-foreground sm:text-xs">
-						Contact:
-						<a
-							href="mailto:ignacio.saldiviagonzatti@wur.nl"
-							class="break-all underline underline-offset-2"
-						>
-							ignacio.saldiviagonzatti@wur.nl
-						</a>
-					</p>
-					<a
-						href="https://git.wur.nl/phd-isaldiviagonzatti/fis-web"
-						target="_blank"
-						rel="noopener"
-						title="GitLab repository"
-						class="text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Gitlab class="h-4 w-4 sm:h-5 sm:w-5" />
-					</a>
-				</div>
+				<!-- Footer -->
+				<footer class="safe-bottom mt-4 px-3 py-2 sm:px-6">
+					<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+						<!-- Logos -->
+						<div class="flex items-center gap-3 sm:gap-6">
+							<a href="https://www.wur.nl" target="_blank" rel="noopener" class="shrink-0">
+								<img
+									src="/wur-logo.svg"
+									alt="Wageningen University & Research"
+									class="h-6 w-auto shrink-0 sm:h-7"
+								/>
+							</a>
+							<a href="https://www.safe4allafrica.eu/" target="_blank" rel="noopener" class="shrink-0">
+								<img
+									src="/safe4all-logo-vertical.svg"
+									alt="SAFE4ALL"
+									class="h-7 w-auto shrink-0 sm:h-8"
+								/>
+							</a>
+						</div>
+
+						<!-- Contact + GitLab -->
+						<div class="flex min-w-0 items-center gap-3 sm:gap-4">
+							<p class="min-w-0 text-[10px] leading-tight text-muted-foreground sm:text-xs">
+								Contact:
+								<a
+									href="mailto:ignacio.saldiviagonzatti@wur.nl"
+									class="break-all underline underline-offset-2"
+								>
+									ignacio.saldiviagonzatti@wur.nl
+								</a>
+							</p>
+							<a
+								href="https://git.wur.nl/phd-isaldiviagonzatti/fis-web"
+								target="_blank"
+								rel="noopener"
+								title="GitLab repository"
+								class="text-muted-foreground hover:text-foreground transition-colors"
+							>
+								<Gitlab class="h-4 w-4 sm:h-5 sm:w-5" />
+							</a>
+						</div>
+					</div>
+				</footer>
 			</div>
-		</footer>
+		</main>
 	</div>
 </div>
 </Tooltip.Provider>
