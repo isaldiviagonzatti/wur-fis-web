@@ -5,18 +5,28 @@
 -->
 <script>
 	import { BASEMAP_STYLE_URL, MAP_DEFAULTS } from '$lib/map-config.js';
-	import { ADMIN_PMTILES_URL } from '$lib/data-config.js';
+	import { ADMIN_PMTILES_URLS } from '$lib/data-config.js';
 
 	let { map = $bindable(null), adminLevel = 'admin1' } = $props();
 
-	const ADMIN1_LAYERS = ['admin1-fill', 'admin1-outline'];
+	const ADMIN_LEVELS = ['country', 'admin1', 'admin2'];
+	const ADMIN_LAYER_SUFFIXES = ['fill', 'outline'];
+
+	function setAdminLayerVisibility(mapInstance, currentAdminLevel) {
+		for (const level of ADMIN_LEVELS) {
+			const visibility = currentAdminLevel === level ? 'visible' : 'none';
+			for (const suffix of ADMIN_LAYER_SUFFIXES) {
+				const layerId = `${level}-${suffix}`;
+				if (mapInstance.getLayer(layerId)) {
+					mapInstance.setLayoutProperty(layerId, 'visibility', visibility);
+				}
+			}
+		}
+	}
 
 	$effect(() => {
 		if (!map) return;
-		const visible = adminLevel === 'admin1' ? 'visible' : 'none';
-		for (const id of ADMIN1_LAYERS) {
-			if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible);
-		}
+		setAdminLayerVisibility(map, adminLevel);
 	});
 
 	function mountMap(node) {
@@ -53,36 +63,38 @@
 
 				mapInstance.setProjection({ type: 'vertical-perspective' });
 
-				mapInstance.addSource('admin1', {
-					type: 'vector',
-					url: `pmtiles://${ADMIN_PMTILES_URL}`
-				});
+				for (const level of ADMIN_LEVELS) {
+					mapInstance.addSource(level, {
+						type: 'vector',
+						url: `pmtiles://${ADMIN_PMTILES_URLS[level]}`
+					});
 
-				const admin1Visibility = adminLevel === 'admin1' ? 'visible' : 'none';
+					mapInstance.addLayer({
+						id: `${level}-fill`,
+						type: 'fill',
+						source: level,
+						'source-layer': level,
+						layout: { visibility: 'none' },
+						paint: {
+							'fill-color': '#4a90d9',
+							'fill-opacity': 0.15
+						}
+					});
 
-				mapInstance.addLayer({
-					id: 'admin1-fill',
-					type: 'fill',
-					source: 'admin1',
-					'source-layer': 'admin1',
-					layout: { visibility: admin1Visibility },
-					paint: {
-						'fill-color': '#4a90d9',
-						'fill-opacity': 0.15
-					}
-				});
+					mapInstance.addLayer({
+						id: `${level}-outline`,
+						type: 'line',
+						source: level,
+						'source-layer': level,
+						layout: { visibility: 'none' },
+						paint: {
+							'line-color': '#2c5f8a',
+							'line-width': 1
+						}
+					});
+				}
 
-				mapInstance.addLayer({
-					id: 'admin1-outline',
-					type: 'line',
-					source: 'admin1',
-					'source-layer': 'admin1',
-					layout: { visibility: admin1Visibility },
-					paint: {
-						'line-color': '#2c5f8a',
-						'line-width': 1
-					}
-				});
+				setAdminLayerVisibility(mapInstance, adminLevel);
 
 				// Expose instance only after layers are ready so $effect can call getLayer()
 				map = mapInstance;

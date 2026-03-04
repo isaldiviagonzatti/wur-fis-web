@@ -19,8 +19,7 @@
 		<p class="text-lg text-muted-foreground leading-relaxed">
 			An information service providing seasonal crop yield forecasts and foodshed analysis under future scenarios for
 			Ghana, Kenya, and Zimbabwe. Developed at Wageningen University &amp; Research as part of the
-			EU Horizon Europe <a href="https://www.safe4allafrica.eu/" class="underline underline-offset-2 hover:text-foreground transition-colors">SAFE4ALL</a> project,
-			with co-creation in LivingLabs across the three case-study countries.
+			EU Horizon Europe <a href="https://www.safe4allafrica.eu/" class="underline underline-offset-2 hover:text-foreground transition-colors">SAFE4ALL</a> project.
 		</p>
 	</div>
 
