@@ -9,7 +9,7 @@
 
 	let { map = $bindable(null), adminLevel = 'admin1' } = $props();
 
-	const ADMIN_LEVELS = ['country', 'admin1', 'admin2'];
+	const ADMIN_LEVELS = ['country', 'admin1', 'admin2', 'aez'];
 	const ADMIN_LAYER_SUFFIXES = ['fill', 'outline'];
 
 	function setAdminLayerVisibility(mapInstance, currentAdminLevel) {

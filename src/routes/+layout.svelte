@@ -11,6 +11,7 @@
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import SquaresIntersect from '@lucide/svelte/icons/squares-intersect';
 	import BookOpen from '@lucide/svelte/icons/book-open';
+	import Layers from '@lucide/svelte/icons/layers';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
 	let { children } = $props();
@@ -45,6 +46,7 @@
 	const navItems = [
 		{ href: '/yield-forecast', label: 'Yield Forecast', icon: TrendingUp },
 		{ href: '/foodshed', label: 'Foodshed Scenarios', icon: SquaresIntersect },
+		{ href: '/context', label: 'Context', icon: Layers },
 		{ href: '/methodology', label: 'Methodology', icon: BookOpen }
 	];
 </script>

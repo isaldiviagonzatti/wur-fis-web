@@ -88,6 +88,29 @@
 
 		<Card>
 			<CardHeader>
+				<CardTitle>Context</CardTitle>
+				<CardDescription>Reference data underlying the forecasts</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<p class="text-sm text-muted-foreground">
+					Static spatial and statistical reference layers used as inputs and baselines for the FIS:
+					crop calendars, FAO and HarvestStat yield and area statistics, agro-ecological zones,
+					soil types, land use, elevation, and ERA5-Land climate climatology.
+				</p>
+			</CardContent>
+			<CardFooter>
+				<a
+					href="/context"
+					class="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4"
+				>
+					<span>Open Context</span>
+					<ArrowRight class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+				</a>
+			</CardFooter>
+		</Card>
+
+		<Card>
+			<CardHeader>
 				<CardTitle>Methodology</CardTitle>
 				<CardDescription>Technical and scientific background</CardDescription>
 			</CardHeader>
