@@ -35,6 +35,18 @@
 		zimbabwe: { center: [29.15, -19.02], zoom: 5 }
 	};
 
+	const hasActiveSelection = $derived(
+		Boolean(country || crop || adminLevel !== 'country' || skillOverlay)
+	);
+
+	function clearSelections() {
+		country = '';
+		crop = '';
+		adminLevel = 'country';
+		skillOverlay = false;
+		previousCountry = '';
+	}
+
 	$effect(() => {
 		if (!map || !country) return;
 		if (country === previousCountry) return;
@@ -117,6 +129,15 @@
 		>
 			<Gauge size={12} />
 			Skill overlay
+		</button>
+
+		<button
+			type="button"
+			onclick={clearSelections}
+			disabled={!hasActiveSelection}
+			class="ml-2 inline-flex cursor-pointer items-center rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+		>
+			Clear selection
 		</button>
 	</div>
 </div>

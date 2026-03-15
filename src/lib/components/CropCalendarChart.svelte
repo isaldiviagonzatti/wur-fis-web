@@ -4,7 +4,13 @@
   Wrap-around seasons (maturity < sowing) are drawn as two segments.
 -->
 <script>
-	import { CALENDAR_STAGE_COLORS, MONTH_LABELS, getCalendarEntryLabel } from '$lib/calendar.js';
+	import {
+		CALENDAR_STAGE_COLORS,
+		MONTH_LABELS,
+		getCalendarDisplayLabel,
+		getCalendarDisplaySeasonLabel,
+		getCalendarEntryLabel
+	} from '$lib/calendar.js';
 
 	let { entries = [] } = $props();
 
@@ -107,9 +113,9 @@
 					fill="currentColor"
 					opacity="0.8"
 				>
-					{getCalendarEntryLabel(entry)}
+					{getCalendarDisplayLabel(entry)}
 					{#if entry.season !== 'annual'}
-						<tspan font-size="8" opacity="0.5"> ({entry.season})</tspan>
+						<tspan font-size="8" opacity="0.5"> ({getCalendarDisplaySeasonLabel(entry)})</tspan>
 					{/if}
 				</text>
 

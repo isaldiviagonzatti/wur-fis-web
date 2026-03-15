@@ -1,0 +1,91 @@
+.calendar-map-popup .maplibregl-popup-content {
+	min-width: 14rem;
+	padding: 0.9rem 0.95rem;
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	background: var(--popover);
+	color: var(--popover-foreground);
+	box-shadow:
+		0 10px 15px -3px rgba(15, 23, 42, 0.1),
+		0 4px 6px -4px rgba(15, 23, 42, 0.1);
+}
+
+.calendar-map-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+	border-top-color: var(--popover);
+}
+
+.calendar-map-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+	border-bottom-color: var(--popover);
+}
+
+.calendar-map-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+	border-right-color: var(--popover);
+}
+
+.calendar-map-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+	border-left-color: var(--popover);
+}
+
+.calendar-map-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.calendar-map-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+	border-bottom-color: var(--popover);
+}
+
+.calendar-map-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.calendar-map-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+	border-top-color: var(--popover);
+}
+
+.calendar-hover-popup {
+	display: grid;
+	gap: 0.5rem;
+	font-size: 0.78rem;
+	line-height: 1.35;
+	color: var(--popover-foreground);
+}
+
+.calendar-hover-popup__country {
+	margin: 0;
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+
+.calendar-hover-popup__title {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 700;
+	line-height: 1.15;
+}
+
+.calendar-hover-popup__crop {
+	margin: 0.1rem 0 0.2rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+}
+
+.calendar-hover-popup__row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.9rem;
+}
+
+.calendar-hover-popup__label {
+	flex: 0 0 auto;
+	color: var(--muted-foreground);
+	font-weight: 500;
+}
+
+.calendar-hover-popup__value {
+	flex: 1 1 auto;
+	text-align: right;
+	font-weight: 600;
+}
+
+.calendar-hover-popup__note {
+	margin: 0.1rem 0 0;
+	color: var(--muted-foreground);
+}

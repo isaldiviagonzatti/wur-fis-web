@@ -25,6 +25,12 @@ export const CALENDAR_STAGE_COLORS = {
 	harvest: '#DDCC77'
 };
 
+export function toSentenceCase(value) {
+	const text = String(value ?? '').trim();
+	if (!text) return '';
+	return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export function normalizeCalendarCropName(name) {
 	return String(name ?? '')
 		.replace(/_/g, ' ')
@@ -44,12 +50,20 @@ export function getCalendarEntryLabel(entry) {
 	return entry?.crop_label ?? normalizeCalendarCropName(entry?.crop);
 }
 
+export function getCalendarDisplayLabel(entry) {
+	return toSentenceCase(getCalendarEntryLabel(entry));
+}
+
 export function getCalendarSeasonKey(entry) {
 	return entry?.season_key ?? String(entry?.season ?? '').trim();
 }
 
 export function getCalendarSeasonLabel(entry) {
 	return entry?.season_label ?? String(entry?.season ?? '').trim();
+}
+
+export function getCalendarDisplaySeasonLabel(entry) {
+	return toSentenceCase(getCalendarSeasonLabel(entry));
 }
 
 export function getCalendarMonth(entry, dataset) {
