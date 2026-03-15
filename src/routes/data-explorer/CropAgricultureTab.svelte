@@ -336,9 +336,6 @@
 					<p class="mt-1 text-sm font-semibold text-foreground">
 						{chartTitle ?? 'Select an AEZ on the map'}
 					</p>
-					<p class="mt-1 text-xs text-muted-foreground">
-						The chart shows the full AEZ calendar for all crops and seasons in the selected shape.
-					</p>
 					<div class="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
 						<span class="inline-flex items-center gap-1.5">
 							<span

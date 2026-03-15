@@ -91,7 +91,7 @@ export function getCalendarCropOptions(calendarData) {
 			for (const entry of entries) {
 				const value = getCalendarEntryKey(entry);
 				if (!value || options.has(value)) continue;
-				options.set(value, getCalendarEntryLabel(entry));
+				options.set(value, getCalendarDisplayLabel(entry));
 			}
 		}
 	}
@@ -111,7 +111,7 @@ export function getCalendarSeasonOptions(calendarData, selectedCrop) {
 				if (getCalendarEntryKey(entry) !== selectedCrop) continue;
 				const value = getCalendarSeasonKey(entry);
 				if (!value || options.has(value)) continue;
-				options.set(value, getCalendarSeasonLabel(entry));
+				options.set(value, getCalendarDisplaySeasonLabel(entry));
 			}
 		}
 	}
