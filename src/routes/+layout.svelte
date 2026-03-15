@@ -14,10 +14,10 @@
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Layers from '@lucide/svelte/icons/layers';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import { theme } from '$lib/theme.svelte.js';
 
 	let { children } = $props();
 
-	let dark = $state(false);
 	let collapsed = $state(true);
 	let collapseTimer;
 	const AUTO_COLLAPSE_DELAY_MS = 400;
@@ -27,13 +27,9 @@
 	const sidebarButtonBaseClass =
 		'cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:text-foreground';
 
-	function applyDarkMode(value) {
-		document.documentElement.classList.toggle('dark', value);
-	}
-
 	function toggleDarkMode() {
-		dark = !dark;
-		applyDarkMode(dark);
+		theme.dark = !theme.dark;
+		document.documentElement.classList.toggle('dark', theme.dark);
 	}
 
 	afterNavigate(({ to }) => {
@@ -46,7 +42,7 @@
 	});
 
 	onMount(() => {
-		applyDarkMode(dark);
+		document.documentElement.classList.toggle('dark', theme.dark);
 		return () => clearTimeout(collapseTimer);
 	});
 
@@ -155,18 +151,18 @@
 									onclick={toggleDarkMode}
 									class={getSidebarButtonClass()}
 							>
-							{#if dark}
+							{#if theme.dark}
 								<Sun size={16} class="shrink-0" />
 							{:else}
 								<Moon size={16} class="shrink-0" />
 							{/if}
 							{#if !collapsed}
-								<span>{dark ? 'Light mode' : 'Dark mode'}</span>
+								<span>{theme.dark ? 'Light mode' : 'Dark mode'}</span>
 							{/if}
 						</button>
 					{/snippet}
 				</Tooltip.Trigger>
-				{@render tooltipContent(dark ? 'Light mode' : 'Dark mode')}
+				{@render tooltipContent(theme.dark ? 'Light mode' : 'Dark mode')}
 			</Tooltip.Root>
 			<!-- Collapse toggle -->
 			<Tooltip.Root>

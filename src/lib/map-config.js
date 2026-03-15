@@ -1,11 +1,28 @@
 /**
  * Map configuration constants.
- * To switch basemap providers, change BASEMAP_STYLE_URL only.
- *
- * Current: OpenFreeMap (free, no API key, OSM-based)
- * Future:  PMTiles on R2 — replace with your R2 bucket URL + protomaps style
+ * Basemap: Protomaps hosted API (light for light mode, dark for dark mode).
  */
-export const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+import { env } from '$env/dynamic/public';
+
+const FALLBACK_STYLE_URLS = {
+	light: 'https://tiles.openfreemap.org/styles/positron',
+	dark: 'https://tiles.openfreemap.org/styles/dark'
+};
+
+function buildProtomapsStyleUrl(theme) {
+	if (!env.PUBLIC_PROTOMAPS_KEY) {
+		return theme === 'dark' ? FALLBACK_STYLE_URLS.dark : FALLBACK_STYLE_URLS.light;
+	}
+
+	const url = new URL(`https://api.protomaps.com/styles/v5/${theme}/en.json`);
+	url.searchParams.set('key', env.PUBLIC_PROTOMAPS_KEY);
+	return url.toString();
+}
+
+export const BASEMAP_STYLE_URLS = {
+	light: buildProtomapsStyleUrl('white'),
+	dark: buildProtomapsStyleUrl('dark')
+};
 
 export const MAP_DEFAULTS = {
 	center: [20, 0],   // centred on Africa
