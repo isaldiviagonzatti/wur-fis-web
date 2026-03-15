@@ -1,6 +1,7 @@
 <script>
 	import favicon from '$lib/assets/favicon.svg';
 	import '../app.css';
+	import { cn } from '$lib/utils.js';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
@@ -20,6 +21,11 @@
 	let collapsed = $state(true);
 	let collapseTimer;
 	const AUTO_COLLAPSE_DELAY_MS = 400;
+	const sidebarLabelClass = 'text-sm font-semibold leading-tight transition-colors';
+	const sidebarItemBaseClass =
+		'flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors';
+	const sidebarButtonBaseClass =
+		'cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:text-foreground';
 
 	function applyDarkMode(value) {
 		document.documentElement.classList.toggle('dark', value);
@@ -50,6 +56,29 @@
 		{ href: '/data-explorer', label: 'Data Explorer', icon: Layers },
 		{ href: '/methodology', label: 'Methodology', icon: BookOpen }
 	];
+
+	const sidebarWidthClass = $derived(collapsed ? 'w-14' : 'w-50');
+	const sidebarJustifyClass = $derived(collapsed ? 'justify-center' : '');
+	const homeLinkClass = $derived(
+		cn(
+			sidebarLabelClass,
+			page.url.pathname === '/'
+				? 'text-foreground'
+				: 'text-muted-foreground hover:text-foreground'
+		)
+	);
+
+	function getNavItemClass(active) {
+		return cn(
+			sidebarItemBaseClass,
+			sidebarJustifyClass,
+			active ? 'font-medium text-foreground' : 'text-muted-foreground hover:text-foreground'
+		);
+	}
+
+	function getSidebarButtonClass() {
+		return cn(sidebarButtonBaseClass, sidebarJustifyClass);
+	}
 </script>
 
 <svelte:head>
@@ -75,17 +104,19 @@
 <Tooltip.Provider delayDuration={300}>
 <div class="app-shell flex overflow-hidden bg-background text-foreground">
 	<!-- Left sidebar -->
-	<aside
-		class="flex flex-col text-foreground transition-all duration-200 {collapsed
-			? 'w-14'
-			: 'w-50'}"
-	>
+	<aside class={cn('flex flex-col text-foreground transition-all duration-200', sidebarWidthClass)}>
 		<!-- Logo / title -->
-			<div style="height: 3rem; display: flex; align-items: center; justify-content: {collapsed ? 'center' : 'flex-start'}; padding: 0 1rem; overflow: hidden;">
+			<div class={cn('flex h-12 items-center overflow-hidden px-4', sidebarJustifyClass || 'justify-start')}>
 				{#if collapsed}
-					<a href="/" class="text-sm font-semibold leading-tight transition-colors {page.url.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}" style="opacity: 1; transition: opacity 150ms ease;">FIS</a>
+					<a href="/" class={homeLinkClass}>FIS</a>
 				{:else}
-					<a href="/" class="text-sm font-semibold leading-tight transition-colors {page.url.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}" style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;">Foodshed Information Service</a>
+					<a
+						href="/"
+						class={homeLinkClass}
+						style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;"
+					>
+						Foodshed Information Service
+					</a>
 				{/if}
 			</div>
 
@@ -100,11 +131,7 @@
 									href={item.href}
 									title={item.label}
 									{...props}
-									class="flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors {collapsed
-										? 'justify-center'
-									: ''} {active
-									? 'text-foreground font-medium'
-									: 'text-muted-foreground hover:text-foreground'}"
+									class={getNavItemClass(active)}
 							>
 								<item.icon size={16} class="shrink-0" />
 								{#if !collapsed}
@@ -125,13 +152,11 @@
 			<!-- Dark mode toggle -->
 			<Tooltip.Root>
 				<Tooltip.Trigger asChild>
-					{#snippet child({ props })}
+						{#snippet child({ props })}
 								<button
 									{...props}
 									onclick={toggleDarkMode}
-									class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:text-foreground {collapsed
-										? 'justify-center'
-										: ''}"
+									class={getSidebarButtonClass()}
 							>
 							{#if dark}
 								<Sun size={16} class="shrink-0" />
@@ -151,13 +176,11 @@
 			<!-- Collapse toggle -->
 			<Tooltip.Root>
 				<Tooltip.Trigger asChild>
-					{#snippet child({ props })}
+						{#snippet child({ props })}
 							<button
 								{...props}
 								onclick={() => (collapsed = !collapsed)}
-								class="cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:text-foreground {collapsed
-									? 'justify-center'
-									: ''}"
+								class={getSidebarButtonClass()}
 							>
 							<ChevronLeft size={16} class="shrink-0 transition-transform {collapsed ? 'rotate-180' : ''}" />
 							{#if !collapsed}
