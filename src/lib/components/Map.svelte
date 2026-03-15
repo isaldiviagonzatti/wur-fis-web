@@ -22,6 +22,14 @@
 				}
 			}
 		}
+
+		if (mapInstance.getLayer('aez-selected-fill')) {
+			mapInstance.setLayoutProperty(
+				'aez-selected-fill',
+				'visibility',
+				currentAdminLevel === 'aez' ? 'visible' : 'none'
+			);
+		}
 	}
 
 	$effect(() => {
@@ -93,6 +101,19 @@
 						}
 					});
 				}
+
+				mapInstance.addLayer({
+					id: 'aez-selected-fill',
+					type: 'fill',
+					source: 'aez',
+					'source-layer': 'aez',
+					layout: { visibility: 'none' },
+					filter: ['==', ['get', 'aez_name'], '__none__'],
+					paint: {
+						'fill-color': '#4a90d9',
+						'fill-opacity': 0
+					}
+				});
 
 				setAdminLayerVisibility(mapInstance, adminLevel);
 

@@ -100,10 +100,10 @@
 			</CardContent>
 			<CardFooter>
 				<a
-					href="/context"
+					href="/data-explorer"
 					class="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4"
 				>
-					<span>Open Context</span>
+					<span>Open Data Explorer</span>
 					<ArrowRight class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 				</a>
 			</CardFooter>

@@ -23,6 +23,12 @@
 		zimbabwe: 'Zimbabwe'
 	};
 
+	const boundaryLabels = {
+		country: 'Country',
+		admin1: 'Admin 1',
+		admin2: 'Admin 2'
+	};
+
 	const countryViews = {
 		ghana: { center: [-1.02, 7.95], zoom: 5 },
 		kenya: { center: [37.91, 0.15], zoom: 5 },
@@ -59,6 +65,22 @@
 <div class="shrink-0 px-4 py-1.5 overflow-x-auto overflow-y-hidden">
 	<div class="flex min-w-max items-center gap-2">
 		<div class="flex items-center gap-1.5">
+			<span class="text-xs text-muted-foreground font-medium">Country</span>
+			<Select type="single" bind:value={country}>
+				<SelectTrigger size="sm" class="w-32">
+					{countryLabels[country] ?? 'Fly to country'}
+				</SelectTrigger>
+				<SelectContent style="width: var(--bits-select-anchor-width);">
+					<SelectItem value="ghana" label="Ghana" />
+					<SelectItem value="kenya" label="Kenya" />
+					<SelectItem value="zimbabwe" label="Zimbabwe" />
+				</SelectContent>
+			</Select>
+		</div>
+
+		<Separator orientation="vertical" class="h-4" />
+
+		<div class="flex items-center gap-1.5">
 			<span class="text-xs text-muted-foreground font-medium">Crop</span>
 			<Select type="single" bind:value={crop}>
 				<SelectTrigger size="sm" class="w-28">
@@ -72,33 +94,17 @@
 		</div>
 
 		<div class="flex items-center gap-1.5">
-			<span class="text-xs text-muted-foreground font-medium">Country</span>
-			<Select type="single" bind:value={country}>
-				<SelectTrigger size="sm" class="w-32">
-					{countryLabels[country] ?? 'Select country'}
+			<span class="text-xs text-muted-foreground font-medium">Boundary</span>
+			<Select type="single" bind:value={adminLevel}>
+				<SelectTrigger size="sm" class="w-28">
+					{boundaryLabels[adminLevel] ?? 'Select boundary'}
 				</SelectTrigger>
 				<SelectContent style="width: var(--bits-select-anchor-width);">
-					<SelectItem value="ghana" label="Ghana" />
-					<SelectItem value="kenya" label="Kenya" />
-					<SelectItem value="zimbabwe" label="Zimbabwe" />
+					<SelectItem value="country" label="Country" />
+					<SelectItem value="admin1" label="Admin 1" />
+					<SelectItem value="admin2" label="Admin 2" />
 				</SelectContent>
 			</Select>
-		</div>
-
-		<Separator orientation="vertical" class="h-4" />
-
-		<div class="flex items-center gap-1">
-			<span class="text-xs text-muted-foreground font-medium mr-1">Admin</span>
-			{#each ['country', 'admin1', 'admin2'] as level (level)}
-				<button
-					onclick={() => (adminLevel = level)}
-					class="cursor-pointer px-2 py-0.5 rounded text-xs border transition-colors {adminLevel === level
-						? 'bg-primary text-primary-foreground border-primary'
-						: 'border-border text-muted-foreground hover:bg-accent'}"
-				>
-					{level === 'country' ? 'Country' : level === 'admin1' ? 'Admin 1' : 'Admin 2'}
-				</button>
-			{/each}
 		</div>
 
 		<Separator orientation="vertical" class="h-4" />

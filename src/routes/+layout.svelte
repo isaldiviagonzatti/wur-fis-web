@@ -46,7 +46,7 @@
 	const navItems = [
 		{ href: '/yield-forecast', label: 'Yield Forecast', icon: TrendingUp },
 		{ href: '/foodshed', label: 'Foodshed Scenarios', icon: SquaresIntersect },
-		{ href: '/context', label: 'Context', icon: Layers },
+		{ href: '/data-explorer', label: 'Data Explorer', icon: Layers },
 		{ href: '/methodology', label: 'Methodology', icon: BookOpen }
 	];
 </script>
