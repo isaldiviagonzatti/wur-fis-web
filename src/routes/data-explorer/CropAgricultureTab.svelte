@@ -330,8 +330,8 @@
 		/>
 
 		<div class="rounded-md border border-border/70 bg-card/70 p-3">
-			<div class="mb-3 flex flex-wrap items-start justify-between gap-3">
-				<div>
+				<div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+					<div>
 					<p class="text-xs font-medium text-muted-foreground">Crop calendar</p>
 					<p class="mt-1 text-sm font-semibold text-foreground">
 						{chartTitle ?? 'Select an AEZ on the map'}
@@ -361,10 +361,20 @@
 							></span>
 							Harvest
 						</span>
+						</div>
 					</div>
-				</div>
 
-			</div>
+					{#if selectedAezKey}
+						<button
+							type="button"
+							onclick={clearSelectedAez}
+							class="inline-flex cursor-pointer items-center rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						>
+							Clear selection
+						</button>
+					{/if}
+
+				</div>
 
 			{#if calendarState === 'error'}
 				<div class="flex h-24 items-center justify-center rounded-md border border-dashed border-border bg-muted/10">
