@@ -11,6 +11,7 @@
 		MONTH_COLORS,
 		MONTH_LABELS,
 		getAezFeatureKey,
+		getCalendarEntriesForAez,
 		getCalendarCropOptions,
 		getCalendarSeasonOptions,
 		toSentenceCase
@@ -26,7 +27,15 @@
 		buildCalendarHoverPopupContent,
 		CALENDAR_MAP_POPUP_CLASS
 	} from '$lib/calendar-hover-popup.js';
-	import { CALENDAR_URL, COUNTRY_OPTIONS, OBSERVED_CROP_OPTIONS } from '$lib/data-config.js';
+	import {
+		CALENDAR_URL,
+		COUNTRY_LABELS,
+		COUNTRY_OPTIONS,
+		COUNTRY_VIEWS,
+		OBSERVED_BOUNDARY_OPTIONS,
+		OBSERVED_CROP_LABELS,
+		OBSERVED_CROP_OPTIONS
+	} from '$lib/data-config.js';
 	import '$lib/styles/calendar-map-popup.css';
 
 	let { active = false } = $props();
@@ -54,17 +63,11 @@
 		sowing_date: 'Sowing date',
 		harvest_date: 'Harvest date'
 	};
-	const boundaryLabels = {
-		country: 'Country',
-		admin1: 'Admin 1',
-		admin2: 'Admin 2',
-		aez: 'AEZ'
-	};
-	const countryLabels = Object.fromEntries(COUNTRY_OPTIONS.map(({ value, label }) => [value, label]));
-	const countryViews = Object.fromEntries(COUNTRY_OPTIONS.map(({ value, view }) => [value, view]));
-	const observedCropLabels = Object.fromEntries(
-		OBSERVED_CROP_OPTIONS.map(({ value, label }) => [value, label])
-	);
+	const calendarStageLegendItems = [
+		{ label: 'Sowing', color: CALENDAR_STAGE_COLORS.sowing },
+		{ label: 'In season', color: CALENDAR_STAGE_COLORS.season },
+		{ label: 'Harvest', color: CALENDAR_STAGE_COLORS.harvest }
+	];
 	const layerOptions = Object.entries(datasetLabels).map(([value, label]) => ({ value, label }));
 
 	const isCalendarDataset = $derived(calendarDatasets.includes(dataset));
@@ -72,7 +75,7 @@
 	const calendarSeasonOptions = $derived.by(() => getCalendarSeasonOptions(calendarData, crop));
 	const cropOptions = $derived(isCalendarDataset ? calendarCropOptions : OBSERVED_CROP_OPTIONS);
 	const cropLabels = $derived.by(() => {
-		if (!isCalendarDataset) return observedCropLabels;
+		if (!isCalendarDataset) return OBSERVED_CROP_LABELS;
 		return Object.fromEntries(calendarCropOptions.map(({ value, label }) => [value, label]));
 	});
 	const validCropValues = $derived.by(() => new Set(cropOptions.map(({ value }) => value)));
@@ -84,22 +87,20 @@
 		isCalendarDataset && crop && calendarSeasonOptions.length > 1
 	);
 	const showSeasonSelect = $derived(requiresSeasonSelection);
-	const availableBoundaries = $derived(isCalendarDataset ? ['aez'] : ['country', 'admin1', 'admin2']);
-	const boundaryOptions = $derived.by(() =>
-		availableBoundaries.map((value) => ({ value, label: boundaryLabels[value] }))
+	const boundaryOptions = $derived(
+		isCalendarDataset ? [{ value: 'aez', label: 'AEZ' }] : OBSERVED_BOUNDARY_OPTIONS
 	);
 	const selectedAezKey = $derived(
 		selectedAezCountry && selectedAezName
 			? getAezFeatureKey(selectedAezCountry, selectedAezName)
 			: ''
 	);
-	const selectedAezEntries = $derived.by(() => {
-		if (!selectedAezCountry || !selectedAezName) return [];
-		return calendarData?.[selectedAezCountry]?.[selectedAezName] ?? [];
-	});
+	const selectedAezEntries = $derived.by(() =>
+		getCalendarEntriesForAez(calendarData, selectedAezCountry, selectedAezName)
+	);
 	const chartTitle = $derived(
 		selectedAezName
-			? `${toSentenceCase(selectedAezName)} — ${countryLabels[selectedAezCountry] ?? selectedAezCountry}`
+			? `${toSentenceCase(selectedAezName)} — ${COUNTRY_LABELS[selectedAezCountry] ?? selectedAezCountry}`
 			: null
 	);
 	const legendTitle = $derived(datasetLabels[dataset] ?? 'Calendar month');
@@ -158,13 +159,14 @@
 
 	$effect(() => {
 		if (!map || !flyToCountry || flyToCountry === previousFlyToCountry) return;
+		const mapInstance = map;
 		previousFlyToCountry = flyToCountry;
 
-		const target = countryViews[flyToCountry];
+		const target = COUNTRY_VIEWS[flyToCountry];
 		if (!target) return;
 
 		const fly = () => {
-			map.flyTo({
+			mapInstance.flyTo({
 				center: target.center,
 				zoom: target.zoom,
 				duration: 900,
@@ -172,7 +174,7 @@
 			});
 		};
 
-		if (!map.isStyleLoaded()) map.once('load', fly);
+		if (!mapInstance.isStyleLoaded()) mapInstance.once('load', fly);
 		else fly();
 	});
 
@@ -203,9 +205,10 @@
 
 	$effect(() => {
 		if (!map) return;
+		const mapInstance = map;
 
 		const onMapClick = (event) => {
-			const match = readAezFeature(getAezFeatureAtPoint(map, event.point));
+			const match = readAezFeature(getAezFeatureAtPoint(mapInstance, event.point));
 			if (!match) {
 				clearSelectedAez();
 				return;
@@ -215,17 +218,18 @@
 			selectedAezName = match.aezName;
 		};
 
-		map.on('click', onMapClick);
-		map.getCanvas().style.cursor = '';
+		mapInstance.on('click', onMapClick);
+		mapInstance.getCanvas().style.cursor = '';
 
 		return () => {
-			map.off('click', onMapClick);
-			map.getCanvas().style.cursor = '';
+			mapInstance.off('click', onMapClick);
+			mapInstance.getCanvas().style.cursor = '';
 		};
 	});
 
 	$effect(() => {
 		if (!map) return;
+		const mapInstance = map;
 
 		let cancelled = false;
 		let popup = null;
@@ -243,7 +247,7 @@
 			});
 
 			const hidePopup = () => {
-				map.getCanvas().style.cursor = '';
+				mapInstance.getCanvas().style.cursor = '';
 				popup?.remove();
 			};
 
@@ -253,17 +257,17 @@
 					return;
 				}
 
-				const match = readAezFeature(getAezFeatureAtPoint(map, event.point));
+				const match = readAezFeature(getAezFeatureAtPoint(mapInstance, event.point));
 				if (!match) {
 					hidePopup();
 					return;
 				}
 
-				map.getCanvas().style.cursor = 'pointer';
+				mapInstance.getCanvas().style.cursor = 'pointer';
 
 				const popupContent = buildCalendarHoverPopupContent({
 					calendarData,
-					countryLabels,
+					countryLabels: COUNTRY_LABELS,
 					aezCountry: match.country,
 					aezName: match.aezName,
 					crop,
@@ -272,15 +276,15 @@
 					requiresSeasonSelection
 				});
 
-				popup.setLngLat(event.lngLat).setDOMContent(popupContent).addTo(map);
+				popup.setLngLat(event.lngLat).setDOMContent(popupContent).addTo(mapInstance);
 			};
 
-			map.on('mousemove', onMapMove);
-			map.on('mouseout', hidePopup);
+			mapInstance.on('mousemove', onMapMove);
+			mapInstance.on('mouseout', hidePopup);
 
 			removeListeners = () => {
-				map.off('mousemove', onMapMove);
-				map.off('mouseout', hidePopup);
+				mapInstance.off('mousemove', onMapMove);
+				mapInstance.off('mouseout', hidePopup);
 				hidePopup();
 			};
 		});
@@ -330,48 +334,32 @@
 		/>
 
 		<div class="rounded-md border border-border/70 bg-card/70 p-3">
-				<div class="mb-3 flex flex-wrap items-start justify-between gap-3">
-					<div>
+			<div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+				<div>
 					<p class="text-xs font-medium text-muted-foreground">Crop calendar</p>
 					<p class="mt-1 text-sm font-semibold text-foreground">
 						{chartTitle ?? 'Select an AEZ on the map'}
 					</p>
 					<div class="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-						<span class="inline-flex items-center gap-1.5">
-							<span
-								class="h-2.5 w-2.5 rounded-full"
-								style:background={CALENDAR_STAGE_COLORS.sowing}
-							></span>
-							Sowing
-						</span>
-						<span class="inline-flex items-center gap-1.5">
-							<span
-								class="h-2.5 w-2.5 rounded-full"
-								style:background={CALENDAR_STAGE_COLORS.season}
-							></span>
-							In season
-						</span>
-						<span class="inline-flex items-center gap-1.5">
-							<span
-								class="h-2.5 w-2.5 rounded-full"
-								style:background={CALENDAR_STAGE_COLORS.harvest}
-							></span>
-							Harvest
-						</span>
-						</div>
+						{#each calendarStageLegendItems as item (item.label)}
+							<span class="inline-flex items-center gap-1.5">
+								<span class="h-2.5 w-2.5 rounded-full" style:background={item.color}></span>
+								{item.label}
+							</span>
+						{/each}
 					</div>
-
-					{#if selectedAezKey}
-						<button
-							type="button"
-							onclick={clearSelectedAez}
-							class="inline-flex cursor-pointer items-center rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-						>
-							Clear selection
-						</button>
-					{/if}
-
 				</div>
+
+				{#if selectedAezKey}
+					<button
+						type="button"
+						onclick={clearSelectedAez}
+						class="inline-flex cursor-pointer items-center rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					>
+						Clear selection
+					</button>
+				{/if}
+			</div>
 
 			{#if calendarState === 'error'}
 				<div class="flex h-24 items-center justify-center rounded-md border border-dashed border-border bg-muted/10">

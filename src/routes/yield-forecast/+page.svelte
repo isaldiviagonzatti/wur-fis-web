@@ -8,6 +8,7 @@
 	import HindcastsTab from './HindcastsTab.svelte';
 	import UserGuideTab from './UserGuideTab.svelte';
 
+	let activeTab = $state('forecast');
 	let crop = $state('');
 	let country = $state('');
 	let adminLevel = $state('country');
@@ -15,7 +16,7 @@
 </script>
 
 <div class="flex flex-col h-full">
-	<Tabs value="forecast" class="flex flex-col flex-1 overflow-hidden">
+	<Tabs bind:value={activeTab} class="flex flex-col flex-1 overflow-hidden">
 		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem;">
 			<TabsList>
 				<TabsTrigger value="forecast">Current Forecast</TabsTrigger>

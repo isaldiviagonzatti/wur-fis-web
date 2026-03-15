@@ -3,7 +3,7 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { Tooltip } from 'bits-ui';
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
@@ -30,16 +30,17 @@
 		applyDarkMode(dark);
 	}
 
+	afterNavigate(({ to }) => {
+		const path = to?.url.pathname;
+		if (!path || path === '/') return;
+		clearTimeout(collapseTimer);
+		collapseTimer = setTimeout(() => {
+			collapsed = true;
+		}, AUTO_COLLAPSE_DELAY_MS);
+	});
+
 	onMount(() => {
 		applyDarkMode(dark);
-		afterNavigate(({ to }) => {
-			const path = to?.url.pathname;
-			if (!path || path === '/') return;
-			clearTimeout(collapseTimer);
-			collapseTimer = setTimeout(() => {
-				collapsed = true;
-			}, AUTO_COLLAPSE_DELAY_MS);
-		});
 		return () => clearTimeout(collapseTimer);
 	});
 
@@ -82,16 +83,16 @@
 		<!-- Logo / title -->
 			<div style="height: 3rem; display: flex; align-items: center; justify-content: {collapsed ? 'center' : 'flex-start'}; padding: 0 1rem; overflow: hidden;">
 				{#if collapsed}
-					<a href="/" class="text-sm font-semibold leading-tight transition-colors {$page.url.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}" style="opacity: 1; transition: opacity 150ms ease;">FIS</a>
+					<a href="/" class="text-sm font-semibold leading-tight transition-colors {page.url.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}" style="opacity: 1; transition: opacity 150ms ease;">FIS</a>
 				{:else}
-					<a href="/" class="text-sm font-semibold leading-tight transition-colors {$page.url.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}" style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;">Foodshed Information Service</a>
+					<a href="/" class="text-sm font-semibold leading-tight transition-colors {page.url.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}" style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;">Foodshed Information Service</a>
 				{/if}
 			</div>
 
 		<!-- Nav links -->
 		<nav class="flex flex-col gap-0.5 p-2 flex-1">
 			{#each navItems as item (item.href)}
-				{@const active = $page.url.pathname.startsWith(item.href)}
+				{@const active = page.url.pathname.startsWith(item.href)}
 				<Tooltip.Root>
 					<Tooltip.Trigger asChild>
 						{#snippet child({ props })}

@@ -2,22 +2,14 @@ import {
 	MONTH_LABELS,
 	getMonthColor,
 	toSentenceCase,
-	getCalendarEntryKey,
 	getCalendarDisplayLabel,
-	getCalendarSeasonKey
+	getCalendarEntryForAez
 } from '$lib/calendar.js';
 
 export const CALENDAR_MAP_POPUP_CLASS = 'calendar-map-popup';
 
 function formatMonthLabel(month) {
 	return MONTH_LABELS[month - 1] ?? 'Not available';
-}
-
-function getCalendarEntryForAez(calendarData, { country, aezName, crop, season }) {
-	const entries = calendarData?.[country]?.[aezName] ?? [];
-	return entries.find(
-		(entry) => getCalendarEntryKey(entry) === crop && getCalendarSeasonKey(entry) === season
-	);
 }
 
 function getPillTextColor(color) {

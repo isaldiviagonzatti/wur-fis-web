@@ -24,10 +24,32 @@ export const COUNTRY_OPTIONS = [
 	}
 ];
 
+export const COUNTRY_LABELS = Object.fromEntries(
+	COUNTRY_OPTIONS.map(({ value, label }) => [value, label])
+);
+
+export const COUNTRY_VIEWS = Object.fromEntries(
+	COUNTRY_OPTIONS.map(({ value, view }) => [value, view])
+);
+
 export const OBSERVED_CROP_OPTIONS = [
 	{ value: 'maize', label: 'Maize' },
 	{ value: 'sorghum', label: 'Sorghum' }
 ];
+
+export const OBSERVED_CROP_LABELS = Object.fromEntries(
+	OBSERVED_CROP_OPTIONS.map(({ value, label }) => [value, label])
+);
+
+export const OBSERVED_BOUNDARY_OPTIONS = [
+	{ value: 'country', label: 'Country' },
+	{ value: 'admin1', label: 'Admin 1' },
+	{ value: 'admin2', label: 'Admin 2' }
+];
+
+export const OBSERVED_BOUNDARY_LABELS = Object.fromEntries(
+	OBSERVED_BOUNDARY_OPTIONS.map(({ value, label }) => [value, label])
+);
 
 export const ADMIN_PMTILES_URLS = {
 	country: `${R2_BASE}/admin/v1/country.pmtiles`,

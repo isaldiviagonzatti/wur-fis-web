@@ -6,10 +6,12 @@
 	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
 	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
+
+	let activeTab = $state('gis');
 </script>
 
 <div class="flex flex-col h-full">
-	<Tabs value="gis" class="flex flex-col flex-1 overflow-hidden">
+	<Tabs bind:value={activeTab} class="flex flex-col flex-1 overflow-hidden">
 		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem; border-bottom: 1px solid var(--border);">
 			<TabsList>
 				<TabsTrigger value="gis">Foodshed Maps</TabsTrigger>

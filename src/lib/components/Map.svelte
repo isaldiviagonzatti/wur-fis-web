@@ -11,6 +11,7 @@
 
 	const ADMIN_LEVELS = ['country', 'admin1', 'admin2', 'aez'];
 	const ADMIN_LAYER_SUFFIXES = ['fill', 'outline'];
+	const PMTILES_PROTOCOL_KEY = '__fisPmtilesProtocolRegistered';
 
 	function setAdminLayerVisibility(mapInstance, currentAdminLevel) {
 		for (const level of ADMIN_LEVELS) {
@@ -37,6 +38,21 @@
 		setAdminLayerVisibility(map, adminLevel);
 	});
 
+	function ensurePmtilesProtocol(maplibre, Protocol) {
+		if (globalThis[PMTILES_PROTOCOL_KEY]) return;
+
+		const protocol = new Protocol();
+
+		try {
+			maplibre.addProtocol('pmtiles', protocol.tile);
+		} catch (error) {
+			const message = String(error?.message ?? error ?? '');
+			if (!message.toLowerCase().includes('already exists')) throw error;
+		}
+
+		globalThis[PMTILES_PROTOCOL_KEY] = true;
+	}
+
 	function mountMap(node) {
 		let isDestroyed = false;
 		let mapInstance = null;
@@ -49,8 +65,7 @@
 				return;
 			}
 
-			const protocol = new Protocol();
-			maplibre.addProtocol('pmtiles', protocol.tile);
+			ensurePmtilesProtocol(maplibre, Protocol);
 
 			mapInstance = new maplibre.Map({
 				container: node,

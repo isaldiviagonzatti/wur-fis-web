@@ -1,6 +1,6 @@
 <script>
-	import { Select, SelectTrigger, SelectContent, SelectItem } from '$lib/components/ui/select';
 	import { Separator } from '$lib/components/ui/separator';
+	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 
 	let {
 		flyToCountry = $bindable(''),
@@ -25,79 +25,52 @@
 
 <div class="shrink-0 overflow-x-auto overflow-y-hidden px-4 py-1.5">
 	<div class="flex min-w-max items-center gap-2">
-		<div class="flex items-center gap-1.5">
-			<span class="text-xs font-medium text-muted-foreground">Fly to</span>
-			<Select type="single" bind:value={flyToCountry}>
-				<SelectTrigger size="sm" class="w-32">
-					{countryOptions.find((option) => option.value === flyToCountry)?.label ?? 'Country'}
-				</SelectTrigger>
-				<SelectContent style="width: var(--bits-select-anchor-width);">
-					{#each countryOptions as option (option.value)}
-						<SelectItem value={option.value} label={option.label} />
-					{/each}
-				</SelectContent>
-			</Select>
-		</div>
+		<LabeledSelect
+			label="Fly to"
+			bind:value={flyToCountry}
+			options={countryOptions}
+			placeholder="Country"
+			widthClass="w-32"
+		/>
 
 		<Separator orientation="vertical" class="h-4" />
 
-		<div class="flex items-center gap-1.5">
-			<span class="text-xs font-medium text-muted-foreground">Layer</span>
-			<Select type="single" bind:value={dataset}>
-				<SelectTrigger size="sm" class="w-48">
-					{layerOptions.find((option) => option.value === dataset)?.label ?? 'Select layer'}
-				</SelectTrigger>
-				<SelectContent style="width: var(--bits-select-anchor-width);">
-					{#each layerOptions as option (option.value)}
-						<SelectItem value={option.value} label={option.label} />
-					{/each}
-				</SelectContent>
-			</Select>
-		</div>
+		<LabeledSelect
+			label="Layer"
+			bind:value={dataset}
+			options={layerOptions}
+			placeholder="Select layer"
+			widthClass="w-48"
+		/>
 
-		<div class="flex items-center gap-1.5">
-			<span class="text-xs font-medium text-muted-foreground">Crop</span>
-			<Select type="single" bind:value={crop} disabled={!hasSelectedLayer}>
-				<SelectTrigger size="sm" class={isCalendarDataset ? 'w-64' : 'w-36'}>
-					{cropOptions.find((option) => option.value === crop)?.label ?? 'Select crop'}
-				</SelectTrigger>
-				<SelectContent style="width: var(--bits-select-anchor-width);">
-					{#each cropOptions as option (option.value)}
-						<SelectItem value={option.value} label={option.label} />
-					{/each}
-				</SelectContent>
-			</Select>
-		</div>
+		<LabeledSelect
+			label="Crop"
+			bind:value={crop}
+			options={cropOptions}
+			placeholder="Select crop"
+			widthClass={isCalendarDataset ? 'w-64' : 'w-36'}
+			disabled={!hasSelectedLayer}
+		/>
 
 		{#if showSeasonSelect}
-			<div class="flex items-center gap-1.5">
-				<span class="text-xs font-medium text-muted-foreground">Season</span>
-				<Select type="single" bind:value={season} disabled={!hasSelectedLayer}>
-					<SelectTrigger size="sm" class="w-40">
-						{seasonOptions.find((option) => option.value === season)?.label ?? 'Select season'}
-					</SelectTrigger>
-					<SelectContent style="width: var(--bits-select-anchor-width);">
-						{#each seasonOptions as option (option.value)}
-							<SelectItem value={option.value} label={option.label} />
-						{/each}
-					</SelectContent>
-				</Select>
-			</div>
+			<LabeledSelect
+				label="Season"
+				bind:value={season}
+				options={seasonOptions}
+				placeholder="Select season"
+				widthClass="w-40"
+				disabled={!hasSelectedLayer}
+			/>
 		{/if}
 
-		<div class="flex items-center gap-1.5">
-			<span class="text-xs font-medium text-muted-foreground">Boundary</span>
-			<Select type="single" bind:value={boundary} disabled={!hasSelectedLayer}>
-				<SelectTrigger size="sm" class="w-32">
-					{boundaryOptions.find((option) => option.value === boundary)?.label ?? 'Select boundary'}
-				</SelectTrigger>
-				<SelectContent style="width: var(--bits-select-anchor-width);">
-					{#each boundaryOptions as option (option.value)}
-						<SelectItem value={option.value} label={option.label} />
-					{/each}
-				</SelectContent>
-			</Select>
-		</div>
+		<LabeledSelect
+			label="Boundary"
+			bind:value={boundary}
+			options={boundaryOptions}
+			placeholder="Select boundary"
+			widthClass="w-32"
+			disabled={!hasSelectedLayer}
+		/>
 
 		{#if showClearButton}
 			<button

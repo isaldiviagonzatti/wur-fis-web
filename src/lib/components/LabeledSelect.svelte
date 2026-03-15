@@ -1,0 +1,30 @@
+<script>
+	import { Select, SelectTrigger, SelectContent, SelectItem } from '$lib/components/ui/select';
+
+	let {
+		label = '',
+		value = $bindable(''),
+		options = [],
+		placeholder = 'Select option',
+		widthClass = 'w-32',
+		disabled = false
+	} = $props();
+
+	const selectedLabel = $derived(
+		options.find((option) => option.value === value)?.label ?? placeholder
+	);
+</script>
+
+<div class="flex items-center gap-1.5">
+	<span class="text-xs font-medium text-muted-foreground">{label}</span>
+	<Select type="single" bind:value disabled={disabled}>
+		<SelectTrigger size="sm" class={widthClass}>
+			{selectedLabel}
+		</SelectTrigger>
+		<SelectContent style="width: var(--bits-select-anchor-width);">
+			{#each options as option (option.value)}
+				<SelectItem value={option.value} label={option.label} />
+			{/each}
+		</SelectContent>
+	</Select>
+</div>
