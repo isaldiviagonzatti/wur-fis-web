@@ -95,7 +95,7 @@
 	<Tooltip.Content
 		sideOffset={8}
 		side="right"
-		class="bg-popover text-popover-foreground rounded-md border px-2.5 py-1 text-xs font-medium shadow-md"
+		class="bg-popover text-popover-foreground z-[9999] rounded-md border px-2.5 py-1 text-xs font-medium shadow-md"
 	>
 		{label}
 	</Tooltip.Content>
@@ -129,7 +129,6 @@
 						{#snippet child({ props })}
 								<a
 									href={item.href}
-									title={item.label}
 									{...props}
 									class={getNavItemClass(active)}
 							>
@@ -140,9 +139,7 @@
 							</a>
 						{/snippet}
 					</Tooltip.Trigger>
-					{#if collapsed}
-						{@render tooltipContent(item.label)}
-					{/if}
+					{@render tooltipContent(item.label)}
 				</Tooltip.Root>
 			{/each}
 		</nav>
@@ -169,9 +166,7 @@
 						</button>
 					{/snippet}
 				</Tooltip.Trigger>
-				{#if collapsed}
-					{@render tooltipContent(dark ? 'Light mode' : 'Dark mode')}
-				{/if}
+				{@render tooltipContent(dark ? 'Light mode' : 'Dark mode')}
 			</Tooltip.Root>
 			<!-- Collapse toggle -->
 			<Tooltip.Root>
@@ -189,9 +184,7 @@
 						</button>
 					{/snippet}
 				</Tooltip.Trigger>
-				{#if collapsed}
-					{@render tooltipContent('Expand sidebar')}
-				{/if}
+				{@render tooltipContent(collapsed ? 'Expand sidebar' : 'Collapse sidebar')}
 			</Tooltip.Root>
 		</div>
 	</aside>
