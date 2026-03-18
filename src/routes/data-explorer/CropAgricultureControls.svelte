@@ -13,7 +13,6 @@ import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 		layerLabel = 'Layer',
 		showSeasonSelect = false,
 		showBoundarySelect = true,
-		isCalendarDataset = false,
 		showClearButton = false,
 		clearDisabled = false,
 		onClear = null

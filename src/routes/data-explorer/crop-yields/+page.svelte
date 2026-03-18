@@ -3,15 +3,15 @@
 -->
 <script>
 	import Map from '$lib/components/Map.svelte';
+	import MapPanel from '$lib/components/MapPanel.svelte';
 	import CropAgricultureControls from '../CropAgricultureControls.svelte';
 	import {
-		resetObservedAezFill
-	} from '$lib/calendar-map.js';
-	import {
 		COUNTRY_OPTIONS,
+		OBSERVED_DATASET_OPTIONS,
 		OBSERVED_BOUNDARY_OPTIONS,
 		OBSERVED_CROP_OPTIONS
 	} from '$lib/data-config.js';
+	import { resetObservedAezFill } from '$lib/calendar-map.js';
 
 	let map = $state(null);
 
@@ -19,12 +19,6 @@
 	let boundary = $state('country');
 	let crop = $state('maize');
 	let flyToCountry = $state('');
-	const datasetLabels = {
-		yield: 'Observed yield',
-		production: 'Observed production',
-		harvested_area: 'Observed harvested area'
-	};
-	const layerOptions = Object.entries(datasetLabels).map(([value, label]) => ({ value, label }));
 	const hasActiveControlSelection = $derived(Boolean(dataset || crop || flyToCountry));
 
 	function clearAllSelections() {
@@ -51,18 +45,17 @@
 		bind:crop
 		season=""
 		bind:boundary
-		layerOptions={layerOptions}
+		layerOptions={OBSERVED_DATASET_OPTIONS}
 		cropOptions={OBSERVED_CROP_OPTIONS}
 		seasonOptions={[]}
 		boundaryOptions={OBSERVED_BOUNDARY_OPTIONS}
 		showSeasonSelect={false}
 		layerLabel="Variable"
-		isCalendarDataset={false}
 		showClearButton={true}
 		clearDisabled={!hasActiveControlSelection}
 		onClear={clearAllSelections}
 	/>
-	<div class="relative h-[55vh] min-h-[360px] max-h-[760px] overflow-hidden rounded-md border border-border">
+	<MapPanel>
 		<Map bind:map bind:flyToCountry adminLevel={boundary} countryOptions={COUNTRY_OPTIONS} />
-	</div>
+	</MapPanel>
 </div>

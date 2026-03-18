@@ -2,9 +2,9 @@
   Climate explorer — ERA5-Land climatology layers.
 -->
 <script>
-	import ClimateTab from '../ClimateTab.svelte';
+	import MapPlaceholderPanel from '$lib/components/MapPlaceholderPanel.svelte';
 </script>
 
-<div class="flex flex-col h-full">
-	<ClimateTab active={true} />
-</div>
+<MapPlaceholderPanel
+	message="Climate climatology layers (ERA5-Land temperature, precipitation) coming soon."
+/>

@@ -5,6 +5,7 @@
 	import Gauge from '@lucide/svelte/icons/gauge';
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import Map from '$lib/components/Map.svelte';
+	import MapPanel from '$lib/components/MapPanel.svelte';
 	import { Separator } from '$lib/components/ui/separator';
 	import {
 		COUNTRY_OPTIONS,
@@ -18,8 +19,6 @@
 		adminLevel = $bindable(),
 		skillOverlay = $bindable()
 	} = $props();
-
-	let map = $state(null);
 
 	const hasActiveSelection = $derived(
 		Boolean(country || crop || adminLevel !== 'country' || skillOverlay)
@@ -78,9 +77,9 @@
 </div>
 
 <div class="space-y-3 px-4 py-3">
-	<div class="relative h-[55vh] min-h-[360px] max-h-[760px] overflow-hidden rounded-md border border-border">
-		<Map bind:map bind:flyToCountry={country} adminLevel={adminLevel} countryOptions={COUNTRY_OPTIONS} />
-	</div>
+	<MapPanel>
+		<Map bind:flyToCountry={country} adminLevel={adminLevel} countryOptions={COUNTRY_OPTIONS} />
+	</MapPanel>
 
 	<div>
 		<p class="mb-2 text-xs font-medium text-muted-foreground">Selected region — density plot</p>

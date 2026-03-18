@@ -3,6 +3,7 @@
 -->
 <script>
 	import Map from '$lib/components/Map.svelte';
+	import MapPanel from '$lib/components/MapPanel.svelte';
 	import CropCalendarChart from '$lib/components/CropCalendarChart.svelte';
 	import ColorScaleLegend from '$lib/components/ColorScaleLegend.svelte';
 	import CropAgricultureControls from '../CropAgricultureControls.svelte';
@@ -10,8 +11,6 @@
 	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
 	import MapIcon from '@lucide/svelte/icons/map';
 	import CalendarIcon from '@lucide/svelte/icons/calendar';
-
-	let activeView = $state('map');
 	import {
 		CALENDAR_STAGE_COLORS,
 		MONTH_COLORS,
@@ -23,22 +22,22 @@
 		toSentenceCase
 	} from '$lib/calendar.js';
 	import {
-		getAezFeatureAtPoint,
-		readAezFeature,
+		attachCalendarHoverPopup,
+		bindAezSelection,
 		updateAezOutline,
 		updateCalendarAezFill
 	} from '$lib/calendar-map.js';
+	import { buildCalendarHoverPopupContent } from '$lib/calendar-hover-popup.js';
 	import {
-		buildCalendarHoverPopupContent,
-		CALENDAR_MAP_POPUP_CLASS
-	} from '$lib/calendar-hover-popup.js';
-	import {
+		CALENDAR_DATASET_LABELS,
+		CALENDAR_DATASET_OPTIONS,
 		CALENDAR_URL,
 		COUNTRY_LABELS,
 		COUNTRY_OPTIONS
 	} from '$lib/data-config.js';
 	import '$lib/styles/calendar-map-popup.css';
 
+	let activeView = $state('map');
 	let map = $state(null);
 
 	let dataset = $state('sowing_date');
@@ -50,10 +49,8 @@
 	let calendarState = $state('idle');
 	let selectedAezCountry = $state('');
 	let selectedAezName = $state('');
+	let preserveSelectedAezName = false;
 
-	const calendarDatasets = ['sowing_date', 'harvest_date'];
-	const datasetLabels = { sowing_date: 'Sowing date', harvest_date: 'Harvest date' };
-	const layerOptions = Object.entries(datasetLabels).map(([value, label]) => ({ value, label }));
 	const calendarStageLegendItems = [
 		{ label: 'Sowing', color: CALENDAR_STAGE_COLORS.sowing },
 		{ label: 'In season', color: CALENDAR_STAGE_COLORS.season },
@@ -98,7 +95,7 @@
 	const chartCountryLabel = $derived(
 		selectedAezCountry ? (COUNTRY_LABELS[selectedAezCountry] ?? selectedAezCountry) : null
 	);
-	const legendTitle = $derived(datasetLabels[dataset] ?? 'Calendar month');
+	const legendTitle = $derived(CALENDAR_DATASET_LABELS[dataset] ?? 'Calendar month');
 	const legendSubtitle = $derived(
 		requiresSeasonSelection && !season
 			? 'Choose a season to color the AEZs'
@@ -112,8 +109,18 @@
 
 	$effect(() => {
 		selectedAezCountry;
+		if (preserveSelectedAezName) {
+			preserveSelectedAezName = false;
+			return;
+		}
 		selectedAezName = '';
 	});
+
+	function setSelectedAez(country, aezName) {
+		preserveSelectedAezName = true;
+		selectedAezCountry = country;
+		selectedAezName = aezName;
+	}
 
 	function clearSelectedAez() {
 		selectedAezCountry = '';
@@ -134,7 +141,10 @@
 	});
 
 	$effect(() => {
-		if (!crop) { season = ''; return; }
+		if (!crop) {
+			season = '';
+			return;
+		}
 		if (!calendarData) return;
 		if (calendarSeasonOptions.length === 1) {
 			const [only] = calendarSeasonOptions;
@@ -150,8 +160,13 @@
 			calendarState = 'loading';
 			fetch(CALENDAR_URL)
 				.then((r) => r.json())
-				.then((data) => { calendarData = data; calendarState = 'ready'; })
-				.catch(() => { calendarState = 'error'; });
+				.then((data) => {
+					calendarData = data;
+					calendarState = 'ready';
+				})
+				.catch(() => {
+					calendarState = 'error';
+				});
 		}
 	});
 
@@ -162,67 +177,29 @@
 
 	$effect(() => {
 		if (!map) return;
-		const mapInstance = map;
-
-		const onMapClick = (event) => {
-			const match = readAezFeature(getAezFeatureAtPoint(mapInstance, event.point));
-			if (!match) { clearSelectedAez(); return; }
-			selectedAezCountry = match.country;
-			selectedAezName = match.aezName;
-		};
-
-		mapInstance.on('click', onMapClick);
-		mapInstance.getCanvas().style.cursor = '';
-		return () => {
-			mapInstance.off('click', onMapClick);
-			mapInstance.getCanvas().style.cursor = '';
-		};
+		return bindAezSelection(map, (match) => {
+			if (!match) {
+				clearSelectedAez();
+				return;
+			}
+			setSelectedAez(match.country, match.aezName);
+		});
 	});
 
 	$effect(() => {
 		if (!map) return;
-		const mapInstance = map;
-
-		let cancelled = false;
-		let popup = null;
-		let removeListeners = () => {};
-
-		import('maplibre-gl').then(({ Popup }) => {
-			if (cancelled) return;
-
-			popup = new Popup({
-				closeButton: false, closeOnClick: false, closeOnMove: false,
-				className: CALENDAR_MAP_POPUP_CLASS, offset: 14
-			});
-
-			const hidePopup = () => {
-				mapInstance.getCanvas().style.cursor = '';
-				popup?.remove();
-			};
-
-			const onMapMove = (event) => {
-				const match = readAezFeature(getAezFeatureAtPoint(mapInstance, event.point));
-				if (!match) { hidePopup(); return; }
-
-				mapInstance.getCanvas().style.cursor = 'pointer';
-				const popupContent = buildCalendarHoverPopupContent({
-					calendarData, countryLabels: COUNTRY_LABELS,
-					aezCountry: match.country, aezName: match.aezName,
-					crop, cropLabels, season, requiresSeasonSelection
-				});
-				popup.setLngLat(event.lngLat).setDOMContent(popupContent).addTo(mapInstance);
-			};
-
-			mapInstance.on('mousemove', onMapMove);
-			mapInstance.on('mouseout', hidePopup);
-			removeListeners = () => {
-				mapInstance.off('mousemove', onMapMove);
-				mapInstance.off('mouseout', hidePopup);
-				hidePopup();
-			};
-		});
-
-		return () => { cancelled = true; removeListeners(); };
+		return attachCalendarHoverPopup(map, ({ country, aezName }) =>
+			buildCalendarHoverPopupContent({
+				calendarData,
+				countryLabels: COUNTRY_LABELS,
+				aezCountry: country,
+				aezName,
+				crop,
+				cropLabels,
+				season,
+				requiresSeasonSelection
+			})
+		);
 	});
 
 	$effect(() => {
@@ -251,21 +228,20 @@
 				bind:crop
 				bind:season
 				boundary="aez"
-				layerOptions={layerOptions}
+				layerOptions={CALENDAR_DATASET_OPTIONS}
 				cropOptions={calendarCropOptions}
 				seasonOptions={calendarSeasonOptions}
 				boundaryOptions={[{ value: 'aez', label: 'AEZ' }]}
 				showSeasonSelect={requiresSeasonSelection}
 				layerLabel="Variable"
 				showBoundarySelect={false}
-				isCalendarDataset={true}
 				showClearButton={true}
 				clearDisabled={!hasActiveControlSelection}
 				onClear={clearAllSelections}
 			/>
-			<div class="relative h-[60vh] min-h-[360px] overflow-hidden rounded-md border border-border">
+			<MapPanel heightClass="h-[60vh] min-h-[360px]">
 				<Map bind:map bind:flyToCountry adminLevel="aez" countryOptions={COUNTRY_OPTIONS} />
-			</div>
+			</MapPanel>
 			<ColorScaleLegend
 				title={legendTitle}
 				subtitle={legendSubtitle}

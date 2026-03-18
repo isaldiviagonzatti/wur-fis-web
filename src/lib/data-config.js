@@ -32,6 +32,16 @@ export const COUNTRY_VIEWS = Object.fromEntries(
 	COUNTRY_OPTIONS.map(({ value, view }) => [value, view])
 );
 
+export const OBSERVED_DATASET_LABELS = {
+	yield: 'Observed yield',
+	production: 'Observed production',
+	harvested_area: 'Observed harvested area'
+};
+
+export const OBSERVED_DATASET_OPTIONS = Object.entries(OBSERVED_DATASET_LABELS).map(
+	([value, label]) => ({ value, label })
+);
+
 export const OBSERVED_CROP_OPTIONS = [
 	{ value: 'maize', label: 'Maize' },
 	{ value: 'sorghum', label: 'Sorghum' }
@@ -49,6 +59,15 @@ export const OBSERVED_BOUNDARY_OPTIONS = [
 
 export const OBSERVED_BOUNDARY_LABELS = Object.fromEntries(
 	OBSERVED_BOUNDARY_OPTIONS.map(({ value, label }) => [value, label])
+);
+
+export const CALENDAR_DATASET_LABELS = {
+	sowing_date: 'Sowing date',
+	harvest_date: 'Harvest date'
+};
+
+export const CALENDAR_DATASET_OPTIONS = Object.entries(CALENDAR_DATASET_LABELS).map(
+	([value, label]) => ({ value, label })
 );
 
 export const ADMIN_PMTILES_URLS = {
