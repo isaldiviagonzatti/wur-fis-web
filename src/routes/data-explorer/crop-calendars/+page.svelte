@@ -35,8 +35,7 @@
 	import {
 		CALENDAR_URL,
 		COUNTRY_LABELS,
-		COUNTRY_OPTIONS,
-		COUNTRY_VIEWS
+		COUNTRY_OPTIONS
 	} from '$lib/data-config.js';
 	import '$lib/styles/calendar-map-popup.css';
 
@@ -46,7 +45,6 @@
 	let crop = $state('maize');
 	let season = $state('annual');
 	let flyToCountry = $state('');
-	let previousFlyToCountry = '';
 
 	let calendarData = $state.raw(null);
 	let calendarState = $state('idle');
@@ -127,7 +125,6 @@
 		dataset = '';
 		crop = '';
 		season = '';
-		previousFlyToCountry = '';
 		clearSelectedAez();
 	}
 
@@ -146,22 +143,6 @@
 		}
 		if (!season) return;
 		if (!validSeasonValues.has(season)) season = '';
-	});
-
-	$effect(() => {
-		if (!map || !flyToCountry || flyToCountry === previousFlyToCountry) return;
-		const mapInstance = map;
-		previousFlyToCountry = flyToCountry;
-
-		const target = COUNTRY_VIEWS[flyToCountry];
-		if (!target) return;
-
-		const fly = () => {
-			mapInstance.flyTo({ center: target.center, zoom: target.zoom, duration: 900, essential: true });
-		};
-
-		if (!mapInstance.isStyleLoaded()) mapInstance.once('load', fly);
-		else fly();
 	});
 
 	$effect(() => {
@@ -266,12 +247,10 @@
 	<TabsContent value="map" class="m-0 p-0">
 		<div class="flex flex-col gap-2 px-4 pb-3">
 			<CropAgricultureControls
-				bind:flyToCountry
 				bind:dataset
 				bind:crop
 				bind:season
 				boundary="aez"
-				countryOptions={COUNTRY_OPTIONS}
 				layerOptions={layerOptions}
 				cropOptions={calendarCropOptions}
 				seasonOptions={calendarSeasonOptions}
@@ -285,7 +264,7 @@
 				onClear={clearAllSelections}
 			/>
 			<div class="relative h-[60vh] min-h-[360px] overflow-hidden rounded-md border border-border">
-				<Map bind:map adminLevel="aez" />
+				<Map bind:map bind:flyToCountry adminLevel="aez" countryOptions={COUNTRY_OPTIONS} />
 			</div>
 			<ColorScaleLegend
 				title={legendTitle}

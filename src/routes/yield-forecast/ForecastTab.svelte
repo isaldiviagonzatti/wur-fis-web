@@ -8,7 +8,6 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import {
 		COUNTRY_OPTIONS,
-		COUNTRY_VIEWS,
 		OBSERVED_BOUNDARY_OPTIONS,
 		OBSERVED_CROP_OPTIONS
 	} from '$lib/data-config.js';
@@ -21,7 +20,6 @@
 	} = $props();
 
 	let map = $state(null);
-	let previousCountry = '';
 
 	const hasActiveSelection = $derived(
 		Boolean(country || crop || adminLevel !== 'country' || skillOverlay)
@@ -32,48 +30,11 @@
 		crop = '';
 		adminLevel = 'country';
 		skillOverlay = false;
-		previousCountry = '';
 	}
-
-	$effect(() => {
-		if (!map || !country || country === previousCountry) return;
-		const mapInstance = map;
-
-		const targetView = COUNTRY_VIEWS[country];
-		if (!targetView) return;
-
-		previousCountry = country;
-
-		const fly = () => {
-			mapInstance.flyTo({
-				center: targetView.center,
-				zoom: targetView.zoom,
-				duration: 900,
-				essential: true
-			});
-		};
-
-		if (!mapInstance.isStyleLoaded()) {
-			mapInstance.once('load', fly);
-			return;
-		}
-
-		fly();
-	});
 </script>
 
 <div class="shrink-0 overflow-x-auto overflow-y-hidden px-4 py-1.5">
 	<div class="flex min-w-max items-center gap-2">
-		<LabeledSelect
-			label="Country"
-			bind:value={country}
-			options={COUNTRY_OPTIONS}
-			placeholder="Zoom to country"
-			widthClass="w-32"
-		/>
-
-		<Separator orientation="vertical" class="h-4" />
-
 		<LabeledSelect
 			label="Crop"
 			bind:value={crop}
@@ -118,7 +79,7 @@
 
 <div class="space-y-3 px-4 py-3">
 	<div class="relative h-[55vh] min-h-[360px] max-h-[760px] overflow-hidden rounded-md border border-border">
-		<Map bind:map adminLevel={adminLevel} />
+		<Map bind:map bind:flyToCountry={country} adminLevel={adminLevel} countryOptions={COUNTRY_OPTIONS} />
 	</div>
 
 	<div>

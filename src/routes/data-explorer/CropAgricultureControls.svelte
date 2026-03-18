@@ -2,12 +2,10 @@
 import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 
 	let {
-		flyToCountry = $bindable(''),
 		dataset = $bindable(''),
 		crop = $bindable(''),
 		season = $bindable(''),
 		boundary = $bindable(''),
-		countryOptions = [],
 		layerOptions = [],
 		cropOptions = [],
 		seasonOptions = [],
@@ -71,15 +69,6 @@ import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 		<!-- Right: navigation + clear -->
 		{#if showClearButton}
 			<div class="flex shrink-0 items-center gap-2">
-				<LabeledSelect
-					label="Zoom to country"
-					showLabel={false}
-					bind:value={flyToCountry}
-					options={countryOptions}
-					placeholder="Zoom to country"
-					widthClass="w-[7.5rem]"
-					triggerStyle="height: auto; padding-top: 0.25rem; padding-bottom: 0.25rem;"
-				/>
 				<button
 					type="button"
 					onclick={onClear}
