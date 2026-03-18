@@ -6,6 +6,12 @@
 	import CropCalendarChart from '$lib/components/CropCalendarChart.svelte';
 	import ColorScaleLegend from '$lib/components/ColorScaleLegend.svelte';
 	import CropAgricultureControls from '../CropAgricultureControls.svelte';
+	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
+	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
+	import MapIcon from '@lucide/svelte/icons/map';
+	import CalendarIcon from '@lucide/svelte/icons/calendar';
+
+	let activeView = $state('map');
 	import {
 		CALENDAR_STAGE_COLORS,
 		MONTH_COLORS,
@@ -75,22 +81,41 @@
 	const selectedAezEntries = $derived.by(() =>
 		getCalendarEntriesForAez(calendarData, selectedAezCountry, selectedAezName)
 	);
-	const chartTitle = $derived(
-		selectedAezName
-			? `${toSentenceCase(selectedAezName)} — ${COUNTRY_LABELS[selectedAezCountry] ?? selectedAezCountry}`
-			: null
+	const aezOptionsByCountry = $derived.by(() => {
+		if (!calendarData) return {};
+		return Object.fromEntries(
+			Object.entries(calendarData).map(([country, aezs]) => [
+				country,
+				Object.keys(aezs)
+					.map((name) => ({ value: name, label: toSentenceCase(name) }))
+					.sort((a, b) => a.label.localeCompare(b.label))
+			])
+		);
+	});
+	const aezOptions = $derived(
+		selectedAezCountry ? (aezOptionsByCountry[selectedAezCountry] ?? []) : []
+	);
+
+	const chartAezName = $derived(selectedAezName ? toSentenceCase(selectedAezName) : null);
+	const chartCountryLabel = $derived(
+		selectedAezCountry ? (COUNTRY_LABELS[selectedAezCountry] ?? selectedAezCountry) : null
 	);
 	const legendTitle = $derived(datasetLabels[dataset] ?? 'Calendar month');
 	const legendSubtitle = $derived(
 		requiresSeasonSelection && !season
 			? 'Choose a season to color the AEZs'
 			: dataset === 'harvest_date'
-				? `AEZ fill colors show harvest month${seasonLabels[season] ? ` for ${seasonLabels[season]}` : ''}`
-				: `AEZ fill colors show sowing month${seasonLabels[season] ? ` for ${seasonLabels[season]}` : ''}`
+				? `Area fill colors show harvest month${seasonLabels[season] ? ` for ${seasonLabels[season]}` : ''}`
+				: `Area fill colors show sowing month${seasonLabels[season] ? ` for ${seasonLabels[season]}` : ''}`
 	);
 	const hasActiveControlSelection = $derived(
 		Boolean(dataset || crop || season || flyToCountry || selectedAezKey)
 	);
+
+	$effect(() => {
+		selectedAezCountry;
+		selectedAezName = '';
+	});
 
 	function clearSelectedAez() {
 		selectedAezCountry = '';
@@ -224,72 +249,102 @@
 	});
 </script>
 
-<CropAgricultureControls
-	bind:flyToCountry
-	bind:dataset
-	bind:crop
-	bind:season
-	boundary="aez"
-	countryOptions={COUNTRY_OPTIONS}
-	layerOptions={layerOptions}
-	cropOptions={calendarCropOptions}
-	seasonOptions={calendarSeasonOptions}
-	boundaryOptions={[{ value: 'aez', label: 'AEZ' }]}
-	showSeasonSelect={requiresSeasonSelection}
-	layerLabel="Variable"
-	showBoundarySelect={false}
-	isCalendarDataset={true}
-	showClearButton={true}
-	clearDisabled={!hasActiveControlSelection}
-	onClear={clearAllSelections}
-/>
-
-<div class="space-y-3 px-4 py-3">
-	<div class="relative h-[55vh] min-h-[360px] max-h-[760px] overflow-hidden rounded-md border border-border">
-		<Map bind:map adminLevel="aez" />
+<Tabs bind:value={activeView} class="flex flex-col">
+	<div class="flex items-center gap-4 px-4 py-2">
+		<TabsList>
+			<TabsTrigger value="map">
+				<MapIcon class="h-3.5 w-3.5" />
+				Map
+			</TabsTrigger>
+			<TabsTrigger value="calendar">
+				<CalendarIcon class="h-3.5 w-3.5" />
+				Calendar
+			</TabsTrigger>
+		</TabsList>
 	</div>
 
-	<ColorScaleLegend
-		title={legendTitle}
-		subtitle={legendSubtitle}
-		colors={MONTH_COLORS}
-		labels={MONTH_LABELS}
-	/>
-
-	<div class="rounded-md border border-border/70 bg-card/70 p-3">
-		<div class="mb-3 flex flex-wrap items-start justify-between gap-3">
-			<div>
-				<p class="text-xs font-medium text-muted-foreground">Crop calendar</p>
-				<p class="mt-1 text-sm font-semibold text-foreground">
-					{chartTitle ?? 'Select an AEZ on the map'}
-				</p>
-				<div class="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-					{#each calendarStageLegendItems as item (item.label)}
-						<span class="inline-flex items-center gap-1.5">
-							<span class="h-2.5 w-2.5 rounded-full" style:background={item.color}></span>
-							{item.label}
-						</span>
-					{/each}
-				</div>
+	<TabsContent value="map" class="m-0 p-0">
+		<div class="flex flex-col gap-2 px-4 pb-3">
+			<CropAgricultureControls
+				bind:flyToCountry
+				bind:dataset
+				bind:crop
+				bind:season
+				boundary="aez"
+				countryOptions={COUNTRY_OPTIONS}
+				layerOptions={layerOptions}
+				cropOptions={calendarCropOptions}
+				seasonOptions={calendarSeasonOptions}
+				boundaryOptions={[{ value: 'aez', label: 'AEZ' }]}
+				showSeasonSelect={requiresSeasonSelection}
+				layerLabel="Variable"
+				showBoundarySelect={false}
+				isCalendarDataset={true}
+				showClearButton={true}
+				clearDisabled={!hasActiveControlSelection}
+				onClear={clearAllSelections}
+			/>
+			<div class="relative h-[60vh] min-h-[360px] overflow-hidden rounded-md border border-border">
+				<Map bind:map adminLevel="aez" />
 			</div>
-
-			{#if selectedAezKey}
-				<button
-					type="button"
-					onclick={clearSelectedAez}
-					class="inline-flex cursor-pointer items-center rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-				>
-					Clear selection
-				</button>
-			{/if}
+			<ColorScaleLegend
+				title={legendTitle}
+				subtitle={legendSubtitle}
+				colors={MONTH_COLORS}
+				labels={MONTH_LABELS}
+			/>
 		</div>
+	</TabsContent>
 
-		{#if calendarState === 'error'}
-			<div class="flex h-24 items-center justify-center rounded-md border border-dashed border-border bg-muted/10">
-				<p class="text-xs text-muted-foreground">Calendar data could not be loaded.</p>
+	<TabsContent value="calendar" class="m-0 p-0">
+		<div class="px-4 pb-3">
+			<!-- Zone selection -->
+			<div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 py-1.5">
+				<LabeledSelect
+					label="Country"
+					bind:value={selectedAezCountry}
+					options={COUNTRY_OPTIONS}
+					placeholder="Country"
+					widthClass="w-28"
+				/>
+				<LabeledSelect
+					label="Zone"
+					bind:value={selectedAezName}
+					options={aezOptions}
+					placeholder="Zone"
+					widthClass="w-56"
+					disabled={!selectedAezCountry}
+				/>
 			</div>
-		{:else}
-			<CropCalendarChart entries={selectedAezEntries} />
-		{/if}
-	</div>
-</div>
+
+			<div class="rounded-md border border-border/70 bg-card/70 p-3">
+				<div class="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+					<p class="text-lg font-bold leading-tight text-foreground">
+						{chartAezName ?? 'Select a country and zone above'}
+					</p>
+					{#if chartCountryLabel}
+						<p class="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap">
+							{chartCountryLabel}
+						</p>
+					{/if}
+					<div class="flex items-center gap-3 pl-4">
+						{#each calendarStageLegendItems as item (item.label)}
+							<span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+								<span class="h-3 w-3 rounded-full" style:background={item.color}></span>
+								{item.label}
+							</span>
+						{/each}
+					</div>
+				</div>
+
+				{#if calendarState === 'error'}
+					<div class="flex h-24 items-center justify-center rounded-md border border-dashed border-border bg-muted/10">
+						<p class="text-xs text-muted-foreground">Calendar data could not be loaded.</p>
+					</div>
+				{:else}
+					<CropCalendarChart entries={selectedAezEntries} />
+				{/if}
+			</div>
+		</div>
+	</TabsContent>
+</Tabs>

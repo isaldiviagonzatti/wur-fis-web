@@ -68,7 +68,7 @@
 			label="Country"
 			bind:value={country}
 			options={COUNTRY_OPTIONS}
-			placeholder="Fly to country"
+			placeholder="Zoom to country"
 			widthClass="w-32"
 		/>
 

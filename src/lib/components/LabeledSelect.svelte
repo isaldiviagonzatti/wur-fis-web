@@ -8,7 +8,8 @@
 		options = [],
 		placeholder = 'Select option',
 		widthClass = 'w-32',
-		disabled = false
+		disabled = false,
+		triggerStyle = ''
 	} = $props();
 
 	const selectedLabel = $derived(
@@ -19,8 +20,8 @@
 <div class="flex items-center gap-1.5">
 	{#if showLabel}<span class="text-xs font-medium text-muted-foreground">{label}</span>{/if}
 	<Select type="single" bind:value disabled={disabled}>
-		<SelectTrigger size="sm" class={widthClass}>
-			{selectedLabel}
+		<SelectTrigger size="sm" class="{widthClass} min-w-0" style={triggerStyle}>
+			<span class="truncate">{selectedLabel}</span>
 		</SelectTrigger>
 		<SelectContent style="width: var(--bits-select-anchor-width);">
 			{#each options as option (option.value)}

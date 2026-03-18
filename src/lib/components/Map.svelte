@@ -95,7 +95,7 @@
 	}
 
 	function applyMapPresentation(mapInstance, currentAdminLevel) {
-		mapInstance.setProjection({ type: 'globe' });
+		mapInstance.setProjection({ type: 'winkelTripel' });
 		setAdminLayerVisibility(mapInstance, currentAdminLevel);
 	}
 

@@ -65,26 +65,25 @@
 	});
 </script>
 
-<CropAgricultureControls
-	bind:flyToCountry
-	bind:dataset
-	bind:crop
-	season=""
-	bind:boundary
-	countryOptions={COUNTRY_OPTIONS}
-	layerOptions={layerOptions}
-	cropOptions={OBSERVED_CROP_OPTIONS}
-	seasonOptions={[]}
-	boundaryOptions={OBSERVED_BOUNDARY_OPTIONS}
-	showSeasonSelect={false}
-	layerLabel="Variable"
-	isCalendarDataset={false}
-	showClearButton={true}
-	clearDisabled={!hasActiveControlSelection}
-	onClear={clearAllSelections}
-/>
-
-<div class="px-4 py-3">
+<div class="flex flex-col gap-2 px-4 py-3">
+	<CropAgricultureControls
+		bind:flyToCountry
+		bind:dataset
+		bind:crop
+		season=""
+		bind:boundary
+		countryOptions={COUNTRY_OPTIONS}
+		layerOptions={layerOptions}
+		cropOptions={OBSERVED_CROP_OPTIONS}
+		seasonOptions={[]}
+		boundaryOptions={OBSERVED_BOUNDARY_OPTIONS}
+		showSeasonSelect={false}
+		layerLabel="Variable"
+		isCalendarDataset={false}
+		showClearButton={true}
+		clearDisabled={!hasActiveControlSelection}
+		onClear={clearAllSelections}
+	/>
 	<div class="relative h-[55vh] min-h-[360px] max-h-[760px] overflow-hidden rounded-md border border-border">
 		<Map bind:map adminLevel={boundary} />
 	</div>

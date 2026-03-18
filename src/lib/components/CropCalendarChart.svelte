@@ -59,7 +59,7 @@
 
 {#if sortedEntries.length === 0}
 	<div class="flex h-24 items-center justify-center rounded-md border border-dashed border-border bg-muted/10">
-		<p class="text-xs text-muted-foreground">Click an AEZ on the map to show the crop calendar</p>
+		<p class="text-xs text-muted-foreground">Click an agro-ecological zone on the map  or select from the dropdown</p>
 	</div>
 {:else}
 	<div class="w-full overflow-x-auto">

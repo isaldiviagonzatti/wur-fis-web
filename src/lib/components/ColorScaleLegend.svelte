@@ -12,26 +12,22 @@
 		{/if}
 	</div>
 
-	<div class="overflow-x-auto">
-		<div class="min-w-[34rem]">
-			<div
-				class="grid gap-px overflow-hidden rounded-sm border border-border/70 bg-border/70"
-				style:grid-template-columns={gridTemplate}
-			>
-				{#each colors as color, index (`${color}-${index}`)}
-					<div class="h-3.5" style:background={color}></div>
-				{/each}
-			</div>
-
-			{#if labels.length === colors.length}
-				<div class="mt-2 grid gap-2" style:grid-template-columns={gridTemplate}>
-					{#each labels as label (`${label}`)}
-						<span class="text-center text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-							{label}
-						</span>
-					{/each}
-				</div>
-			{/if}
-		</div>
+	<div
+		class="grid gap-px overflow-hidden rounded-sm border border-border/70 bg-border/70"
+		style:grid-template-columns={gridTemplate}
+	>
+		{#each colors as color, index (`${color}-${index}`)}
+			<div class="h-3" style:background={color}></div>
+		{/each}
 	</div>
+
+	{#if labels.length === colors.length}
+		<div class="mt-1.5 grid" style:grid-template-columns={gridTemplate}>
+			{#each labels as label (`${label}`)}
+				<span class="text-center text-[9px] font-medium uppercase tracking-tight text-muted-foreground">
+					{label}
+				</span>
+			{/each}
+		</div>
+	{/if}
 </div>

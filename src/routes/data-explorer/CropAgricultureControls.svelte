@@ -1,6 +1,5 @@
 <script>
-	import { Separator } from '$lib/components/ui/separator';
-	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
+import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 
 	let {
 		flyToCountry = $bindable(''),
@@ -25,67 +24,71 @@
 	const hasSelectedLayer = $derived(Boolean(dataset));
 </script>
 
-<div class="shrink-0 overflow-x-auto overflow-y-hidden px-4 py-1.5">
-	<div class="flex min-w-max items-center gap-2">
-		<LabeledSelect
-			label="Fly to"
-			showLabel={false}
-			bind:value={flyToCountry}
-			options={countryOptions}
-			placeholder="Fly to country"
-			widthClass="w-36"
-		/>
-
-		<Separator orientation="vertical" class="h-4" />
-
-		<LabeledSelect
-			label={layerLabel}
-			bind:value={dataset}
-			options={layerOptions}
-			placeholder="Select variable"
-			widthClass="w-48"
-		/>
-
-		<LabeledSelect
-			label="Crop"
-			bind:value={crop}
-			options={cropOptions}
-			placeholder="Select crop"
-			widthClass={isCalendarDataset ? 'w-64' : 'w-36'}
-			disabled={!hasSelectedLayer}
-		/>
-
-		{#if showSeasonSelect}
+<div class="shrink-0 py-1.5">
+	<div class="flex items-center justify-between gap-4">
+		<!-- Left: data selectors -->
+		<div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
 			<LabeledSelect
-				label="Season"
-				bind:value={season}
-				options={seasonOptions}
-				placeholder="Select season"
-				widthClass="w-40"
+				label="Crop"
+				bind:value={crop}
+				options={cropOptions}
+				placeholder="Crop"
+				widthClass="w-28"
 				disabled={!hasSelectedLayer}
 			/>
-		{/if}
 
-		{#if showBoundarySelect}
+			{#if showSeasonSelect}
+				<LabeledSelect
+					label="Season"
+					bind:value={season}
+					options={seasonOptions}
+					placeholder="Season"
+					widthClass="w-28"
+					disabled={!hasSelectedLayer}
+				/>
+			{/if}
+
 			<LabeledSelect
-				label="Boundary"
-				bind:value={boundary}
-				options={boundaryOptions}
-				placeholder="Select boundary"
+				label={layerLabel}
+				bind:value={dataset}
+				options={layerOptions}
+				placeholder="Variable"
 				widthClass="w-32"
-				disabled={!hasSelectedLayer}
 			/>
-		{/if}
 
+			{#if showBoundarySelect}
+				<LabeledSelect
+					label="Boundary"
+					bind:value={boundary}
+					options={boundaryOptions}
+					placeholder="Boundary"
+					widthClass="w-24"
+					disabled={!hasSelectedLayer}
+				/>
+			{/if}
+		</div>
+
+		<!-- Right: navigation + clear -->
 		{#if showClearButton}
-			<button
-				type="button"
-				onclick={onClear}
-				disabled={clearDisabled}
-				class="ml-2 inline-flex cursor-pointer items-center rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-			>
-				Clear selection
-			</button>
+			<div class="flex shrink-0 items-center gap-2">
+				<LabeledSelect
+					label="Zoom to country"
+					showLabel={false}
+					bind:value={flyToCountry}
+					options={countryOptions}
+					placeholder="Zoom to country"
+					widthClass="w-[7.5rem]"
+					triggerStyle="height: auto; padding-top: 0.25rem; padding-bottom: 0.25rem;"
+				/>
+				<button
+					type="button"
+					onclick={onClear}
+					disabled={clearDisabled}
+					class="inline-flex cursor-pointer items-center rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+				>
+					Clear selection
+				</button>
+			</div>
 		{/if}
 	</div>
 </div>
