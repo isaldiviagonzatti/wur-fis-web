@@ -13,7 +13,9 @@
 		cropOptions = [],
 		seasonOptions = [],
 		boundaryOptions = [],
+		layerLabel = 'Layer',
 		showSeasonSelect = false,
+		showBoundarySelect = true,
 		isCalendarDataset = false,
 		showClearButton = false,
 		clearDisabled = false,
@@ -27,19 +29,20 @@
 	<div class="flex min-w-max items-center gap-2">
 		<LabeledSelect
 			label="Fly to"
+			showLabel={false}
 			bind:value={flyToCountry}
 			options={countryOptions}
-			placeholder="Country"
-			widthClass="w-32"
+			placeholder="Fly to country"
+			widthClass="w-36"
 		/>
 
 		<Separator orientation="vertical" class="h-4" />
 
 		<LabeledSelect
-			label="Layer"
+			label={layerLabel}
 			bind:value={dataset}
 			options={layerOptions}
-			placeholder="Select layer"
+			placeholder="Select variable"
 			widthClass="w-48"
 		/>
 
@@ -63,14 +66,16 @@
 			/>
 		{/if}
 
-		<LabeledSelect
-			label="Boundary"
-			bind:value={boundary}
-			options={boundaryOptions}
-			placeholder="Select boundary"
-			widthClass="w-32"
-			disabled={!hasSelectedLayer}
-		/>
+		{#if showBoundarySelect}
+			<LabeledSelect
+				label="Boundary"
+				bind:value={boundary}
+				options={boundaryOptions}
+				placeholder="Select boundary"
+				widthClass="w-32"
+				disabled={!hasSelectedLayer}
+			/>
+		{/if}
 
 		{#if showClearButton}
 			<button

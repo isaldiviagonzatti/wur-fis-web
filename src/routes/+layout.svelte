@@ -228,7 +228,7 @@
 								href="/about-us"
 								class="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors sm:text-xs"
 							>
-								About us
+								About Us
 							</a>
 							<a
 								href="https://git.wur.nl/phd-isaldiviagonzatti/fis-web"

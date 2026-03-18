@@ -3,6 +3,7 @@
 
 	let {
 		label = '',
+		showLabel = true,
 		value = $bindable(''),
 		options = [],
 		placeholder = 'Select option',
@@ -16,7 +17,7 @@
 </script>
 
 <div class="flex items-center gap-1.5">
-	<span class="text-xs font-medium text-muted-foreground">{label}</span>
+	{#if showLabel}<span class="text-xs font-medium text-muted-foreground">{label}</span>{/if}
 	<Select type="single" bind:value disabled={disabled}>
 		<SelectTrigger size="sm" class={widthClass}>
 			{selectedLabel}
