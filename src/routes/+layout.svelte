@@ -213,19 +213,23 @@
 									class="h-7 w-auto shrink-0 sm:h-8"
 								/>
 							</a>
+							<div class="shrink-0">
+								<img
+									src="/eu-flag.svg"
+									alt="European Union"
+									class="h-7 w-auto shrink-0 sm:h-8"
+								/>
+							</div>
 						</div>
 
-						<!-- Contact + GitLab -->
+						<!-- About us + GitLab -->
 						<div class="flex min-w-0 items-center gap-3 sm:gap-4">
-							<p class="min-w-0 text-[10px] leading-tight text-muted-foreground sm:text-xs">
-								Contact:
-								<a
-									href="mailto:ignacio.saldiviagonzatti@wur.nl"
-									class="break-all underline underline-offset-2"
-								>
-									ignacio.saldiviagonzatti@wur.nl
-								</a>
-							</p>
+							<a
+								href="/about-us"
+								class="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors sm:text-xs"
+							>
+								About us
+							</a>
 							<a
 								href="https://git.wur.nl/phd-isaldiviagonzatti/fis-web"
 								target="_blank"
