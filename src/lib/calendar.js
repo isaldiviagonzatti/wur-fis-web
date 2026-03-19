@@ -28,10 +28,10 @@ export const MONTH_COLORS = [
 	'#3f123d'
 ];
 
-export const CALENDAR_FILL_NEUTRAL = '#a8c8c0';
-export const CALENDAR_FILL_MISSING = '#6f9a92';
+export const CALENDAR_FILL_NEUTRAL = 'rgba(0, 0, 0, 0)';
+export const CALENDAR_FILL_MISSING = 'rgba(0, 0, 0, 0)';
 export const CALENDAR_OUTLINE_BASE = '#ffffff';
-export const CALENDAR_OUTLINE_SELECTED = '#111827';
+export const CALENDAR_NO_DATA_HATCH_OPACITY = 0.82;
 export const CALENDAR_STAGE_COLORS = {
 	sowing: '#332288',
 	season: '#7a7686',
@@ -102,6 +102,16 @@ function getAezEntryKey(country, aezName, crop, season) {
 
 function getFillSelectionKey(dataset, crop, season) {
 	return `${dataset ?? ''}::${crop ?? ''}::${season ?? ''}`;
+}
+
+function getCalendarFillPairs(calendarData, selectedCrop, selectedSeason, dataset) {
+	if (!calendarData || !selectedCrop || !selectedSeason) return null;
+
+	return (
+		getCalendarDataIndex(calendarData).fillPairsBySelection.get(
+			getFillSelectionKey(dataset, selectedCrop, selectedSeason)
+		) ?? EMPTY_OPTIONS
+	);
 }
 
 function getCalendarDataIndex(calendarData) {
@@ -215,14 +225,26 @@ export function getCalendarEntryForAez(calendarData, { country, aezName, crop, s
 }
 
 export function buildCalendarFillExpression(calendarData, selectedCrop, selectedSeason, dataset) {
-	if (!calendarData || !selectedCrop || !selectedSeason) return CALENDAR_FILL_NEUTRAL;
-
-	const pairs =
-		getCalendarDataIndex(calendarData).fillPairsBySelection.get(
-			getFillSelectionKey(dataset, selectedCrop, selectedSeason)
-		) ?? EMPTY_OPTIONS;
+	const pairs = getCalendarFillPairs(calendarData, selectedCrop, selectedSeason, dataset);
+	if (!pairs) return CALENDAR_FILL_NEUTRAL;
 
 	if (pairs.length === 0) return CALENDAR_FILL_MISSING;
 
 	return ['match', getAezFeatureExpression(), ...pairs, CALENDAR_FILL_MISSING];
+}
+
+export function buildCalendarNoDataOpacityExpression(calendarData, selectedCrop, selectedSeason, dataset) {
+	const pairs = getCalendarFillPairs(calendarData, selectedCrop, selectedSeason, dataset);
+	if (!pairs) return 0;
+
+	if (pairs.length === 0) return CALENDAR_NO_DATA_HATCH_OPACITY;
+
+	const availableAezKeys = pairs.filter((_, index) => index % 2 === 0);
+
+	return [
+		'case',
+		['in', getAezFeatureExpression(), ['literal', availableAezKeys]],
+		0,
+		CALENDAR_NO_DATA_HATCH_OPACITY
+	];
 }

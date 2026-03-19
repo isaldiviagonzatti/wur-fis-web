@@ -29,12 +29,12 @@
 	} from '$lib/calendar-map.js';
 	import { buildCalendarHoverPopupContent } from '$lib/calendar-hover-popup.js';
 	import {
-		CALENDAR_DATASET_LABELS,
 		CALENDAR_DATASET_OPTIONS,
 		CALENDAR_URL,
 		COUNTRY_LABELS,
 		COUNTRY_OPTIONS
 	} from '$lib/data-config.js';
+	import { NO_DATA_LEGEND_LABEL } from '$lib/no-data-pattern.js';
 	import '$lib/styles/calendar-map-popup.css';
 
 	let activeView = $state('map');
@@ -95,18 +95,6 @@
 	const chartCountryLabel = $derived(
 		selectedAezCountry ? (COUNTRY_LABELS[selectedAezCountry] ?? selectedAezCountry) : null
 	);
-	const legendTitle = $derived(CALENDAR_DATASET_LABELS[dataset] ?? 'Calendar month');
-	const legendSubtitle = $derived(
-		requiresSeasonSelection && !season
-			? 'Choose a season to color the AEZs'
-			: dataset === 'harvest_date'
-				? `Area fill colors show harvest month${seasonLabels[season] ? ` for ${seasonLabels[season]}` : ''}`
-				: `Area fill colors show sowing month${seasonLabels[season] ? ` for ${seasonLabels[season]}` : ''}`
-	);
-	const hasActiveControlSelection = $derived(
-		Boolean(dataset || crop || season || flyToCountry || selectedAezKey)
-	);
-
 	$effect(() => {
 		selectedAezCountry;
 		if (preserveSelectedAezName) {
@@ -125,14 +113,6 @@
 	function clearSelectedAez() {
 		selectedAezCountry = '';
 		selectedAezName = '';
-	}
-
-	function clearAllSelections() {
-		flyToCountry = '';
-		dataset = '';
-		crop = '';
-		season = '';
-		clearSelectedAez();
 	}
 
 	$effect(() => {
@@ -235,19 +215,18 @@
 				showSeasonSelect={requiresSeasonSelection}
 				layerLabel="Variable"
 				showBoundarySelect={false}
-				showClearButton={true}
-				clearDisabled={!hasActiveControlSelection}
-				onClear={clearAllSelections}
 			/>
-			<MapPanel heightClass="h-[60vh] min-h-[360px]">
-				<Map bind:map bind:flyToCountry adminLevel="aez" countryOptions={COUNTRY_OPTIONS} />
-			</MapPanel>
-			<ColorScaleLegend
-				title={legendTitle}
-				subtitle={legendSubtitle}
-				colors={MONTH_COLORS}
-				labels={MONTH_LABELS}
-			/>
+			<div class="overflow-hidden rounded-md border border-border/70 bg-card/80">
+				<MapPanel shellClass="relative overflow-hidden rounded-none border-0">
+					<Map bind:map bind:flyToCountry adminLevel="aez" countryOptions={COUNTRY_OPTIONS} />
+				</MapPanel>
+				<ColorScaleLegend
+					colors={MONTH_COLORS}
+					labels={MONTH_LABELS}
+					noDataLabel={NO_DATA_LEGEND_LABEL}
+					containerClass="rounded-none border-0 border-t border-border/70 bg-transparent p-3"
+				/>
+			</div>
 		</div>
 	</TabsContent>
 

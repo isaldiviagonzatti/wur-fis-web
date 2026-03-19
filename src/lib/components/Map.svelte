@@ -8,6 +8,7 @@
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import { BASEMAP_STYLE_URLS, MAP_DEFAULTS } from '$lib/map-config.js';
 	import { ADMIN_PMTILES_URLS, COUNTRY_VIEWS } from '$lib/data-config.js';
+	import { createNoDataPatternImage } from '$lib/no-data-pattern.js';
 	import { theme } from '$lib/theme.svelte.js';
 
 	let {
@@ -18,11 +19,12 @@
 	} = $props();
 
 	const ADMIN_LEVELS = ['country', 'admin1', 'admin2', 'aez'];
-	const ADMIN_LAYER_SUFFIXES = ['fill', 'outline'];
+	const ADMIN_LAYER_SUFFIXES = ['hatch', 'fill', 'outline'];
 	const PROJECTION_OPTIONS = [
 		{ value: 'mercator', label: 'Mercator' },
 		{ value: 'globe', label: 'Globe' }
 	];
+	const NO_DATA_PATTERN_ID = 'fis-no-data-hatch';
 	const PMTILES_PROTOCOL_KEY = '__fisPmtilesProtocolRegistered';
 	const APP_SOURCE_IDS = new Set(ADMIN_LEVELS);
 	const APP_LAYER_IDS = new Set([
@@ -62,12 +64,28 @@
 		};
 	}
 
+	function ensureNoDataPattern(mapInstance) {
+		if (mapInstance.hasImage(NO_DATA_PATTERN_ID)) return;
+		mapInstance.addImage(NO_DATA_PATTERN_ID, createNoDataPatternImage());
+	}
+
 	function ensureAdminLayers(mapInstance) {
 		for (const level of ADMIN_LEVELS) {
 			if (!mapInstance.getSource(level)) {
 				mapInstance.addSource(level, {
 					type: 'vector',
 					url: `pmtiles://${ADMIN_PMTILES_URLS[level]}`
+				});
+			}
+
+			if (!mapInstance.getLayer(`${level}-hatch`)) {
+				mapInstance.addLayer({
+					id: `${level}-hatch`,
+					type: 'fill',
+					source: level,
+					'source-layer': level,
+					layout: { visibility: 'none' },
+					paint: { 'fill-pattern': NO_DATA_PATTERN_ID, 'fill-opacity': 0 }
 				});
 			}
 
@@ -78,7 +96,7 @@
 					source: level,
 					'source-layer': level,
 					layout: { visibility: 'none' },
-					paint: { 'fill-color': '#4a90d9', 'fill-opacity': 0.15 }
+					paint: { 'fill-color': 'rgba(0, 0, 0, 0)', 'fill-opacity': 0.85 }
 				});
 			}
 
@@ -102,7 +120,7 @@
 				'source-layer': 'aez',
 				layout: { visibility: 'none' },
 				filter: ['==', ['get', 'aez_name'], '__none__'],
-				paint: { 'fill-color': '#4a90d9', 'fill-opacity': 0 }
+				paint: { 'fill-color': 'rgba(0, 0, 0, 0)', 'fill-opacity': 0 }
 			});
 		}
 	}
@@ -110,6 +128,12 @@
 	function applyMapPresentation(mapInstance, currentAdminLevel) {
 		mapInstance.setProjection({ type: projectionMode });
 		setAdminLayerVisibility(mapInstance, currentAdminLevel);
+	}
+
+	function syncMapAssets(mapInstance, currentAdminLevel) {
+		ensureNoDataPattern(mapInstance);
+		ensureAdminLayers(mapInstance);
+		applyMapPresentation(mapInstance, currentAdminLevel);
 	}
 
 	function setProjectionMode(nextProjection) {
@@ -175,8 +199,7 @@
 
 		const handleStyleLoad = () => {
 			activeBasemapStyleUrl = styleUrl;
-			ensureAdminLayers(mapInstance);
-			applyMapPresentation(mapInstance, adminLevel);
+			syncMapAssets(mapInstance, adminLevel);
 		};
 
 		mapInstance.on('style.load', handleStyleLoad);
@@ -224,7 +247,9 @@
 				style: initialStyleUrl,
 				center: MAP_DEFAULTS.center,
 				zoom: MAP_DEFAULTS.zoom,
+				maxZoom: MAP_DEFAULTS.maxZoom,
 				minZoom: MAP_DEFAULTS.minZoom,
+				renderWorldCopies: false,
 				cooperativeGestures: true,
 				attributionControl: false
 			});
@@ -237,8 +262,7 @@
 				const attributionControl = node.querySelector('.maplibregl-ctrl-attrib');
 				attributionControl?.classList.remove('maplibregl-compact-show');
 
-				ensureAdminLayers(mapInstance);
-				applyMapPresentation(mapInstance, adminLevel);
+				syncMapAssets(mapInstance, adminLevel);
 
 				// Expose instance only after layers are ready so $effect can call getLayer()
 				map = mapInstance;

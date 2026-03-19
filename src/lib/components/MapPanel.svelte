@@ -3,11 +3,12 @@
 -->
 <script>
 	let {
-		heightClass = 'h-[55vh] min-h-[360px] max-h-[760px]',
+		heightClass = 'h-[42vh] min-h-[280px] max-h-[560px]',
+		shellClass = 'relative overflow-hidden rounded-md border border-border',
 		children
 	} = $props();
 </script>
 
-<div class={`relative overflow-hidden rounded-md border border-border ${heightClass}`}>
+<div class={`${shellClass} ${heightClass}`}>
 	{@render children?.()}
 </div>

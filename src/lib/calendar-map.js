@@ -1,5 +1,11 @@
-import { CALENDAR_OUTLINE_BASE, buildCalendarFillExpression, getAezFeatureExpression } from '$lib/calendar.js';
+import {
+	CALENDAR_OUTLINE_BASE,
+	buildCalendarFillExpression,
+	buildCalendarNoDataOpacityExpression,
+	getAezFeatureExpression
+} from '$lib/calendar.js';
 
+const AEZ_HATCH_LAYER = 'aez-hatch';
 const AEZ_FILL_LAYER = 'aez-fill';
 const AEZ_SELECTED_FILL_LAYER = 'aez-selected-fill';
 const AEZ_OUTLINE_LAYER = 'aez-outline';
@@ -9,6 +15,11 @@ export function updateCalendarAezFill(map, { calendarData, crop, season, dataset
 	if (!map) return;
 
 	const colorExpr = buildCalendarFillExpression(calendarData, crop, season, dataset);
+	const noDataOpacityExpr = buildCalendarNoDataOpacityExpression(calendarData, crop, season, dataset);
+
+	if (map.getLayer(AEZ_HATCH_LAYER)) {
+		map.setPaintProperty(AEZ_HATCH_LAYER, 'fill-opacity', noDataOpacityExpr);
+	}
 
 	if (map.getLayer(AEZ_FILL_LAYER)) {
 		map.setPaintProperty(AEZ_FILL_LAYER, 'fill-color', colorExpr);
@@ -31,6 +42,10 @@ export function updateCalendarAezFill(map, { calendarData, crop, season, dataset
 
 export function resetObservedAezFill(map) {
 	if (!map) return;
+
+	if (map.getLayer(AEZ_HATCH_LAYER)) {
+		map.setPaintProperty(AEZ_HATCH_LAYER, 'fill-opacity', 0);
+	}
 
 	if (map.getLayer(AEZ_FILL_LAYER)) {
 		map.setPaintProperty(AEZ_FILL_LAYER, 'fill-color', '#4a90d9');

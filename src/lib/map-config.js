@@ -26,6 +26,7 @@ export const BASEMAP_STYLE_URLS = {
 
 export const MAP_DEFAULTS = {
 	center: [20, 0],   // centred on Africa
+	maxZoom: 6,
 	zoom: 1.5,
-	minZoom: 0
+	minZoom: 1
 };

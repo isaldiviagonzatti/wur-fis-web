@@ -18,6 +18,7 @@ import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 		onClear = null
 	} = $props();
 
+	const hasSelectedCrop = $derived(Boolean(crop));
 	const hasSelectedLayer = $derived(Boolean(dataset));
 </script>
 
@@ -31,7 +32,6 @@ import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 				options={cropOptions}
 				placeholder="Crop"
 				widthClass="w-28"
-				disabled={!hasSelectedLayer}
 			/>
 
 			{#if showSeasonSelect}
@@ -41,7 +41,7 @@ import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 					options={seasonOptions}
 					placeholder="Season"
 					widthClass="w-28"
-					disabled={!hasSelectedLayer}
+					disabled={!hasSelectedCrop}
 				/>
 			{/if}
 
@@ -51,6 +51,7 @@ import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 				options={layerOptions}
 				placeholder="Variable"
 				widthClass="w-32"
+				disabled={!hasSelectedCrop}
 			/>
 
 			{#if showBoundarySelect}

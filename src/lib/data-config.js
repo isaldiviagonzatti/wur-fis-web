@@ -10,17 +10,17 @@ export const COUNTRY_OPTIONS = [
 	{
 		value: 'ghana',
 		label: 'Ghana',
-		view: { center: [-1.02, 7.95], zoom: 5 }
+		view: { center: [-1.02, 7.95], zoom: 4.3 }
 	},
 	{
 		value: 'kenya',
 		label: 'Kenya',
-		view: { center: [37.91, 0.15], zoom: 5 }
+		view: { center: [37.91, 0.15], zoom: 4.3 }
 	},
 	{
 		value: 'zimbabwe',
 		label: 'Zimbabwe',
-		view: { center: [29.15, -19.02], zoom: 5 }
+		view: { center: [29.15, -19.02], zoom: 4.3 }
 	}
 ];
 
