@@ -8,11 +8,17 @@
 		labels = [],
 		noDataLabel = '',
 		containerClass = 'rounded-md border border-border/70 bg-card/80 p-3',
-		noDataSwatchClass = 'w-10 sm:w-12'
+		noDataSwatchClass = 'w-10 sm:w-12',
+		barHeightClass = 'h-3'
 	} = $props();
 
 	const gridTemplate = $derived(`repeat(${Math.max(colors.length, 1)}, minmax(0, 1fr))`);
 	const noDataHatchBackground = getNoDataHatchBackground();
+	// Without a no-data swatch the reserved first column is dead space that makes
+	// the ramp look cramped, so collapse to a single column in that case.
+	const outerColumns = $derived(
+		noDataLabel ? 'grid-cols-[2.5rem_minmax(0,1fr)] sm:grid-cols-[3rem_minmax(0,1fr)]' : 'grid-cols-1'
+	);
 </script>
 
 <div class={containerClass}>
@@ -27,7 +33,7 @@
 		</div>
 	{/if}
 
-	<div class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-start gap-x-2 gap-y-1.5 sm:grid-cols-[3rem_minmax(0,1fr)] sm:gap-x-3">
+	<div class={`grid items-start gap-x-2 gap-y-1.5 sm:gap-x-3 ${outerColumns}`}>
 		{#if noDataLabel}
 			<div class="flex justify-center">
 				<span class={`grid overflow-hidden rounded-sm border border-border/70 bg-border/70 ${noDataSwatchClass}`}>
@@ -44,7 +50,7 @@
 			style:grid-template-columns={gridTemplate}
 		>
 			{#each colors as color, index (`${color}-${index}`)}
-				<div class="h-3" style:background={color}></div>
+				<div class={barHeightClass} style:background={color}></div>
 			{/each}
 		</div>
 
@@ -58,7 +64,7 @@
 
 		{#if labels.length === colors.length}
 			<div class="grid" style:grid-template-columns={gridTemplate}>
-				{#each labels as label (`${label}`)}
+				{#each labels as label, index (`${label}-${index}`)}
 					<span class="text-center text-[9px] font-medium uppercase tracking-tight text-muted-foreground">
 						{label}
 					</span>

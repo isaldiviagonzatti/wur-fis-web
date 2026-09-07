@@ -6,8 +6,9 @@
 -->
 <script>
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
-	import { BASEMAP_STYLE_URLS, MAP_DEFAULTS } from '$lib/map-config.js';
-	import { ADMIN_PMTILES_URLS, COUNTRY_VIEWS } from '$lib/data-config.js';
+	import { BASEMAP_STYLE_URLS, FALLBACK_STYLE_URLS, MAP_DEFAULTS } from '$lib/map-config.js';
+	import { ADMIN_PMTILES_URLS } from '$lib/data-sources.js';
+	import { COUNTRY_VIEWS } from '$lib/domain-options.js';
 	import { createNoDataPatternImage } from '$lib/no-data-pattern.js';
 	import { theme } from '$lib/theme.svelte.js';
 
@@ -15,7 +16,12 @@
 		map = $bindable(null),
 		adminLevel = 'admin1',
 		flyToCountry = $bindable(''),
-		countryOptions = []
+		countryOptions = [],
+		onStyleReload = undefined,
+		// Opening camera. Defaults to the shared continental view; pages whose data
+		// only covers part of it can pass {bounds, fitBoundsOptions} to frame that
+		// instead, which stays correct at any container width.
+		initialView = undefined
 	} = $props();
 
 	const ADMIN_LEVELS = ['country', 'admin1', 'admin2', 'aez'];
@@ -134,6 +140,32 @@
 		ensureNoDataPattern(mapInstance);
 		ensureAdminLayers(mapInstance);
 		applyMapPresentation(mapInstance, currentAdminLevel);
+		// A style swap discards every source and layer this component does not
+		// explicitly preserve, so consumers that added their own must re-add them.
+		onStyleReload?.(mapInstance);
+	}
+
+	/**
+	 * Fall back to the open basemap when the configured style cannot be fetched.
+	 *
+	 * A restricted Protomaps key answers 403 "Invalid origin for API key", and
+	 * MapLibre then never fires `load` — which would leave `map` unbound and every
+	 * data layer silently unmounted, looking like missing data rather than a
+	 * missing basemap.
+	 */
+	function attachStyleFallback(mapInstance) {
+		const handleError = (event) => {
+			const status = event?.error?.status;
+			if (mapInstance.isStyleLoaded() || (status !== 403 && status !== 401)) return;
+			const fallback = theme.dark ? FALLBACK_STYLE_URLS.dark : FALLBACK_STYLE_URLS.light;
+			if (activeBasemapStyleUrl === fallback) return;
+			console.warn(
+				`Basemap style rejected (${status}); falling back to the open basemap.`
+			);
+			activeBasemapStyleUrl = fallback;
+			mapInstance.setStyle(fallback);
+		};
+		mapInstance.on('error', handleError);
 	}
 
 	function setProjectionMode(nextProjection) {
@@ -184,8 +216,11 @@
 			map.flyTo({ center: target.center, zoom: target.zoom, duration: 900, essential: true });
 		};
 
-		if (!map.isStyleLoaded()) map.once('load', fly);
-		else fly();
+		// `load` has already fired by the time this component exposes `map`, and it
+		// only fires once, so waiting on it here would drop the camera move
+		// forever. `idle` fires again after the next render settles.
+		if (map.isStyleLoaded()) fly();
+		else map.once('idle', fly);
 	});
 
 	// Swap basemap style when dark mode changes, then re-add custom layers after load.
@@ -245,8 +280,15 @@
 			mapInstance = new maplibre.Map({
 				container: node,
 				style: initialStyleUrl,
-				center: MAP_DEFAULTS.center,
-				zoom: MAP_DEFAULTS.zoom,
+				...(initialView?.bounds
+					? {
+							bounds: initialView.bounds,
+							fitBoundsOptions: initialView.fitBoundsOptions ?? { padding: 20 }
+						}
+					: {
+							center: initialView?.center ?? MAP_DEFAULTS.center,
+							zoom: initialView?.zoom ?? MAP_DEFAULTS.zoom
+						}),
 				maxZoom: MAP_DEFAULTS.maxZoom,
 				minZoom: MAP_DEFAULTS.minZoom,
 				renderWorldCopies: false,
@@ -255,6 +297,7 @@
 			});
 
 			mapInstance.addControl(new maplibre.AttributionControl({ compact: true }), 'bottom-right');
+			attachStyleFallback(mapInstance);
 
 			mapInstance.on('load', () => {
 				// MapLibre has no public option for "compact and collapsed on first render".

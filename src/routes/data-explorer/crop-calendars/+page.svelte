@@ -28,12 +28,12 @@
 		updateCalendarAezFill
 	} from '$lib/calendar-map.js';
 	import { buildCalendarHoverPopupContent } from '$lib/calendar-hover-popup.js';
+	import { CALENDAR_URL } from '$lib/data-sources.js';
 	import {
 		CALENDAR_DATASET_OPTIONS,
-		CALENDAR_URL,
 		COUNTRY_LABELS,
 		COUNTRY_OPTIONS
-	} from '$lib/data-config.js';
+	} from '$lib/domain-options.js';
 	import { NO_DATA_LEGEND_LABEL } from '$lib/no-data-pattern.js';
 	import '$lib/styles/calendar-map-popup.css';
 

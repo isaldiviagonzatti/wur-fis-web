@@ -11,7 +11,7 @@
 	let activeTab = $state('forecast');
 	let crop = $state('');
 	let country = $state('');
-	let adminLevel = $state('country');
+	let adminLevel = $state('grid');
 	let skillOverlay = $state(false);
 </script>
 

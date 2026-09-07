@@ -8,10 +8,18 @@
 	import {
 		COUNTRY_OPTIONS,
 		OBSERVED_DATASET_OPTIONS,
-		OBSERVED_BOUNDARY_OPTIONS,
-		OBSERVED_CROP_OPTIONS
-	} from '$lib/data-config.js';
+		OBSERVED_BOUNDARY_OPTIONS
+	} from '$lib/domain-options.js';
 	import { resetObservedAezFill } from '$lib/calendar-map.js';
+
+	// Placeholder until observed yield artifacts are published. This page draws no
+	// data layer yet, so the list only fills the control. It is local rather than
+	// shared so it cannot be mistaken for a real crop source: the yield forecast
+	// gets its crops from the published catalog.
+	const PLACEHOLDER_CROP_OPTIONS = [
+		{ value: 'maize', label: 'Maize' },
+		{ value: 'sorghum', label: 'Sorghum' }
+	];
 
 	let map = $state(null);
 
@@ -46,7 +54,7 @@
 		season=""
 		bind:boundary
 		layerOptions={OBSERVED_DATASET_OPTIONS}
-		cropOptions={OBSERVED_CROP_OPTIONS}
+		cropOptions={PLACEHOLDER_CROP_OPTIONS}
 		seasonOptions={[]}
 		boundaryOptions={OBSERVED_BOUNDARY_OPTIONS}
 		showSeasonSelect={false}

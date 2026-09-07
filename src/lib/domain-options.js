@@ -1,11 +1,11 @@
 /**
- * R2 bucket base URL and data artifact paths.
- * Swap R2_BASE for the custom domain when one is configured.
+ * Options the UI offers: countries, datasets and boundary levels.
+ *
+ * Only lists shared by more than one route belong here. Crop lists are
+ * deliberately absent — the yield forecast reads its crops from the published
+ * catalog, so hard-coding a second list here would create a source of truth
+ * that silently drifts from the data.
  */
-export const R2_BASE = 'https://pub-0a56875e3f4c46ad97b50538897150d9.r2.dev';
-
-export const CALENDAR_URL = `${R2_BASE}/agriculture/v1/crop_calendar.json`;
-
 export const COUNTRY_OPTIONS = [
 	{
 		value: 'ghana',
@@ -42,15 +42,6 @@ export const OBSERVED_DATASET_OPTIONS = Object.entries(OBSERVED_DATASET_LABELS).
 	([value, label]) => ({ value, label })
 );
 
-export const OBSERVED_CROP_OPTIONS = [
-	{ value: 'maize', label: 'Maize' },
-	{ value: 'sorghum', label: 'Sorghum' }
-];
-
-export const OBSERVED_CROP_LABELS = Object.fromEntries(
-	OBSERVED_CROP_OPTIONS.map(({ value, label }) => [value, label])
-);
-
 export const OBSERVED_BOUNDARY_OPTIONS = [
 	{ value: 'country', label: 'Country' },
 	{ value: 'admin1', label: 'Admin 1' },
@@ -61,6 +52,14 @@ export const OBSERVED_BOUNDARY_LABELS = Object.fromEntries(
 	OBSERVED_BOUNDARY_OPTIONS.map(({ value, label }) => [value, label])
 );
 
+// The forecast is published per grid cell, so that is its default view. The
+// admin levels currently draw reference outlines only; they become aggregation
+// levels once admin artifacts exist.
+export const YIELD_FORECAST_BOUNDARY_OPTIONS = [
+	{ value: 'grid', label: 'Grid cells' },
+	...OBSERVED_BOUNDARY_OPTIONS
+];
+
 export const CALENDAR_DATASET_LABELS = {
 	sowing_date: 'Sowing date',
 	harvest_date: 'Harvest date'
@@ -69,10 +68,3 @@ export const CALENDAR_DATASET_LABELS = {
 export const CALENDAR_DATASET_OPTIONS = Object.entries(CALENDAR_DATASET_LABELS).map(
 	([value, label]) => ({ value, label })
 );
-
-export const ADMIN_PMTILES_URLS = {
-	country: `${R2_BASE}/admin/v1/country.pmtiles`,
-	admin1: `${R2_BASE}/admin/v1/admin1.pmtiles`,
-	admin2: `${R2_BASE}/admin/v1/admin2.pmtiles`,
-	aez: `${R2_BASE}/admin/v1/aez.pmtiles`
-};
