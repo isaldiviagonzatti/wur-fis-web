@@ -33,3 +33,9 @@ export function yieldForecastGridUrl(runId, country, crop) {
 export function yieldForecastDensityUrl(runId, country, crop) {
 	return `${YIELD_FORECAST_BASE}/runs/${runId}/density/${country}/${crop}.json`;
 }
+
+// Admin aggregates are grouped by level and crop across all countries, matching
+// the crop-first UI, so one request covers every country that has the crop.
+export function yieldForecastAdminUrl(runId, level, crop) {
+	return `${YIELD_FORECAST_BASE}/runs/${runId}/admin/${level}/${crop}.json`;
+}

@@ -15,13 +15,21 @@ import {
 	PERCENTILE_STOPS,
 	SKILL_COLORS,
 	SKILL_STOPS,
-	buildCellFeatures
+	buildCellFeatures,
+	buildNoForecastFeatures
 } from '$lib/yield-forecast.js';
+import { createNoDataPatternImage } from '$lib/no-data-pattern.js';
 
 export const FORECAST_SOURCE = 'yield-forecast-cells';
 export const FORECAST_FILL_LAYER = 'yield-forecast-fill';
 export const FORECAST_OUTLINE_LAYER = 'yield-forecast-outline';
 export const FORECAST_SELECTED_LAYER = 'yield-forecast-selected';
+export const NO_FORECAST_SOURCE = 'yield-forecast-no-forecast';
+export const NO_FORECAST_LAYER = 'yield-forecast-no-forecast-fill';
+
+// Reuses the site-wide no-data hatch so the shading means the same thing here
+// as it does on the admin layers and the crop calendars.
+const NO_DATA_PATTERN_ID = 'fis-no-data-hatch';
 
 const EMPTY_COLLECTION = { type: 'FeatureCollection', features: [] };
 const NO_SELECTION = '__none__';
@@ -45,6 +53,19 @@ export function setColorMode(map, mode) {
  */
 export function ensureForecastLayers(map) {
 	if (!map || map.getSource(FORECAST_SOURCE)) return;
+
+	if (!map.hasImage(NO_DATA_PATTERN_ID)) {
+		map.addImage(NO_DATA_PATTERN_ID, createNoDataPatternImage());
+	}
+
+	// Added first so the coloured cells always draw over the hatch.
+	map.addSource(NO_FORECAST_SOURCE, { type: 'geojson', data: EMPTY_COLLECTION, tolerance: 0 });
+	map.addLayer({
+		id: NO_FORECAST_LAYER,
+		type: 'fill',
+		source: NO_FORECAST_SOURCE,
+		paint: { 'fill-pattern': NO_DATA_PATTERN_ID, 'fill-opacity': 0.7 }
+	});
 
 	map.addSource(FORECAST_SOURCE, {
 		type: 'geojson',
@@ -73,7 +94,9 @@ export function ensureForecastLayers(map) {
 		type: 'line',
 		source: FORECAST_SOURCE,
 		filter: ['==', ['get', 'uid'], NO_SELECTION],
-		paint: { 'line-color': '#111827', 'line-width': 2 }
+		paint: { 'line-color': '#1f2937',
+			'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1.2, 8, 2]
+		}
 	});
 }
 
@@ -89,13 +112,19 @@ export function setForecastCells(map, entries) {
 	const source = map.getSource(FORECAST_SOURCE);
 	if (!source) return;
 
+	const hidden = map.getSource(NO_FORECAST_SOURCE);
 	if (!entries?.length) {
 		source.setData(EMPTY_COLLECTION);
+		hidden?.setData(EMPTY_COLLECTION);
 		return;
 	}
 	source.setData({
 		type: 'FeatureCollection',
 		features: entries.flatMap(({ country, grid }) => buildCellFeatures(grid, country).features)
+	});
+	hidden?.setData({
+		type: 'FeatureCollection',
+		features: entries.flatMap(({ grid }) => buildNoForecastFeatures(grid).features)
 	});
 }
 
@@ -116,11 +145,19 @@ export function setForecastOpacity(map, opacity) {
 	if (map.getLayer(FORECAST_OUTLINE_LAYER)) {
 		map.setPaintProperty(FORECAST_OUTLINE_LAYER, 'line-opacity', opacity);
 	}
+	if (map.getLayer(NO_FORECAST_LAYER)) {
+		map.setPaintProperty(NO_FORECAST_LAYER, 'fill-opacity', opacity * 0.7);
+	}
 }
 
 export function setForecastVisibility(map, visible) {
 	if (!map) return;
-	for (const layerId of [FORECAST_FILL_LAYER, FORECAST_OUTLINE_LAYER, FORECAST_SELECTED_LAYER]) {
+	for (const layerId of [
+		NO_FORECAST_LAYER,
+		FORECAST_FILL_LAYER,
+		FORECAST_OUTLINE_LAYER,
+		FORECAST_SELECTED_LAYER
+	]) {
 		if (map.getLayer(layerId)) {
 			map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
 		}

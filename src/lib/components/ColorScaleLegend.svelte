@@ -38,7 +38,7 @@
 			<div class="flex justify-center">
 				<span class={`grid overflow-hidden rounded-sm border border-border/70 bg-border/70 ${noDataSwatchClass}`}>
 					<span
-						class="h-3 bg-muted/30"
+						class={`bg-muted/30 ${barHeightClass}`}
 						style:background-image={noDataHatchBackground}
 					></span>
 				</span>

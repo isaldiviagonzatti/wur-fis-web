@@ -1,6 +1,6 @@
 <!--
-  ForecastTab — controls bar, forecast grid map, and the density panel for a
-  clicked cell.
+  ForecastTab — controls bar, forecast map, and the distribution panel for the
+  selected grid cell or administrative unit.
 
   The crop is the primary control: selecting one draws it for every country that
   has it in this initialization, which is only defensible because the map is
@@ -16,14 +16,13 @@
 <script>
 	import { untrack } from 'svelte';
 	import Gauge from '@lucide/svelte/icons/gauge';
-	import Info from '@lucide/svelte/icons/info';
 	import ColorScaleLegend from '$lib/components/ColorScaleLegend.svelte';
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import Map from '$lib/components/Map.svelte';
 	import MapPanel from '$lib/components/MapPanel.svelte';
 	import PlaceSearch from '$lib/components/PlaceSearch.svelte';
 	import YieldDensityChart from '$lib/components/YieldDensityChart.svelte';
-	import { COUNTRY_OPTIONS, YIELD_FORECAST_BOUNDARY_OPTIONS } from '$lib/domain-options.js';
+	import { COUNTRY_OPTIONS, YIELD_FORECAST_AGGREGATION_OPTIONS } from '$lib/domain-options.js';
 	import { STUDY_AREA_VIEW } from '$lib/map-config.js';
 	import {
 		PERCENTILE_COLORS,
@@ -35,19 +34,31 @@
 		formatCountryList,
 		formatSigned,
 		formatTercileSplit,
+		loadAdmin,
 		loadCatalog,
 		loadDensity,
 		loadGrid,
-		snapToCellCentre
+		snapToCellCentre,
+		toSentenceCase
 	} from '$lib/yield-forecast.js';
 	import {
 		attachForecastInteractions,
 		clearForecastCells,
+		setForecastVisibility,
 		setColorMode,
 		setForecastCells,
 		setForecastOpacity,
 		setSelectedCell
 	} from '$lib/yield-forecast-map.js';
+	import {
+		attachZoneInteractions,
+		clearZoneLayers,
+		isAdminLevel,
+		paintZones,
+		zoneIdProperty,
+		setSelectedZone,
+		setZoneOpacity
+	} from '$lib/yield-forecast-admin-map.js';
 
 	let {
 		crop = $bindable(),
@@ -65,7 +76,21 @@
 	let loadedCrop = $state('');
 	let loadError = $state('');
 	let layerOpacity = $state(0.85);
-	let searchNotice = $state('');
+	let zones = $state([]);
+	let selectedZoneGid = $state(null);
+	// Which (level, crop) `zones` holds, so a half-finished switch is not read as
+	// data for the newly selected one.
+	let loadedZoneKey = $state('');
+	// The location the user is interested in, as plain coordinates. Everything
+	// selected — a grid cell, a province, a country — is whichever unit contains
+	// this point, so changing the aggregation level re-resolves rather than
+	// clearing. Set by a search, or by clicking anywhere on the map.
+	let anchor = $state(null);
+	// What the anchor resolved to at each aggregation level, so returning to a
+	// level restores what was selected there. Without it, a level the anchor
+	// cannot be re-resolved at — a point on a cell this crop does not cover —
+	// loses its selection permanently, even though the unit is still valid.
+	let anchorZones = $state({});
 
 	// Fired once at component init. Not an effect: it has no reactive input, so
 	// making it one would only obscure that it runs exactly once.
@@ -75,10 +100,22 @@
 
 	const runId = $derived(catalog?.latest_run ?? null);
 	const cropIndex = $derived(catalog ? buildCropIndex(catalog) : []);
-	const cropOptions = $derived(cropIndex.map(({ id, label }) => ({ value: id, label })));
+	const cropOptions = $derived(
+		cropIndex.map(({ id, label }) => ({ value: id, label: toSentenceCase(label) }))
+	);
 	const activeCrop = $derived(cropIndex.find((entry) => entry.id === crop) ?? null);
 	const totalCells = $derived(entries.reduce((sum, entry) => sum + entry.grid.n_cells, 0));
+	const showZones = $derived(isAdminLevel(adminLevel));
 	const isLoadedCropCurrent = $derived(loadedCrop === crop);
+	const isZoneDataCurrent = $derived(loadedZoneKey === `${adminLevel}:${crop}`);
+	const selectedZone = $derived(
+		isZoneDataCurrent && selectedZoneGid
+			? (zones.find((zone) => zone.gid === selectedZoneGid) ?? null)
+			: null
+	);
+	const zoneLevelLabel = $derived(
+		{ country: 'Country', admin1: 'Admin 1', admin2: 'Admin 2' }[adminLevel] ?? ''
+	);
 	const selectedGrid = $derived(
 		isLoadedCropCurrent && selected
 			? (entries.find((entry) => entry.country === selected.country)?.grid ?? null)
@@ -89,8 +126,12 @@
 			? null
 			: (selectedGrid?.cells?.[selected.index] ?? null)
 	);
-	// A position is held but this crop is not grown there.
-	const selectionOutsideCrop = $derived(Boolean(selected) && isLoadedCropCurrent && !selectedCell);
+	// A location is held but the current crop and level have nothing for it. Covers
+	// both a searched place with no data and a crop switch away from a covered cell.
+	const anchorUnresolved = $derived(
+		Boolean(anchor) &&
+			(showZones ? isZoneDataCurrent && !selectedZone : isLoadedCropCurrent && !selectedCell)
+	);
 	const hasActiveSelection = $derived(
 		Boolean(crop || country || adminLevel !== 'grid' || skillOverlay)
 	);
@@ -113,15 +154,75 @@
 	}
 
 	function clearSelections() {
+		anchorZones = {};
 		crop = '';
 		country = '';
 		adminLevel = 'grid';
 		skillOverlay = false;
+		// Without this the panel keeps reporting the last clicked cell, which then
+		// reads as "no data here" for a crop that is no longer selected.
+		anchor = null;
+		selected = null;
+		selectedZoneGid = null;
+		setSelectedCell(map, null);
+		clearZoneLayers(map);
 	}
 
 	function clearCellSelection() {
+		anchor = null;
+		anchorZones = {};
 		selected = null;
 		setSelectedCell(map, null);
+	}
+
+	function clearZoneSelection() {
+		anchor = null;
+		anchorZones = {};
+		selectedZoneGid = null;
+		setSelectedZone(map, adminLevel, null);
+	}
+
+	/** The cell containing a point, across every loaded country. */
+	function selectCellAtPoint(mapInstance, loaded, lat, lon) {
+		const cellLat = snapToCellCentre(lat);
+		const cellLon = snapToCellCentre(lon);
+		for (const entry of loaded) {
+			const found = findCellAt([entry], entry.country, cellLat, cellLon);
+			if (found) {
+				selected = { country: entry.country, lat: cellLat, lon: cellLon, ...found };
+				setSelectedCell(mapInstance, found.uid);
+				return true;
+			}
+		}
+		selected = null;
+		setSelectedCell(mapInstance, null);
+		return false;
+	}
+
+	/**
+	 * The zone containing a point.
+	 *
+	 * Answered from the grid payload, which records each cell's zone ids. Asking
+	 * the rendered map instead needs the point on screen with its tiles drawn,
+	 * which is a race every time the aggregation level changes.
+	 */
+	function resolveZoneAtPoint(mapInstance, level, point) {
+		// Data first: the grid payload records each cell's zone, so this is exact
+		// and works even when the point is off screen.
+		const cellLat = snapToCellCentre(point.lat);
+		const cellLon = snapToCellCentre(point.lon);
+		for (const entry of entries) {
+			const cell = entry.grid.cells.find(
+				(candidate) =>
+					Math.abs(candidate.lat - cellLat) < 1e-6 && Math.abs(candidate.lon - cellLon) < 1e-6
+			);
+			if (cell?.zones?.[level]) return cell.zones[level];
+		}
+		// Fall back to the rendered polygons for a point inside a published unit but
+		// on a cell this crop does not cover.
+		const pixel = mapInstance.project([point.lon, point.lat]);
+		const hits = mapInstance.queryRenderedFeatures(pixel, { layers: [`${level}-fill`] });
+		return hits?.[0]?.properties?.[zoneIdProperty(level)] ?? null;
 	}
 
 	/** Locate the cell at a given position, since indices differ between crops. */
@@ -140,33 +241,42 @@
 	 * the coordinate rather than by any spatial search. A place with no published
 	 * cell still moves the map and reports why, rather than doing nothing.
 	 */
-	function handlePlaceSelect({ lat, lon, name }) {
+	function handlePlaceSelect({ lat, lon }) {
 		if (!map) return;
-		map.flyTo({ center: [lon, lat], zoom: 8, duration: 900, essential: true });
+		const mapInstance = map;
+		mapInstance.flyTo({ center: [lon, lat], zoom: 8, duration: 900, essential: true });
+		// Setting the anchor is enough: the panel reports whether anything was found
+		// there, which is where the user is already looking for the answer.
+		anchor = { lat, lon };
+		anchorZones = {};
 
-		const cellLat = snapToCellCentre(lat);
-		const cellLon = snapToCellCentre(lon);
-		for (const entry of entries) {
-			const found = findCellAt([entry], entry.country, cellLat, cellLon);
-			if (found) {
-				selected = { country: entry.country, lat: cellLat, lon: cellLon, ...found };
-				setSelectedCell(map, found.uid);
-				searchNotice = '';
-				return;
-			}
+		if (showZones) {
+			const gid = resolveZoneAtPoint(mapInstance, adminLevel, { lat, lon });
+			selectedZoneGid = gid;
+			setSelectedZone(mapInstance, adminLevel, gid);
+			return;
 		}
-		clearCellSelection();
-		searchNotice = `No ${activeCrop?.label ?? 'forecast'} cell at ${name}.`;
+		selectCellAtPoint(mapInstance, entries, lat, lon);
 	}
 
 	// A basemap style swap (dark mode, or the fallback kicking in) discards every
 	// source and layer, so the forecast layer has to be rebuilt afterwards.
 	function handleStyleReload(mapInstance) {
-		if (!entries.length) return;
-		setForecastCells(mapInstance, entries);
-		setColorMode(mapInstance, skillOverlay ? 'skill' : 'percentile');
-		setForecastOpacity(mapInstance, layerOpacity);
-		setSelectedCell(mapInstance, selected?.uid ?? null);
+		// Rebuild the grid layer even in zone mode: the swap dropped it entirely, and
+		// it has to exist again before it can be hidden.
+		if (entries.length) {
+			setForecastCells(mapInstance, entries);
+			setColorMode(mapInstance, skillOverlay ? 'skill' : 'percentile');
+			setForecastOpacity(mapInstance, layerOpacity);
+			setSelectedCell(mapInstance, selected?.uid ?? null);
+		}
+		if (!showZones) return;
+		setForecastVisibility(mapInstance, false);
+		if (!zones.length) return;
+		// The zone fill is a fresh copy of the admin tiles, so its paint and the
+		// lazily-added selection outline both have to be reapplied.
+		paintZones(mapInstance, adminLevel, zones, layerOpacity);
+		setSelectedZone(mapInstance, adminLevel, selectedZoneGid);
 	}
 
 	// Load the selected crop for every country that has it, then hand the merged
@@ -187,9 +297,7 @@
 		// Taken straight from the stored position rather than by looking the index up
 		// in `entries` — after a crop the cell is missing from, there is no index to
 		// look up, and resolving through one silently dropped the selection.
-		const previous = untrack(() =>
-			selected ? { country: selected.country, lat: selected.lat, lon: selected.lon } : null
-		);
+		const previous = untrack(() => anchor);
 		Promise.all(
 			cropEntry.countries.map((name) =>
 				loadGrid(runId, name, cropEntry.id).then((grid) => ({ country: name, grid }))
@@ -205,10 +313,29 @@
 				// in the same place, so the panel updates instead of emptying.
 				// The position is kept even when the new crop is not grown there, so the
 				// panel can say so rather than silently emptying and jumping the map.
-				const carried = previous
-					? findCellAt(loaded, previous.country, previous.lat, previous.lon)
-					: null;
-				selected = previous ? { ...previous, ...(carried ?? { uid: null, index: null }) } : null;
+				if (!previous) {
+					selected = null;
+					setSelectedCell(mapInstance, null);
+					return;
+				}
+				const cellLat = snapToCellCentre(previous.lat);
+				const cellLon = snapToCellCentre(previous.lon);
+				let carried = null;
+				let carriedCountry = null;
+				for (const entry of loaded) {
+					const found = findCellAt([entry], entry.country, cellLat, cellLon);
+					if (found) {
+						carried = found;
+						carriedCountry = entry.country;
+						break;
+					}
+				}
+				selected = {
+					country: carriedCountry ?? previous.country ?? loaded[0]?.country,
+					lat: cellLat,
+					lon: cellLon,
+					...(carried ?? { uid: null, index: null })
+				};
 				setSelectedCell(mapInstance, carried?.uid ?? null);
 			})
 			.catch((error) => {
@@ -223,6 +350,90 @@
 		};
 	});
 
+	// Aggregated zones for the chosen level. Grid cells and zone polygons are
+	// mutually exclusive views of the same forecast, so one hides the other.
+	$effect(() => {
+		if (!map) return;
+		const mapInstance = map;
+		if (!showZones || !runId || !crop) {
+			zones = [];
+			loadedZoneKey = '';
+			clearZoneLayers(mapInstance);
+			setForecastVisibility(mapInstance, true);
+			return;
+		}
+		setForecastVisibility(mapInstance, false);
+		// Reset every level first. The selection outlines are layers this component
+		// adds, so Map.svelte's visibility handling does not know about them and a
+		// level change would otherwise leave the previous level's outline on screen.
+		clearZoneLayers(mapInstance);
+		const level = adminLevel;
+		const key = `${level}:${crop}`;
+		let cancelled = false;
+		loadAdmin(runId, level, crop)
+			.then((payload) => {
+				if (cancelled) return;
+				zones = payload.zones;
+				loadedZoneKey = key;
+				loadError = '';
+				paintZones(mapInstance, level, payload.zones, layerOpacity);
+				const point = untrack(() => anchor);
+				if (!point) {
+					selectedZoneGid = null;
+					setSelectedZone(mapInstance, level, null);
+					return;
+				}
+				// Carry the anchor across the level change: the same location, resolved
+				// to whichever unit of the new level contains it.
+				const apply = () => {
+					const remembered = untrack(() => anchorZones)[level];
+					const known = payload.zones.some((zone) => zone.gid === remembered);
+					const gid = known ? remembered : resolveZoneAtPoint(mapInstance, level, point);
+					if (gid) anchorZones = { ...untrack(() => anchorZones), [level]: gid };
+					selectedZoneGid = gid;
+					setSelectedZone(mapInstance, level, gid);
+				};
+				if (mapInstance.areTilesLoaded()) apply();
+				else mapInstance.once('idle', apply);
+			})
+			.catch((error) => {
+				if (cancelled) return;
+				zones = [];
+				loadedZoneKey = '';
+				clearZoneLayers(mapInstance);
+				loadError = `Could not load ${level} aggregates for ${crop}. ${error.message}`;
+			});
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	// Switching back to grid does not reload anything, so the anchor has to be
+	// re-resolved to a cell here.
+	$effect(() => {
+		if (!map || showZones || !entries.length) return;
+		const point = untrack(() => anchor);
+		if (!point) return;
+		selectCellAtPoint(map, entries, point.lat, point.lon);
+	});
+
+	$effect(() => {
+		if (!map || !showZones) return;
+		return attachZoneInteractions(map, adminLevel, {
+			onSelect: (gid, lngLat) => {
+				if (lngLat) {
+					anchor = { lat: lngLat.lat, lon: lngLat.lng };
+					anchorZones = {};
+				}
+				// Remember it: this click is the ground truth for this level, and it
+				// cannot always be recovered from the anchor alone.
+				anchorZones = { ...anchorZones, [adminLevel]: gid };
+				selectedZoneGid = gid;
+				setSelectedZone(map, adminLevel, gid);
+			}
+		});
+	});
+
 	// Kept apart from the layer effect so toggling the colour mode repaints
 	// without re-uploading the geometry or dropping the selected cell.
 	$effect(() => {
@@ -233,6 +444,7 @@
 	$effect(() => {
 		if (!map) return;
 		setForecastOpacity(map, layerOpacity);
+		if (showZones) setZoneOpacity(map, adminLevel, layerOpacity);
 	});
 
 	$effect(() => {
@@ -241,6 +453,8 @@
 			onSelect: ({ uid, country, index }) => {
 				const cell = entries.find((entry) => entry.country === country)?.grid.cells?.[index];
 				if (!cell) return;
+				anchor = { lat: cell.lat, lon: cell.lon };
+				anchorZones = {};
 				selected = { country, lat: cell.lat, lon: cell.lon, uid, index };
 			}
 		});
@@ -270,20 +484,24 @@
 			/>
 
 			<LabeledSelect
-				label="Boundary"
+				label="Aggregation"
 				bind:value={adminLevel}
-				options={YIELD_FORECAST_BOUNDARY_OPTIONS}
-				placeholder="Select boundary"
+				options={YIELD_FORECAST_AGGREGATION_OPTIONS}
+				placeholder="Select level"
 				widthClass="w-full"
 			/>
 
 			<button
 				onclick={() => (skillOverlay = !skillOverlay)}
+				disabled={showZones}
+				title={showZones ? 'Skill is only available per grid cell' : ''}
 				class={[
-					'flex h-7 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors',
-					skillOverlay
-						? 'border-primary bg-primary text-primary-foreground'
-						: 'border-border text-muted-foreground hover:bg-accent'
+					'flex h-7 w-full items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors',
+					showZones
+						? 'cursor-not-allowed border-border text-muted-foreground opacity-50'
+						: skillOverlay
+							? 'cursor-pointer border-primary bg-primary text-primary-foreground'
+							: 'cursor-pointer border-border text-muted-foreground hover:bg-accent'
 				]}
 			>
 				<Gauge size={12} />
@@ -305,12 +523,6 @@
 
 			<PlaceSearch onSelect={handlePlaceSelect} />
 
-			{#if searchNotice}
-				<p class="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground">
-					<Info size={12} class="mt-px shrink-0" />
-					<span>{searchNotice}</span>
-				</p>
-			{/if}
 
 			<button
 				type="button"
@@ -322,7 +534,7 @@
 			</button>
 		</div>
 
-		{#if skillOverlay}
+		{#if skillOverlay && !showZones}
 			<ColorScaleLegend
 				title="Forecast skill"
 				subtitle="Fair CRPSS vs 5-year climatology"
@@ -337,6 +549,7 @@
 				subtitle="within 1994–2023 reference"
 				colors={PERCENTILE_COLORS}
 				labels={PERCENTILE_LEGEND_LABELS}
+				noDataLabel={showZones ? '' : 'No forecast'}
 				barHeightClass="h-5"
 				containerClass="rounded-md bg-muted/30 p-3"
 			/>
@@ -364,29 +577,96 @@
 
 <div class="px-4 pb-4">
 	<div class="rounded-md bg-muted/30 p-3">
-			{#if selectionOutsideCrop}
+			{#if anchorUnresolved}
 				<div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
 					<p class="text-xs font-medium text-foreground">
-						{selected.lat.toFixed(2)}°, {selected.lon.toFixed(2)}° in {formatCountryList([
-							selected.country
-						])}
+						{anchor.lat.toFixed(2)}°, {anchor.lon.toFixed(2)}°
 					</p>
 					<button
 						type="button"
 						onclick={clearCellSelection}
 						class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground"
 					>
-						Clear cell
+						Clear
 					</button>
 				</div>
 				<div class="flex h-28 items-center justify-center rounded-md bg-background/60 px-4">
 					<p class="text-center text-xs text-muted-foreground">
-						No {activeCrop?.label ?? 'forecast'} for this location in this initialisation.
+						No {activeCrop?.label ?? 'forecast'} data for this location in this initialisation.
 					</p>
 				</div>
+			{:else if showZones}
+				{#if !selectedZone}
+					<div class="flex h-28 items-center justify-center rounded-md bg-background/60">
+						<p class="text-xs text-muted-foreground">
+							{zones.length
+								? `Click any ${zoneLevelLabel.toLowerCase()} area to see its forecast distribution`
+								: 'Select a crop to load the forecast'}
+						</p>
+					</div>
+				{:else}
+					<div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+						<p class="text-xs font-medium text-foreground">
+							{adminLevel === 'country'
+								? `${toSentenceCase(activeCrop?.label ?? '')} in ${formatCountryList([
+										selectedZone.country
+									])}`
+								: `${toSentenceCase(activeCrop?.label ?? '')} in ${selectedZone.zone_name}, ${formatCountryList(
+										[selectedZone.country]
+									)}`}
+						</p>
+						<button
+							type="button"
+							onclick={clearZoneSelection}
+							class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground"
+						>
+							Clear area
+						</button>
+					</div>
+
+					<div class="mb-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:grid-cols-4">
+						<div class="text-center">
+							<span class="text-muted-foreground">Percentile</span>
+							<p class="text-sm font-medium text-foreground">
+								{selectedZone.percentile.toFixed(0)}
+							</p>
+						</div>
+						<div class="text-center">
+							<span class="text-muted-foreground">Anomaly</span>
+							<p class="text-sm font-medium text-foreground">
+								{formatSigned(selectedZone.anomaly_pct)}%
+							</p>
+						</div>
+						<div class="text-center">
+							<span class="text-muted-foreground">Below / near / above</span>
+							<p class="text-sm font-medium text-foreground">
+								{formatTercileSplit(
+									selectedZone.prob_below,
+									selectedZone.prob_near,
+									selectedZone.prob_above
+								).join(' / ')}
+							</p>
+						</div>
+						<div class="text-center">
+							<span class="text-muted-foreground">Area covered</span>
+							<p class="text-sm font-medium text-foreground">
+								{(100 * selectedZone.area_coverage).toFixed(0)}%
+							</p>
+						</div>
+					</div>
+
+					<p class="mb-2 text-[11px] text-muted-foreground">
+						The ensemble mean sits {describePercentile(selectedZone.percentile)}. Historical
+						variability in this area is {selectedZone.hist_cv_pct.toFixed(0)}%.
+					</p>
+
+					<YieldDensityChart
+						forecast={selectedZone.members}
+						historical={selectedZone.reference}
+					/>
+				{/if}
 			{:else if !selectedCell}
-				<p class="text-xs font-medium text-muted-foreground">Selected cell</p>
-				<div class="mt-2 flex h-28 items-center justify-center rounded-md bg-background/60">
+				<div class="flex h-28 items-center justify-center rounded-md bg-background/60">
 					<p class="text-xs text-muted-foreground">
 						{totalCells
 							? 'Click any of the cells to see its forecast distribution'
@@ -396,7 +676,7 @@
 			{:else}
 				<div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
 					<p class="text-xs font-medium text-foreground">
-						{selectedGrid.crop_label} in {formatCountryList([selected.country])} at
+						{toSentenceCase(selectedGrid.crop_label)} in {formatCountryList([selected.country])} at
 						{selectedCell.lat.toFixed(2)}°, {selectedCell.lon.toFixed(2)}°
 					</p>
 					<button

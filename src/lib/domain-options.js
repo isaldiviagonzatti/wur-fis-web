@@ -52,10 +52,11 @@ export const OBSERVED_BOUNDARY_LABELS = Object.fromEntries(
 	OBSERVED_BOUNDARY_OPTIONS.map(({ value, label }) => [value, label])
 );
 
-// The forecast is published per grid cell, so that is its default view. The
-// admin levels currently draw reference outlines only; they become aggregation
-// levels once admin artifacts exist.
-export const YIELD_FORECAST_BOUNDARY_OPTIONS = [
+// The level the forecast is reported at. Not a boundary choice: it changes what
+// the numbers are, from a 0.1 degree cell's percentile to an area-weighted
+// aggregate over a whole unit. The forecast is published per grid cell, so that
+// is the default.
+export const YIELD_FORECAST_AGGREGATION_OPTIONS = [
 	{ value: 'grid', label: 'Grid cells' },
 	...OBSERVED_BOUNDARY_OPTIONS
 ];

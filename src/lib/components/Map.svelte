@@ -31,6 +31,9 @@
 		{ value: 'globe', label: 'Globe' }
 	];
 	const NO_DATA_PATTERN_ID = 'fis-no-data-hatch';
+	// Neutral grey rather than the old saturated blue: the boundaries are context,
+	// not data, and this reads on both the light and dark basemaps.
+	const ADMIN_OUTLINE_COLOR = '#8a8f98';
 	const PMTILES_PROTOCOL_KEY = '__fisPmtilesProtocolRegistered';
 	const APP_SOURCE_IDS = new Set(ADMIN_LEVELS);
 	const APP_LAYER_IDS = new Set([
@@ -112,8 +115,14 @@
 					type: 'line',
 					source: level,
 					'source-layer': level,
-					layout: { visibility: 'none' },
-					paint: { 'line-color': '#2c5f8a', 'line-width': 1 }
+					layout: { visibility: 'none', 'line-join': 'round' },
+					paint: {
+						'line-color': ADMIN_OUTLINE_COLOR,
+						// Hairline when zoomed out, where every border is on screen at
+						// once and a 1px line reads as heavy clutter.
+						'line-width': ['interpolate', ['linear'], ['zoom'], 3, 0.4, 6, 0.8, 10, 1.2],
+						'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0.45, 6, 0.7]
+					}
 				});
 			}
 		}

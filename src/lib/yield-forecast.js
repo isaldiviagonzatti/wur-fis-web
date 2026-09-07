@@ -12,6 +12,7 @@
  */
 import {
 	YIELD_FORECAST_CATALOG_URL,
+	yieldForecastAdminUrl,
 	yieldForecastDensityUrl,
 	yieldForecastGridUrl
 } from '$lib/data-sources.js';
@@ -65,10 +66,22 @@ export async function loadGrid(runId, country, crop) {
 	const columns = Object.fromEntries(
 		payload.columns.map((name, index) => [name, payload.cells[index]])
 	);
+	// Zone membership per cell, shipped de-duplicated as a list plus indices.
+	const zoneOf = (level, index) => {
+		const zone = payload.zones?.[level];
+		if (!zone) return null;
+		const position = zone.cells[index];
+		return position >= 0 ? zone.ids[position] : null;
+	};
 	const cells = columns.lat.map((lat, index) => ({
 		index,
 		lat,
 		lon: columns.lon[index],
+		zones: {
+			country: zoneOf('country', index),
+			admin1: zoneOf('admin1', index),
+			admin2: zoneOf('admin2', index)
+		},
 		percentile: columns.percentile[index],
 		anomalyPct: columns.anomaly_pct[index],
 		probBelow: columns.prob_below[index],
@@ -78,7 +91,11 @@ export async function loadGrid(runId, country, crop) {
 		histCvPct: columns.hist_cv_pct[index],
 		areaHa: columns.area_ha[index]
 	}));
-	return { ...payload, cells };
+	return { ...payload, cells, noForecast: payload.no_forecast ?? { lat: [], lon: [] } };
+}
+
+export function loadAdmin(runId, level, crop) {
+	return fetchJson(yieldForecastAdminUrl(runId, level, crop));
 }
 
 export function loadDensity(runId, country, crop) {
@@ -105,6 +122,12 @@ export function buildCropIndex(catalog) {
 
 const COUNTRY_TITLES = { ghana: 'Ghana', kenya: 'Kenya', zimbabwe: 'Zimbabwe' };
 
+/** Crop labels arrive lowercase from the LPJmL band names. */
+export function toSentenceCase(label) {
+	const text = String(label ?? '');
+	return text ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
 export function formatCountryList(countries) {
 	return countries.map((country) => COUNTRY_TITLES[country] ?? country).join(', ');
 }
@@ -128,19 +151,42 @@ export function buildCellFeatures(grid, country = grid.country) {
 				percentile: cell.percentile,
 				skill: cell.skill
 			},
-			geometry: {
-				type: 'Polygon',
-				coordinates: [
-					[
-						[cell.lon - half, cell.lat - half],
-						[cell.lon + half, cell.lat - half],
-						[cell.lon + half, cell.lat + half],
-						[cell.lon - half, cell.lat + half],
-						[cell.lon - half, cell.lat - half]
-					]
-				]
-			}
+			geometry: cellSquare(cell.lon, cell.lat, half)
 		}))
+	};
+}
+
+/**
+ * Squares for cells where the crop grows but no forecast is published.
+ *
+ * Drawn so that blank map means only "the crop is not grown here". These carry
+ * no properties: they are not clickable and have nothing to show in the panel.
+ */
+export function buildNoForecastFeatures(grid) {
+	const half = (grid.resolution_deg ?? 0.1) / 2;
+	const { lat = [], lon = [] } = grid.noForecast ?? {};
+	return {
+		type: 'FeatureCollection',
+		features: lat.map((value, index) => ({
+			type: 'Feature',
+			properties: {},
+			geometry: cellSquare(lon[index], value, half)
+		}))
+	};
+}
+
+function cellSquare(lon, lat, half) {
+	return {
+		type: 'Polygon',
+		coordinates: [
+			[
+				[lon - half, lat - half],
+				[lon + half, lat - half],
+				[lon + half, lat + half],
+				[lon - half, lat + half],
+				[lon - half, lat - half]
+			]
+		]
 	};
 }
 
