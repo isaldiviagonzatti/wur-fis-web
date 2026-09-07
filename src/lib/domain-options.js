@@ -55,10 +55,14 @@ export const OBSERVED_BOUNDARY_LABELS = Object.fromEntries(
 // The level the forecast is reported at. Not a boundary choice: it changes what
 // the numbers are, from a 0.1 degree cell's percentile to an area-weighted
 // aggregate over a whole unit. The forecast is published per grid cell, so that
-// is the default.
+// is the default. Ordered smallest to largest, which is the order the levels
+// nest in; listed here rather than spread from OBSERVED_BOUNDARY_OPTIONS, whose
+// own order the data explorer depends on.
 export const YIELD_FORECAST_AGGREGATION_OPTIONS = [
 	{ value: 'grid', label: 'Grid cells' },
-	...OBSERVED_BOUNDARY_OPTIONS
+	{ value: 'admin2', label: 'Admin 2' },
+	{ value: 'admin1', label: 'Admin 1' },
+	{ value: 'country', label: 'Country' }
 ];
 
 export const CALENDAR_DATASET_LABELS = {

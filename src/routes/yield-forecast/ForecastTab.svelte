@@ -578,10 +578,17 @@
 <div class="px-4 pb-4">
 	<div class="rounded-md bg-muted/30 p-3">
 			{#if anchorUnresolved}
+				<!-- The coordinate names a cell, so it is only a heading in the grid
+				     view. At an admin level the reported unit is the area, and a point
+				     inside it would misdescribe what is missing. -->
 				<div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-					<p class="text-xs font-medium text-foreground">
-						{anchor.lat.toFixed(2)}°, {anchor.lon.toFixed(2)}°
-					</p>
+					{#if showZones}
+						<span></span>
+					{:else}
+						<p class="text-xs font-medium text-foreground">
+							{anchor.lat.toFixed(2)}°, {anchor.lon.toFixed(2)}°
+						</p>
+					{/if}
 					<button
 						type="button"
 						onclick={clearCellSelection}
@@ -592,7 +599,8 @@
 				</div>
 				<div class="flex h-28 items-center justify-center rounded-md bg-background/60 px-4">
 					<p class="text-center text-xs text-muted-foreground">
-						No {activeCrop?.label ?? 'forecast'} data for this location in this initialisation.
+						No {activeCrop?.label ?? 'forecast'} data for this
+						{showZones ? 'area' : 'location'} in this initialisation.
 					</p>
 				</div>
 			{:else if showZones}
