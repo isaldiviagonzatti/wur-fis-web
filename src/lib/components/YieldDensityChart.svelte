@@ -10,9 +10,9 @@
   reference distribution therefore centres on zero and the forecast mean lands on
   the same anomaly quoted in the panel above.
 
-  Mean markers are positioned from the shared x domain rather than by the
-  charting library, and the key below is a fixed row, so two means falling close
-  together cannot overlap.
+  Mean markers and the band of member dots are positioned from the shared x
+  domain rather than by the charting library, and the key below is a fixed row,
+  so two means falling close together cannot overlap.
 -->
 <script>
 	import { Area, Axis, Chart, Svg } from 'layerchart';
@@ -22,9 +22,13 @@
 	let { forecast = [], historical = [], height = 200 } = $props();
 
 	// Must match the Chart padding below so markers line up with the curves.
+	const PAD_TOP = 8;
 	const PAD_LEFT = 8;
 	const PAD_RIGHT = 8;
 	const PAD_BOTTOM = 26;
+	// Band between the curves and the axis holding one dot per ensemble member.
+	const STRIP_HEIGHT = 24;
+	const DOT_SIZE = 5;
 
 	const referenceMean = $derived(mean(historical));
 
@@ -73,6 +77,12 @@
 			: [-1, 1]
 	);
 	const yMax = $derived(1);
+	const yTop = $derived(yMax * 1.08);
+	// The curves fill down to zero (yBaseline), so extending the domain below zero
+	// leaves an empty band; this sizes that band to exactly STRIP_HEIGHT pixels.
+	const yBottom = $derived(
+		(-STRIP_HEIGHT * yTop) / (height - PAD_TOP - PAD_BOTTOM - STRIP_HEIGHT)
+	);
 
 	const forecastMean = $derived(forecastMeanValue);
 
@@ -88,6 +98,19 @@
 	// dashed rule and no key entry — naming it would only state the obvious.
 	const referenceLeft = $derived(markerLeft(0));
 	const forecastLeft = $derived(markerLeft(forecastMean));
+
+	// The vertical offset carries no meaning, it only keeps dots apart. Sorting
+	// first and stepping by the golden ratio separates neighbours in x, and being
+	// deterministic, a dot never jumps between renders.
+	const memberDots = $derived(
+		[...forecastAnomalies]
+			.sort((a, b) => a - b)
+			.map((value, index) => ({
+				left: markerLeft(value),
+				top: 2 + ((index * 0.6180339887) % 1) * (STRIP_HEIGHT - 4 - DOT_SIZE)
+			}))
+			.filter((dot) => dot.left)
+	);
 
 	function formatPercent(value) {
 		return `${value > 0 ? '+' : ''}${Math.round(value)}%`;
@@ -121,8 +144,9 @@
 				xScale={scaleLinear()}
 				yScale={scaleLinear()}
 				{xDomain}
-				yDomain={[0, yMax * 1.08]}
-				padding={{ top: 8, right: PAD_RIGHT, bottom: PAD_BOTTOM, left: PAD_LEFT }}
+				yDomain={[yBottom, yTop]}
+				yBaseline={0}
+				padding={{ top: PAD_TOP, right: PAD_RIGHT, bottom: PAD_BOTTOM, left: PAD_LEFT }}
 			>
 				<Svg>
 					<Axis placement="bottom" ticks={6} format={formatPercent} />
@@ -142,6 +166,24 @@
 					{/if}
 				</Svg>
 			</Chart>
+
+			<div
+				class="pointer-events-none absolute inset-x-0"
+				style:bottom={`${PAD_BOTTOM}px`}
+				style:height={`${STRIP_HEIGHT}px`}
+				aria-hidden="true"
+			>
+				{#each memberDots as dot, index (index)}
+					<span
+						class="absolute -translate-x-1/2 rounded-full opacity-75"
+						style:left={dot.left}
+						style:top={`${dot.top}px`}
+						style:width={`${DOT_SIZE}px`}
+						style:height={`${DOT_SIZE}px`}
+						style:background={FORECAST_COLOR}
+					></span>
+				{/each}
+			</div>
 
 			{#if referenceLeft}
 				<span
@@ -174,6 +216,17 @@
 			{#if forecastLeft}
 				<span class="inline-flex items-center gap-1" style:color={FORECAST_COLOR}>
 					▲ Forecast mean ({formatMean(forecastMean)})
+				</span>
+			{/if}
+			{#if memberDots.length}
+				<span class="inline-flex items-center gap-1" style:color={FORECAST_COLOR}>
+					<span
+						class="rounded-full opacity-75"
+						style:width={`${DOT_SIZE}px`}
+						style:height={`${DOT_SIZE}px`}
+						style:background={FORECAST_COLOR}
+					></span>
+					{memberDots.length} members
 				</span>
 			{/if}
 		</div>
