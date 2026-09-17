@@ -32,7 +32,9 @@
 		document.documentElement.classList.toggle('dark', theme.dark);
 	}
 
-	afterNavigate(({ to }) => {
+	afterNavigate(({ to, type }) => {
+		// count.js only counts the initial page load; client-side navigations are counted here.
+		if (type !== 'enter') window.goatcounter?.count?.();
 		const path = to?.url.pathname;
 		if (!path || path === '/') return;
 		clearTimeout(collapseTimer);
