@@ -13,6 +13,7 @@
 	let country = $state('');
 	let adminLevel = $state('grid');
 	let skillOverlay = $state(false);
+	let run = $state('');
 </script>
 
 <div class="flex flex-col h-full">
@@ -26,7 +27,7 @@
 		</div>
 
 		<TabsContent value="forecast" class="m-0 flex-1 overflow-auto p-0">
-			<ForecastTab bind:crop bind:country bind:adminLevel bind:skillOverlay />
+			<ForecastTab bind:crop bind:country bind:adminLevel bind:skillOverlay bind:run />
 		</TabsContent>
 
 		<TabsContent value="hindcasts" class="flex-1 overflow-auto p-4 m-0">

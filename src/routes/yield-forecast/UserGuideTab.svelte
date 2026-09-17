@@ -39,6 +39,7 @@
 				A selected location stays selected when you change the aggregation, so you can read the
 				same place as a cell, a district and a country in turn.
 			</p>
+			<p>The latest month is shown by default. To see a past month, use Change month next to the heading.</p>
 		</CardContent>
 	</Card>
 

@@ -14,7 +14,8 @@ import {
 	YIELD_FORECAST_CATALOG_URL,
 	yieldForecastAdminUrl,
 	yieldForecastDensityUrl,
-	yieldForecastGridUrl
+	yieldForecastGridUrl,
+	yieldForecastRunUrl
 } from '$lib/data-sources.js';
 
 // ColorBrewer BrBG, colourblind-safe: brown below normal, teal above.
@@ -56,6 +57,11 @@ async function fetchJson(url) {
 
 export function loadCatalog() {
 	return fetchJson(YIELD_FORECAST_CATALOG_URL);
+}
+
+/** An older month's run.json, shaped like the catalog's `countries` and `admin_levels`. */
+export function loadRunDescription(runId) {
+	return fetchJson(yieldForecastRunUrl(runId));
 }
 
 /**

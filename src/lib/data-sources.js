@@ -26,6 +26,12 @@ export const ADMIN_PMTILES_URLS = {
 export const YIELD_FORECAST_BASE = `${DATA_BASE}/yield-forecast`;
 export const YIELD_FORECAST_CATALOG_URL = `${YIELD_FORECAST_BASE}/catalog.json`;
 
+// One month's own description (crop lists, admin levels). The catalog's top
+// level describes only the latest run, so older months need this file.
+export function yieldForecastRunUrl(runId) {
+	return `${YIELD_FORECAST_BASE}/runs/${runId}/run.json`;
+}
+
 export function yieldForecastGridUrl(runId, country, crop) {
 	return `${YIELD_FORECAST_BASE}/runs/${runId}/grid/${country}/${crop}.json`;
 }

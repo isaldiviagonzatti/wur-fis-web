@@ -12,15 +12,21 @@
 
   Only cells the forecast beats its climatology on are published, so an absent
   cell means "no skill here", not "no crop here".
+
+  The latest initialisation is shown by default. An older month is described by
+  its own run.json, since the catalog's crop lists describe only the latest.
 -->
 <script>
 	import { untrack } from 'svelte';
+	import { browser } from '$app/environment';
+	import { replaceState } from '$app/navigation';
 	import Gauge from '@lucide/svelte/icons/gauge';
 	import ColorScaleLegend from '$lib/components/ColorScaleLegend.svelte';
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import Map from '$lib/components/Map.svelte';
 	import MapPanel from '$lib/components/MapPanel.svelte';
 	import PlaceSearch from '$lib/components/PlaceSearch.svelte';
+	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import YieldDensityChart from '$lib/components/YieldDensityChart.svelte';
 	import { COUNTRY_OPTIONS, YIELD_FORECAST_AGGREGATION_OPTIONS } from '$lib/domain-options.js';
 	import { STUDY_AREA_VIEW } from '$lib/map-config.js';
@@ -38,6 +44,7 @@
 		loadCatalog,
 		loadDensity,
 		loadGrid,
+		loadRunDescription,
 		snapToCellCentre,
 		toSentenceCase
 	} from '$lib/yield-forecast.js';
@@ -64,21 +71,23 @@
 		crop = $bindable(),
 		country = $bindable(),
 		adminLevel = $bindable(),
-		skillOverlay = $bindable()
+		skillOverlay = $bindable(),
+		// The chosen initialisation month; empty means the latest.
+		run = $bindable('')
 	} = $props();
 
 	let map = $state(null);
 	let catalog = $state(null);
 	let entries = $state([]);
 	let selected = $state(null);
-	// Which crop `entries` actually holds, so a half-finished crop switch cannot be
-	// read as data for the newly selected crop.
-	let loadedCrop = $state('');
+	// Which run and crop `entries` actually holds, so a half-finished crop or month
+	// switch cannot be read as data for the newly selected one.
+	let loadedCropKey = $state('');
 	let loadError = $state('');
 	let layerOpacity = $state(0.85);
 	let zones = $state([]);
 	let selectedZoneGid = $state(null);
-	// Which (level, crop) `zones` holds, so a half-finished switch is not read as
+	// Which (run, level, crop) `zones` holds, so a half-finished switch is not read as
 	// data for the newly selected one.
 	let loadedZoneKey = $state('');
 	// The location the user is interested in, as plain coordinates. Everything
@@ -91,23 +100,43 @@
 	// cannot be re-resolved at — a point on a cell this crop does not cover —
 	// loses its selection permanently, even though the unit is still valid.
 	let anchorZones = $state({});
+	// run.json of the selected older month, once loaded.
+	let runDescription = $state(null);
 
 	// Fired once at component init. Not an effect: it has no reactive input, so
 	// making it one would only obscure that it runs exactly once.
 	loadCatalog()
-		.then((loaded) => (catalog = loaded))
+		.then((loaded) => {
+			catalog = loaded;
+			// A shared link names its month; one no longer published falls back to the latest.
+			if (!browser || run) return;
+			const requested = new URL(window.location.href).searchParams.get('run');
+			if (requested && requested !== loaded.latest_run && loaded.runs?.includes(requested)) {
+				run = requested;
+			}
+		})
 		.catch((error) => (loadError = `Could not load the forecast catalog. ${error.message}`));
 
-	const runId = $derived(catalog?.latest_run ?? null);
-	const cropIndex = $derived(catalog ? buildCropIndex(catalog) : []);
+	const latestRun = $derived(catalog?.latest_run ?? null);
+	const runOptions = $derived([...(catalog?.runs ?? [])].sort().reverse());
+	const isLatestRun = $derived(!run || run === latestRun);
+	const shownRun = $derived(isLatestRun ? latestRun : run);
+	// What the shown month contains. The catalog's top level describes the latest;
+	// an older month has nothing to show until its run.json arrives, so `runId`
+	// stays null meanwhile and every layer effect clears instead of mixing months.
+	const runInfo = $derived(
+		isLatestRun ? catalog : runDescription?.run_id === run ? runDescription : null
+	);
+	const runId = $derived(runInfo ? shownRun : null);
+	const cropIndex = $derived(runInfo ? buildCropIndex(runInfo) : []);
 	const cropOptions = $derived(
 		cropIndex.map(({ id, label }) => ({ value: id, label: toSentenceCase(label) }))
 	);
 	const activeCrop = $derived(cropIndex.find((entry) => entry.id === crop) ?? null);
 	const totalCells = $derived(entries.reduce((sum, entry) => sum + entry.grid.n_cells, 0));
 	const showZones = $derived(isAdminLevel(adminLevel));
-	const isLoadedCropCurrent = $derived(loadedCrop === crop);
-	const isZoneDataCurrent = $derived(loadedZoneKey === `${adminLevel}:${crop}`);
+	const isLoadedCropCurrent = $derived(loadedCropKey === `${runId}:${crop}`);
+	const isZoneDataCurrent = $derived(loadedZoneKey === `${runId}:${adminLevel}:${crop}`);
 	const selectedZone = $derived(
 		isZoneDataCurrent && selectedZoneGid
 			? (zones.find((zone) => zone.gid === selectedZoneGid) ?? null)
@@ -151,6 +180,24 @@
 	function formatRunId(runId) {
 		const [year, month] = String(runId ?? '').split('-');
 		return RUN_MONTHS[Number(month) - 1] ? `${RUN_MONTHS[Number(month) - 1]} ${year}` : runId;
+	}
+
+	/** A crop the month does not have is dropped, as if never picked. */
+	function dropUnavailableCrop(description) {
+		if (crop && !buildCropIndex(description).some((entry) => entry.id === crop)) crop = '';
+	}
+
+	function selectRun(id) {
+		const next = id === latestRun ? '' : id;
+		if (next === run) return;
+		run = next;
+		loadError = '';
+		if (!next) dropUnavailableCrop(catalog);
+		// The latest needs no parameter, so its link stays the plain page URL.
+		const url = new URL(window.location.href);
+		if (next) url.searchParams.set('run', next);
+		else url.searchParams.delete('run');
+		replaceState(url, {});
 	}
 
 	function clearSelections() {
@@ -279,6 +326,27 @@
 		setSelectedZone(mapInstance, adminLevel, selectedZoneGid);
 	}
 
+	// An older month's description, fetched when it is selected. Cached by URL, so
+	// returning to a month does not refetch.
+	$effect(() => {
+		if (!catalog || isLatestRun) return;
+		const id = run;
+		let cancelled = false;
+		loadRunDescription(id)
+			.then((description) => {
+				if (cancelled) return;
+				dropUnavailableCrop(description);
+				runDescription = description;
+			})
+			.catch((error) => {
+				if (cancelled) return;
+				loadError = `Could not load the ${formatRunId(id)} forecast. ${error.message}`;
+			});
+		return () => {
+			cancelled = true;
+		};
+	});
+
 	// Load the selected crop for every country that has it, then hand the merged
 	// set to the map and frame it. Depends on `map` so a crop resolved before the
 	// map finished mounting is still drawn.
@@ -287,11 +355,12 @@
 		const cropEntry = activeCrop;
 		if (!runId || !cropEntry) {
 			entries = [];
-			loadedCrop = '';
+			loadedCropKey = '';
 			clearForecastCells(map);
 			return;
 		}
 		const mapInstance = map;
+		const key = `${runId}:${cropEntry.id}`;
 		let cancelled = false;
 		// Read without subscribing: this steers the load, it must not retrigger it.
 		// Taken straight from the stored position rather than by looking the index up
@@ -306,7 +375,7 @@
 			.then((loaded) => {
 				if (cancelled) return;
 				entries = loaded;
-				loadedCrop = cropEntry.id;
+				loadedCropKey = key;
 				loadError = '';
 				setForecastCells(mapInstance, loaded);
 				// Carry the selection across the crop change when the new crop is grown
@@ -341,7 +410,7 @@
 			.catch((error) => {
 				if (cancelled) return;
 				entries = [];
-				loadedCrop = '';
+				loadedCropKey = '';
 				clearForecastCells(mapInstance);
 				loadError = `Could not load ${cropEntry.label}. ${error.message}`;
 			});
@@ -368,7 +437,7 @@
 		// level change would otherwise leave the previous level's outline on screen.
 		clearZoneLayers(mapInstance);
 		const level = adminLevel;
-		const key = `${level}:${crop}`;
+		const key = `${runId}:${level}:${crop}`;
 		let cancelled = false;
 		loadAdmin(runId, level, crop)
 			.then((payload) => {
@@ -463,9 +532,35 @@
 
 {#if catalog}
 	<div class="shrink-0 px-4 pt-2">
-		<p class="text-sm font-semibold text-foreground">
-			Forecast initialised {formatRunId(catalog.latest_run)}
-		</p>
+		<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+			<p class="text-sm font-semibold text-foreground">
+				Forecast initialised {formatRunId(shownRun)}
+			</p>
+			{#if runOptions.length > 1}
+				<Select type="single" bind:value={() => shownRun, selectRun}>
+					<SelectTrigger size="sm" aria-label="Forecast month" class="h-6 text-muted-foreground">
+						Change month
+					</SelectTrigger>
+					<SelectContent>
+						{#each runOptions as id (id)}
+							<SelectItem value={id} label={formatRunId(id)} />
+						{/each}
+					</SelectContent>
+				</Select>
+			{/if}
+		</div>
+		{#if !isLatestRun}
+			<p class="mt-1 text-xs text-muted-foreground">
+				Older forecast. The latest is {formatRunId(latestRun)}.
+				<button
+					type="button"
+					onclick={() => selectRun(latestRun)}
+					class="cursor-pointer font-medium text-foreground underline underline-offset-2 hover:no-underline"
+				>
+					Show latest
+				</button>
+			</p>
+		{/if}
 	</div>
 {/if}
 
