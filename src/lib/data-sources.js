@@ -45,3 +45,15 @@ export function yieldForecastDensityUrl(runId, country, crop) {
 export function yieldForecastAdminUrl(runId, level, crop) {
 	return `${YIELD_FORECAST_BASE}/runs/${runId}/admin/${level}/${crop}.json`;
 }
+
+// Crop nowcast of a month (ERA5-Land up to the day before the forecast start).
+// Admin files are per level and crop across countries, like the forecast's; grid
+// files are split per country, crop and province so a clicked cell loads one
+// small file. Which files exist is listed in the run's `nowcast` block.
+export function yieldForecastNowcastAdminUrl(runId, level, crop) {
+	return `${YIELD_FORECAST_BASE}/runs/${runId}/nowcast/admin/${level}/${crop}.json`;
+}
+
+export function yieldForecastNowcastGridUrl(runId, country, crop, admin1) {
+	return `${YIELD_FORECAST_BASE}/runs/${runId}/nowcast/grid/${country}/${crop}/${admin1}.json`;
+}

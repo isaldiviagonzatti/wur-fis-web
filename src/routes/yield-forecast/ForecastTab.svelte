@@ -25,6 +25,7 @@
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import Map from '$lib/components/Map.svelte';
 	import MapPanel from '$lib/components/MapPanel.svelte';
+	import NowcastPanel from '$lib/components/NowcastPanel.svelte';
 	import PlaceSearch from '$lib/components/PlaceSearch.svelte';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import YieldDensityChart from '$lib/components/YieldDensityChart.svelte';
@@ -44,6 +45,8 @@
 		loadCatalog,
 		loadDensity,
 		loadGrid,
+		loadNowcastAdmin,
+		loadNowcastCell,
 		loadRunDescription,
 		snapToCellCentre,
 		toSentenceCase
@@ -169,6 +172,31 @@
 	// same crop and country reuses the resolved promise rather than refetching.
 	const densityRequest = $derived(
 		selectedCell && runId && crop ? loadDensity(runId, selected.country, crop) : null
+	);
+
+	// The month's crop nowcast (season so far from observed weather), when it has one.
+	const nowcastInfo = $derived(runInfo?.nowcast ?? null);
+	// With a nowcast the panel has two columns: season so far, then the forecast.
+	const FORECAST_COLUMN = 'border-t pt-3 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-5';
+	const nowcastZoneRequest = $derived(
+		nowcastInfo && showZones && selectedZone && runId && crop
+			? loadNowcastAdmin(runId, nowcastInfo, adminLevel, crop).then(
+					(payload) => payload?.zones.find((zone) => zone.gid === selectedZone.gid) ?? null
+				)
+			: null
+	);
+	const nowcastCellRequest = $derived(
+		nowcastInfo && selectedCell && runId && crop
+			? loadNowcastCell(
+					runId,
+					nowcastInfo,
+					selected.country,
+					crop,
+					selectedCell.zones.admin1,
+					selectedCell.lat,
+					selectedCell.lon
+				)
+			: null
 	);
 
 	const RUN_MONTHS = [
@@ -530,6 +558,23 @@
 	});
 </script>
 
+{#snippet nowcastColumn(request)}
+	<div>
+		<p class="mb-2 text-sm font-semibold text-foreground">Season so far</p>
+		{#await request}
+			<p class="text-xs text-muted-foreground">Loading the season so far…</p>
+		{:then entry}
+			{#if entry}
+				<NowcastPanel {entry} through={nowcastInfo.through} stepDays={nowcastInfo.step_days} />
+			{:else}
+				<p class="text-xs text-muted-foreground">Not sown yet.</p>
+			{/if}
+		{:catch error}
+			<p class="text-xs text-destructive">Could not load the season so far. {error.message}</p>
+		{/await}
+	</div>
+{/snippet}
+
 {#if catalog}
 	<div class="shrink-0 px-4 pt-2">
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -727,46 +772,56 @@
 						</button>
 					</div>
 
-					<div class="mb-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:grid-cols-4">
-						<div class="text-center">
-							<span class="text-muted-foreground">Percentile</span>
-							<p class="text-sm font-medium text-foreground">
-								{selectedZone.percentile.toFixed(0)}
+					<div class={nowcastInfo ? 'grid gap-5 lg:grid-cols-2' : ''}>
+						{#if nowcastInfo}
+							{@render nowcastColumn(nowcastZoneRequest)}
+						{/if}
+						<div class={nowcastInfo ? FORECAST_COLUMN : ''}>
+							{#if nowcastInfo}
+								<p class="mb-2 text-sm font-semibold text-foreground">Yield forecast</p>
+							{/if}
+							<div class="mb-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:grid-cols-4">
+								<div class="text-center">
+									<span class="text-muted-foreground">Percentile</span>
+									<p class="text-sm font-medium text-foreground">
+										{selectedZone.percentile.toFixed(0)}
+									</p>
+								</div>
+								<div class="text-center">
+									<span class="text-muted-foreground">Anomaly</span>
+									<p class="text-sm font-medium text-foreground">
+										{formatSigned(selectedZone.anomaly_pct)}%
+									</p>
+								</div>
+								<div class="text-center">
+									<span class="text-muted-foreground">Below / near / above</span>
+									<p class="text-sm font-medium text-foreground">
+										{formatTercileSplit(
+											selectedZone.prob_below,
+											selectedZone.prob_near,
+											selectedZone.prob_above
+										).join(' / ')}
+									</p>
+								</div>
+								<div class="text-center">
+									<span class="text-muted-foreground">Area covered</span>
+									<p class="text-sm font-medium text-foreground">
+										{(100 * selectedZone.area_coverage).toFixed(0)}%
+									</p>
+								</div>
+							</div>
+
+							<p class="mb-2 text-[11px] text-muted-foreground">
+								The ensemble mean sits {describePercentile(selectedZone.percentile)}. Historical
+								variability in this area is {selectedZone.hist_cv_pct.toFixed(0)}%.
 							</p>
-						</div>
-						<div class="text-center">
-							<span class="text-muted-foreground">Anomaly</span>
-							<p class="text-sm font-medium text-foreground">
-								{formatSigned(selectedZone.anomaly_pct)}%
-							</p>
-						</div>
-						<div class="text-center">
-							<span class="text-muted-foreground">Below / near / above</span>
-							<p class="text-sm font-medium text-foreground">
-								{formatTercileSplit(
-									selectedZone.prob_below,
-									selectedZone.prob_near,
-									selectedZone.prob_above
-								).join(' / ')}
-							</p>
-						</div>
-						<div class="text-center">
-							<span class="text-muted-foreground">Area covered</span>
-							<p class="text-sm font-medium text-foreground">
-								{(100 * selectedZone.area_coverage).toFixed(0)}%
-							</p>
+
+							<YieldDensityChart
+								forecast={selectedZone.members}
+								historical={selectedZone.reference}
+							/>
 						</div>
 					</div>
-
-					<p class="mb-2 text-[11px] text-muted-foreground">
-						The ensemble mean sits {describePercentile(selectedZone.percentile)}. Historical
-						variability in this area is {selectedZone.hist_cv_pct.toFixed(0)}%.
-					</p>
-
-					<YieldDensityChart
-						forecast={selectedZone.members}
-						historical={selectedZone.reference}
-					/>
 				{/if}
 			{:else if !selectedCell}
 				<div class="flex h-28 items-center justify-center rounded-md bg-background/60">
@@ -791,58 +846,68 @@
 					</button>
 				</div>
 
-				<div class="mb-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:grid-cols-4">
-					<div class="text-center">
-						<span class="text-muted-foreground">Percentile</span>
-						<p class="text-sm font-medium text-foreground">
-							{selectedCell.percentile.toFixed(0)}
+				<div class={nowcastInfo ? 'grid gap-5 lg:grid-cols-2' : ''}>
+					{#if nowcastInfo}
+						{@render nowcastColumn(nowcastCellRequest)}
+					{/if}
+					<div class={nowcastInfo ? FORECAST_COLUMN : ''}>
+						{#if nowcastInfo}
+							<p class="mb-2 text-sm font-semibold text-foreground">Yield forecast</p>
+						{/if}
+						<div class="mb-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:grid-cols-4">
+							<div class="text-center">
+								<span class="text-muted-foreground">Percentile</span>
+								<p class="text-sm font-medium text-foreground">
+									{selectedCell.percentile.toFixed(0)}
+								</p>
+							</div>
+							<div class="text-center">
+								<span class="text-muted-foreground">Anomaly</span>
+								<p class="text-sm font-medium text-foreground">
+									{formatSigned(selectedCell.anomalyPct)}%
+								</p>
+							</div>
+							<div class="text-center">
+								<span class="text-muted-foreground">Below / near / above</span>
+								<p class="text-sm font-medium text-foreground">
+									{formatTercileSplit(
+										selectedCell.probBelow,
+										selectedCell.probNear,
+										selectedCell.probAbove
+									).join(' / ')}
+								</p>
+							</div>
+							<div class="text-center">
+								<span class="text-muted-foreground">Skill (CRPSS)</span>
+								<p class="text-sm font-medium text-foreground">{selectedCell.skill.toFixed(2)}</p>
+							</div>
+						</div>
+
+						<p class="mb-2 text-[11px] text-muted-foreground">
+							The ensemble mean sits {describePercentile(selectedCell.percentile)}. Historical
+							variability in this cell is {selectedCell.histCvPct.toFixed(0)}%.
 						</p>
-					</div>
-					<div class="text-center">
-						<span class="text-muted-foreground">Anomaly</span>
-						<p class="text-sm font-medium text-foreground">
-							{formatSigned(selectedCell.anomalyPct)}%
-						</p>
-					</div>
-					<div class="text-center">
-						<span class="text-muted-foreground">Below / near / above</span>
-						<p class="text-sm font-medium text-foreground">
-							{formatTercileSplit(
-								selectedCell.probBelow,
-								selectedCell.probNear,
-								selectedCell.probAbove
-							).join(' / ')}
-						</p>
-					</div>
-					<div class="text-center">
-						<span class="text-muted-foreground">Skill (CRPSS)</span>
-						<p class="text-sm font-medium text-foreground">{selectedCell.skill.toFixed(2)}</p>
+
+						{#await densityRequest}
+							<div class="flex h-24 items-center justify-center">
+								<p class="text-xs text-muted-foreground">Loading distribution…</p>
+							</div>
+						{:then density}
+							{#if density}
+								<YieldDensityChart
+									forecast={density.forecast[selected.index] ?? []}
+									historical={density.historical[selected.index] ?? []}
+								/>
+							{/if}
+						{:catch error}
+							<div class="flex h-24 items-center justify-center">
+								<p class="text-xs text-destructive">
+									Could not load the distribution. {error.message}
+								</p>
+							</div>
+						{/await}
 					</div>
 				</div>
-
-				<p class="mb-2 text-[11px] text-muted-foreground">
-					The ensemble mean sits {describePercentile(selectedCell.percentile)}. Historical
-					variability in this cell is {selectedCell.histCvPct.toFixed(0)}%.
-				</p>
-
-				{#await densityRequest}
-					<div class="flex h-24 items-center justify-center">
-						<p class="text-xs text-muted-foreground">Loading distribution…</p>
-					</div>
-				{:then density}
-					{#if density}
-						<YieldDensityChart
-							forecast={density.forecast[selected.index] ?? []}
-							historical={density.historical[selected.index] ?? []}
-						/>
-					{/if}
-				{:catch error}
-					<div class="flex h-24 items-center justify-center">
-						<p class="text-xs text-destructive">
-							Could not load the distribution. {error.message}
-						</p>
-					</div>
-				{/await}
 			{/if}
 	</div>
 </div>

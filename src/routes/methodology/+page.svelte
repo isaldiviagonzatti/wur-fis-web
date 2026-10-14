@@ -25,7 +25,7 @@
 				<p class="text-sm text-muted-foreground">
 					Seasonal climate forcing: SEAS5 re-forecasts (ECMWF) bias-corrected and downscaled
 					against ERA5-Land reanalysis. Crop calibration: HarvestStat and FAOSTAT yield statistics.
-					Administrative boundaries: GADM v4.1. Crop area masks: CROPGRIDS.
+					Administrative boundaries: GADM v4.1. Crop area masks: SPAM 2017.
 					Soil texture: USDA-NRCS. Crop calendars: FAO, validated by local experts.
 				</p>
 				<p class="text-xs text-muted-foreground/60 mt-4">— Placeholder —</p>

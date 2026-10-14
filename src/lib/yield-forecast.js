@@ -15,6 +15,8 @@ import {
 	yieldForecastAdminUrl,
 	yieldForecastDensityUrl,
 	yieldForecastGridUrl,
+	yieldForecastNowcastAdminUrl,
+	yieldForecastNowcastGridUrl,
 	yieldForecastRunUrl
 } from '$lib/data-sources.js';
 
@@ -106,6 +108,48 @@ export function loadAdmin(runId, level, crop) {
 
 export function loadDensity(runId, country, crop) {
 	return fetchJson(yieldForecastDensityUrl(runId, country, crop));
+}
+
+/** The month's nowcast for one level and crop, or null when the run has none for it. */
+export function loadNowcastAdmin(runId, nowcast, level, crop) {
+	if (!nowcast?.admin_levels?.[level]?.includes(crop)) return Promise.resolve(null);
+	return fetchJson(yieldForecastNowcastAdminUrl(runId, level, crop));
+}
+
+/** The nowcast of one grid cell, from its province's file, or null when there is none. */
+export async function loadNowcastCell(runId, nowcast, country, crop, admin1, lat, lon) {
+	if (!admin1 || !nowcast?.grid?.[country]?.[crop]?.includes(admin1)) return null;
+	const chunk = await fetchJson(yieldForecastNowcastGridUrl(runId, country, crop, admin1));
+	const index = chunk.lat.findIndex(
+		(cellLat, i) => Math.abs(cellLat - lat) < 1e-3 && Math.abs(chunk.lon[i] - lon) < 1e-3
+	);
+	if (index < 0) return null;
+	const sowing = new Date(Date.UTC(chunk.season_year[index], 0, chunk.sowing_doy[index]));
+	const indicator = (name) =>
+		Object.fromEntries(Object.entries(chunk[name]).map(([key, values]) => [key, values[index]]));
+	return {
+		sowing_date: sowing.toISOString().slice(0, 10),
+		day_of_season: chunk.day_of_season[index],
+		biomass: indicator('biomass'),
+		water: indicator('water')
+	};
+}
+
+/**
+ * Rows for the nowcast chart: one per step from sowing, with the season so far and
+ * the reference band, all multiplied by `scale`.
+ */
+export function nowcastRows(block, sowingDate, stepDays, scale = 1) {
+	const start = new Date(`${sowingDate}T00:00:00Z`).getTime();
+	const length = Math.max(block.mean.length, block.current.length);
+	const value = (values, i) => (values[i] === null || values[i] === undefined ? null : values[i] * scale);
+	return Array.from({ length }, (_, i) => ({
+		date: new Date(start + i * stepDays * 86400000),
+		current: value(block.current, i),
+		mean: value(block.mean, i),
+		p05: value(block.p05, i),
+		p95: value(block.p95, i)
+	}));
 }
 
 /**
