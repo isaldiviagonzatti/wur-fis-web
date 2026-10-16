@@ -17,9 +17,12 @@
 <script>
 	import { Area, Axis, Chart, Svg } from 'layerchart';
 	import { scaleLinear } from 'd3-scale';
-	import { FORECAST_COLOR, HISTORICAL_COLOR, kernelDensity, mean } from '$lib/yield-forecast.js';
+	import { theme } from '$lib/theme.svelte.js';
+	import { chartColors, kernelDensity, mean } from '$lib/yield-forecast.js';
 
 	let { forecast = [], historical = [], height = 200 } = $props();
+
+	const colors = $derived(chartColors(theme.dark));
 
 	// Must match the Chart padding below so markers line up with the curves.
 	const PAD_TOP = 8;
@@ -124,19 +127,19 @@
 </script>
 
 <div class="space-y-2">
-	<div class="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+	<div class="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground">
 		<span class="inline-flex items-center gap-1.5">
-			<span class="h-2 w-4 rounded-sm" style:background={FORECAST_COLOR}></span>
+			<span class="h-2 w-4 rounded-sm" style:background={colors.forecast}></span>
 			Forecast ensemble
 		</span>
 		<span class="inline-flex items-center gap-1.5">
-			<span class="h-2 w-4 rounded-sm" style:background={HISTORICAL_COLOR}></span>
+			<span class="h-2 w-4 rounded-sm" style:background={colors.reference}></span>
 			Reference years
 		</span>
 	</div>
 
 	{#if hasCurves}
-		<div class="relative" style:height={`${height}px`}>
+		<div class="density-chart relative" style:height={`${height}px`}>
 			<Chart
 				data={forecastCurve}
 				x="x"
@@ -152,16 +155,16 @@
 					<Axis placement="bottom" ticks={6} format={formatPercent} />
 					<Area
 						data={historicalCurve}
-						fill={HISTORICAL_COLOR}
+						fill={colors.reference}
 						fillOpacity={0.28}
-						line={{ stroke: HISTORICAL_COLOR, 'stroke-width': 1.5 }}
+						line={{ stroke: colors.reference, 'stroke-width': 1.5 }}
 					/>
 					{#if forecastCurve.length}
 						<Area
 							data={forecastCurve}
-							fill={FORECAST_COLOR}
+							fill={colors.forecast}
 							fillOpacity={0.38}
-							line={{ stroke: FORECAST_COLOR, 'stroke-width': 1.5 }}
+							line={{ stroke: colors.forecast, 'stroke-width': 1.5 }}
 						/>
 					{/if}
 				</Svg>
@@ -180,7 +183,7 @@
 						style:top={`${dot.top}px`}
 						style:width={`${DOT_SIZE}px`}
 						style:height={`${DOT_SIZE}px`}
-						style:background={FORECAST_COLOR}
+						style:background={colors.forecast}
 					></span>
 				{/each}
 			</div>
@@ -190,7 +193,7 @@
 					class="pointer-events-none absolute top-2 w-0 border-l border-dashed"
 					style:left={referenceLeft}
 					style:bottom={`${PAD_BOTTOM}px`}
-					style:border-color={HISTORICAL_COLOR}
+					style:border-color={colors.reference}
 					aria-hidden="true"
 				></span>
 			{/if}
@@ -199,32 +202,32 @@
 					class="pointer-events-none absolute top-2 w-0 border-l border-dashed"
 					style:left={forecastLeft}
 					style:bottom={`${PAD_BOTTOM}px`}
-					style:border-color={FORECAST_COLOR}
+					style:border-color={colors.forecast}
 					aria-hidden="true"
 				></span>
 				<span
-					class="pointer-events-none absolute -translate-x-1/2 text-[10px] leading-none"
+					class="pointer-events-none absolute -translate-x-1/2 text-xs leading-none"
 					style:left={forecastLeft}
 					style:bottom={`${PAD_BOTTOM - 6}px`}
-					style:color={FORECAST_COLOR}
+					style:color={colors.forecast}
 					aria-hidden="true">▲</span
 				>
 			{/if}
 		</div>
 
-		<div class="flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
+		<div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
 			{#if forecastLeft}
-				<span class="inline-flex items-center gap-1" style:color={FORECAST_COLOR}>
+				<span class="inline-flex items-center gap-1" style:color={colors.forecast}>
 					▲ Forecast mean ({formatMean(forecastMean)})
 				</span>
 			{/if}
 			{#if memberDots.length}
-				<span class="inline-flex items-center gap-1" style:color={FORECAST_COLOR}>
+				<span class="inline-flex items-center gap-1" style:color={colors.forecast}>
 					<span
 						class="rounded-full opacity-75"
 						style:width={`${DOT_SIZE}px`}
 						style:height={`${DOT_SIZE}px`}
-						style:background={FORECAST_COLOR}
+						style:background={colors.forecast}
 					></span>
 					{memberDots.length} members
 				</span>
@@ -232,7 +235,14 @@
 		</div>
 	{:else}
 		<div class="flex h-24 items-center justify-center rounded-md bg-background/60">
-			<p class="text-xs text-muted-foreground">No reference distribution for this cell.</p>
+			<p class="text-sm text-muted-foreground">No reference distribution for this cell.</p>
 		</div>
 	{/if}
 </div>
+
+<style>
+	/* LayerChart's 10px tick labels are too small to read on a laptop. */
+	.density-chart :global(.lc-axis-tick-label) {
+		font-size: 12px;
+	}
+</style>

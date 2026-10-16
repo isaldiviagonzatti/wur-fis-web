@@ -20,7 +20,7 @@ export const isGeocodingAvailable = () => Boolean(env.PUBLIC_MAPBOX_TOKEN);
  *
  * @param {string} query
  * @param {AbortSignal} [signal] so a superseded keystroke cancels its request
- * @returns {Promise<Array<{id: string, name: string, context: string, lat: number, lon: number}>>}
+ * @returns {Promise<Array<{id: string, name: string, context: string, countryCode: string, lat: number, lon: number}>>}
  */
 export async function searchPlaces(query, signal) {
 	const token = env.PUBLIC_MAPBOX_TOKEN;
@@ -44,6 +44,7 @@ export async function searchPlaces(query, signal) {
 				id: feature.id ?? `${lat},${lon}`,
 				name: properties.name ?? properties.full_address ?? query,
 				context: properties.place_formatted ?? '',
+				countryCode: properties.context?.country?.country_code?.toLowerCase() ?? '',
 				lat,
 				lon
 			};

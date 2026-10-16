@@ -15,11 +15,13 @@
 -->
 <script>
 	import NowcastChart from '$lib/components/NowcastChart.svelte';
-	import { FORECAST_COLOR, HISTORICAL_COLOR, formatSigned, nowcastRows } from '$lib/yield-forecast.js';
+	import { theme } from '$lib/theme.svelte.js';
+	import { chartColors, formatSigned, nowcastRows } from '$lib/yield-forecast.js';
 
 	let { entry, through, stepDays } = $props();
 
 	const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+	const colors = $derived(chartColors(theme.dark));
 
 	// Normal end-of-season biomass: the last value of the reference mean.
 	const biomassScale = $derived.by(() => {
@@ -30,11 +32,6 @@
 		biomassScale ? nowcastRows(entry.biomass, entry.sowing_date, stepDays, biomassScale) : []
 	);
 	const waterRows = $derived(nowcastRows(entry.water, entry.sowing_date, stepDays, 100));
-
-	function formatDate(text) {
-		const date = new Date(`${text}T00:00:00Z`);
-		return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
-	}
 
 	function formatMonth(text) {
 		const date = new Date(`${text}T00:00:00Z`);
@@ -59,18 +56,18 @@
 		if (block.percentile === null) return 'no comparison available for this day of the season';
 		const anomaly =
 			withAnomaly && block.anomaly_pct !== null ? ` (${formatSigned(block.anomaly_pct)}% vs normal)` : '';
-		return `${ordinal(block.percentile)} percentile of 1994-2023${anomaly}`;
+		return `${ordinal(block.percentile)} percentile of the past 30 years${anomaly}`;
 	}
 </script>
 
 <div class="space-y-3">
-	<p class="text-[11px] text-muted-foreground">
-		Sown {formatMonth(entry.sowing_date)}. Observed weather up to {formatDate(through)}.
+	<p class="text-[13px] text-muted-foreground">
+		Sown {formatMonth(entry.sowing_date)}.
 	</p>
 
 	<div>
-		<p class="text-xs font-medium text-foreground">Biomass to date</p>
-		<p class="mb-1 text-[11px] text-muted-foreground">
+		<p class="text-sm font-medium text-foreground">Biomass to date</p>
+		<p class="mb-1 text-[13px] text-muted-foreground">
 			{summary(entry.biomass)}. 100% is what a normal season reaches by harvest.
 		</p>
 		{#if biomassRows.length}
@@ -79,24 +76,24 @@
 	</div>
 
 	<div>
-		<p class="text-xs font-medium text-foreground">Water needs met</p>
-		<p class="mb-1 text-[11px] text-muted-foreground">
+		<p class="text-sm font-medium text-foreground">Water needs met</p>
+		<p class="mb-1 text-[13px] text-muted-foreground">
 			{waterSummary}.
 		</p>
 		<NowcastChart rows={waterRows} {through} yMax={100} />
 	</div>
 
-	<div class="flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
+	<div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
 		<span class="inline-flex items-center gap-1.5">
-			<span class="h-0.5 w-4" style:background={FORECAST_COLOR}></span>
+			<span class="h-0.5 w-4" style:background={colors.forecast}></span>
 			This season
 		</span>
 		<span class="inline-flex items-center gap-1.5">
-			<span class="w-4 border-t border-dashed" style:border-color={HISTORICAL_COLOR}></span>
+			<span class="w-4 border-t border-dashed" style:border-color={colors.reference}></span>
 			Normal
 		</span>
 		<span class="inline-flex items-center gap-1.5">
-			<span class="h-2 w-4 rounded-sm opacity-30" style:background={HISTORICAL_COLOR}></span>
+			<span class="h-2 w-4 rounded-sm opacity-30" style:background={colors.reference}></span>
 			Usual range (5-95%)
 		</span>
 		<span class="inline-flex items-center gap-1.5">

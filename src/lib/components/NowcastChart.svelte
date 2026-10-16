@@ -11,9 +11,12 @@
 <script>
 	import { Area, Axis, Chart, Spline, Svg, Tooltip } from 'layerchart';
 	import { scaleLinear, scaleUtc } from 'd3-scale';
-	import { FORECAST_COLOR, HISTORICAL_COLOR } from '$lib/yield-forecast.js';
+	import { theme } from '$lib/theme.svelte.js';
+	import { chartColors } from '$lib/yield-forecast.js';
 
 	let { rows = [], through, yMax = null, height = 150 } = $props();
+
+	const colors = $derived(chartColors(theme.dark));
 
 	// Must match the Chart padding below so the day marker lines up.
 	const PAD = { top: 8, right: 8, bottom: 22, left: 34 };
@@ -43,7 +46,7 @@
 	const formatValue = (value) => `${Math.round(value)}%`;
 </script>
 
-<div class="relative" style:height={`${height}px`}>
+<div class="nowcast-chart relative" style:height={`${height}px`}>
 	<Chart
 		data={rows}
 		x="date"
@@ -58,26 +61,26 @@
 		<Svg>
 			<Axis placement="left" ticks={4} format={formatValue} />
 			<Axis placement="bottom" ticks={4} format={formatMonth} />
-			<Area data={band} y0="p05" y1="p95" fill={HISTORICAL_COLOR} fillOpacity={0.18} />
+			<Area data={band} y0="p05" y1="p95" fill={colors.reference} fillOpacity={0.18} />
 			<Spline
 				data={rows}
 				y="mean"
 				defined={(d) => d.mean !== null}
-				stroke={HISTORICAL_COLOR}
+				stroke={colors.reference}
 				stroke-width={1.5}
 				stroke-dasharray="4 3"
 			/>
-			<Spline data={current} y="current" stroke={FORECAST_COLOR} stroke-width={2.25} />
+			<Spline data={current} y="current" stroke={colors.forecast} stroke-width={2.25} />
 		</Svg>
 		<Tooltip.Root>
 			{#snippet children({ data })}
 				<Tooltip.Header>{formatDay(data.date)}</Tooltip.Header>
 				<Tooltip.List>
 					{#if data.current !== null}
-						<Tooltip.Item label="This season" value={formatValue(data.current)} color={FORECAST_COLOR} />
+						<Tooltip.Item label="This season" value={formatValue(data.current)} color={colors.forecast} />
 					{/if}
 					{#if data.mean !== null}
-						<Tooltip.Item label="Normal" value={formatValue(data.mean)} color={HISTORICAL_COLOR} />
+						<Tooltip.Item label="Normal" value={formatValue(data.mean)} color={colors.reference} />
 					{/if}
 					{#if data.p05 !== null && data.p95 !== null}
 						<Tooltip.Item
@@ -100,3 +103,10 @@
 		></span>
 	{/if}
 </div>
+
+<style>
+	/* LayerChart's 10px tick labels are too small to read on a laptop. */
+	.nowcast-chart :global(.lc-axis-tick-label) {
+		font-size: 12px;
+	}
+</style>

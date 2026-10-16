@@ -11,16 +11,18 @@
 	import Gitlab from '@lucide/svelte/icons/gitlab';
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import SquaresIntersect from '@lucide/svelte/icons/squares-intersect';
-	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Layers from '@lucide/svelte/icons/layers';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import { theme } from '$lib/theme.svelte.js';
 
 	let { children } = $props();
 
-	let collapsed = $state(true);
+	// Open by default: collapsed, the icons alone did not tell first-time users
+	// what they were or how to expand them. Narrow screens start collapsed.
+	let collapsed = $state(false);
 	let collapseTimer;
 	const AUTO_COLLAPSE_DELAY_MS = 400;
+	const NARROW_SCREEN_QUERY = '(max-width: 767px)';
 	const sidebarLabelClass = 'text-sm font-semibold leading-tight transition-colors';
 	const sidebarItemBaseClass =
 		'flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors';
@@ -36,7 +38,7 @@
 		// count.js only counts the initial page load; client-side navigations are counted here.
 		if (type !== 'enter') window.goatcounter?.count?.();
 		const path = to?.url.pathname;
-		if (!path || path === '/') return;
+		if (!path || path === '/' || !window.matchMedia(NARROW_SCREEN_QUERY).matches) return;
 		clearTimeout(collapseTimer);
 		collapseTimer = setTimeout(() => {
 			collapsed = true;
@@ -45,14 +47,14 @@
 
 	onMount(() => {
 		document.documentElement.classList.toggle('dark', theme.dark);
+		if (window.matchMedia(NARROW_SCREEN_QUERY).matches) collapsed = true;
 		return () => clearTimeout(collapseTimer);
 	});
 
 	const navItems = [
 		{ href: '/yield-forecast', label: 'Yield Forecast', icon: TrendingUp },
-		{ href: '/foodshed', label: 'Foodshed Scenarios', icon: SquaresIntersect },
-		{ href: '/data-explorer', label: 'Data Explorer', icon: Layers },
-		{ href: '/methodology', label: 'Methodology', icon: BookOpen }
+		{ href: '/foodshed', label: 'Foodshed Atlas', icon: SquaresIntersect },
+		{ href: '/data-explorer', label: 'Data Explorer', icon: Layers }
 	];
 
 	const sidebarWidthClass = $derived(collapsed ? 'w-14' : 'w-50');

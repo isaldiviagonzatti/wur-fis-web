@@ -1,4 +1,5 @@
 <script>
+	import InfoTip from '$lib/components/InfoTip.svelte';
 	import { getNoDataHatchBackground } from '$lib/no-data-pattern.js';
 
 	let {
@@ -7,10 +8,18 @@
 		colors = [],
 		labels = [],
 		noDataLabel = '',
+		// Optional explanation of how to read the legend, behind an icon by the title.
+		help = '',
 		containerClass = 'rounded-md border border-border/70 bg-card/80 p-3',
 		noDataSwatchClass = 'w-10 sm:w-12',
-		barHeightClass = 'h-3'
+		barHeightClass = 'h-3',
+		// Larger text, for pages read on a laptop rather than a wide monitor.
+		large = false
 	} = $props();
+
+	const titleClass = $derived(large ? 'text-sm' : 'text-xs');
+	const subtitleClass = $derived(large ? 'text-xs' : 'text-[11px]');
+	const tickClass = $derived(large ? 'text-[11px]' : 'text-[9px]');
 
 	const gridTemplate = $derived(`repeat(${Math.max(colors.length, 1)}, minmax(0, 1fr))`);
 	const noDataHatchBackground = getNoDataHatchBackground();
@@ -25,10 +34,15 @@
 	{#if title || subtitle}
 		<div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
 			{#if title}
-				<p class="text-xs font-medium text-foreground">{title}</p>
+				<div class="flex items-center gap-1.5">
+					<p class="{titleClass} font-medium text-foreground">{title}</p>
+					{#if help}
+						<InfoTip text={help} label="How to read this legend" class="text-muted-foreground" />
+					{/if}
+				</div>
 			{/if}
 			{#if subtitle}
-				<p class="text-[11px] text-muted-foreground">{subtitle}</p>
+				<p class="{subtitleClass} text-muted-foreground">{subtitle}</p>
 			{/if}
 		</div>
 	{/if}
@@ -56,7 +70,7 @@
 
 		{#if noDataLabel}
 			<div class="flex justify-center">
-				<span class="text-center text-[9px] font-medium tracking-tight text-muted-foreground">
+				<span class="text-center {tickClass} font-medium tracking-tight text-muted-foreground">
 					{noDataLabel}
 				</span>
 			</div>
@@ -65,7 +79,7 @@
 		{#if labels.length === colors.length}
 			<div class="grid" style:grid-template-columns={gridTemplate}>
 				{#each labels as label, index (`${label}-${index}`)}
-					<span class="text-center text-[9px] font-medium uppercase tracking-tight text-muted-foreground">
+					<span class="text-center {tickClass} font-medium uppercase tracking-tight text-muted-foreground">
 						{label}
 					</span>
 				{/each}

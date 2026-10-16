@@ -57,3 +57,4 @@ submit_job.sh
 plan.md
 # Local dev copy of R2 artifacts (see PUBLIC_DATA_BASE in .env.local)
 static/dev-data/
+docs/feedback/2026-10-15-yield-forecast-session.md

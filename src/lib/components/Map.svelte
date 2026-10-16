@@ -21,7 +21,11 @@
 		// Opening camera. Defaults to the shared continental view; pages whose data
 		// only covers part of it can pass {bounds, fitBoundsOptions} to frame that
 		// instead, which stays correct at any container width.
-		initialView = undefined
+		initialView = undefined,
+		// Ctrl + scroll to zoom and two fingers to pan, so scrolling the page past
+		// the map never moves it. 'touch' keeps only the two-finger rule, for touch
+		// screens; with a mouse the wheel then zooms directly.
+		cooperativeGestures = true
 	} = $props();
 
 	const ADMIN_LEVELS = ['country', 'admin1', 'admin2', 'aez'];
@@ -301,10 +305,21 @@
 				maxZoom: MAP_DEFAULTS.maxZoom,
 				minZoom: MAP_DEFAULTS.minZoom,
 				renderWorldCopies: false,
-				cooperativeGestures: true,
+				cooperativeGestures:
+					cooperativeGestures === 'touch'
+						? window.matchMedia('(pointer: coarse)').matches
+						: cooperativeGestures,
+				// The data is flat and north-up; tilting or rotating only disorients.
+				dragRotate: false,
+				pitchWithRotate: false,
+				touchPitch: false,
+				maxPitch: 0,
 				attributionControl: false
 			});
+			mapInstance.touchZoomRotate.disableRotation();
+			mapInstance.keyboard.disableRotation();
 
+			mapInstance.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-left');
 			mapInstance.addControl(new maplibre.AttributionControl({ compact: true }), 'bottom-right');
 			attachStyleFallback(mapInstance);
 

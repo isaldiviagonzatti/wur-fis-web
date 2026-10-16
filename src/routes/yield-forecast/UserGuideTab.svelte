@@ -4,6 +4,7 @@
 <script>
 	import NowcastChart from '$lib/components/NowcastChart.svelte';
 	import { PERCENTILE_COLORS } from '$lib/yield-forecast.js';
+	import { CONTROL_HELP, METRIC_HELP } from '$lib/yield-forecast-help.js';
 
 	// Illustrative season-so-far charts (synthetic, not model output): sown 1 May, a dry
 	// spell in late May and June, rain from July. Water needs met dips below its usual
@@ -35,19 +36,16 @@
 	});
 
 	const controls = [
-		['Crop', 'Shown in every country where it is forecast this month.'],
-		['Aggregation', 'Grid cells, or crop-area weighted averages for country, admin 1 or admin 2.'],
-		['Colour by skill', 'Colours cells by forecast skill instead of percentile. Grid cells only.'],
-		['Find a place', 'Jumps to a town or city and selects the unit it falls in.']
+		['Find a place', 'Jumps to a town or city, ticks its country and selects the unit it falls in.'],
+		['Countries', 'All are ticked at first. Untick countries to show only the others; the crop list follows.'],
+		['Crop', 'Crops forecast this month in at least one ticked country. Crops grown twice a year are listed per season.'],
+		['Show by', CONTROL_HELP.showBy],
+		['Colour by skill', CONTROL_HELP.skill],
+		['Opacity', CONTROL_HELP.opacity],
+		['Clear all', 'Clears every choice and returns the map to its starting view.']
 	];
 
-	const metrics = [
-		['Percentile', 'Where the forecast sits among the 30 reference years: 10 means only 10% of years were lower.'],
-		['Anomaly', 'Difference from the average of the reference years, in percent.'],
-		['Below / near / above', 'Share of the 51 forecast members in the lowest, middle and highest third of the reference years.'],
-		['Skill (CRPSS)', 'How much better the forecast did over 1994-2023 than assuming a repeat of the previous five years. 0.4 means 40% better.'],
-		['Area covered', 'Share of the crop area behind an area value; cells without a forecast or without skill drop out.']
-	];
+	const metrics = Object.values(METRIC_HELP).map(({ label, text }) => [label, text]);
 </script>
 
 <div class="mx-auto max-w-3xl space-y-8">
@@ -63,15 +61,15 @@
 			{/each}
 		</dl>
 		<p>
-			The forecast is initialised every month with the latest seasonal weather forecast. The
-			latest initialisation is shown; Change month, next to the heading, shows earlier ones.
+			The forecast is updated every month with the latest seasonal weather forecast, and the date
+			of the last update is shown under the title.
 		</p>
 	</section>
 
 	<section class="space-y-3 text-sm text-muted-foreground">
 		<h2 class="text-base font-semibold text-foreground">Reading the colours</h2>
 		<p>
-			Colour is the percentile of the forecast within that place's own 1994-2023 record: brown a
+			Colour is the percentile of the forecast within that place's own past 30 years: brown a
 			low year for that place, green a high one.
 		</p>
 		<div>
@@ -110,8 +108,8 @@
 	<section class="space-y-3 text-sm text-muted-foreground">
 		<h2 class="text-base font-semibold text-foreground">Reading the distribution</h2>
 		<p>
-			Green is the 51 forecast members, brown the 30 reference years, both as percent difference
-			from the reference average (the dashed line at 0). A narrow green curve means the members
+			Rose is the 51 forecast members, blue the 30 reference years, both as percent difference
+			from the reference average (the dashed line at 0). A narrow rose curve means the members
 			agree, as late in a season, when most of the weather has already happened.
 		</p>
 		<p>
@@ -126,8 +124,8 @@
 		<p>
 			"Season so far" shows how the crop has developed from sowing up to the last day of observed
 			weather, the end of the month before the forecast. It appears only while a season is under
-			way. The green line is this season; the brown dashed line and band are the normal and usual
-			range (5-95%) of the 1994-2023 seasons at the same number of days after sowing.
+			way. Nothing in it is forecast. The rose line is this season; the blue dashed line and band are the normal and usual
+			range (5-95%) of the past 30 seasons at the same number of days after sowing.
 		</p>
 		<p>
 			<span class="font-medium text-foreground">Biomass to date</span> is how much the crop has
@@ -191,7 +189,7 @@
 				soil.
 			</li>
 			<li>
-				Reference: the 1994-2023 seasons of the same run, compared on the same day after sowing.
+				Reference: the past 30 seasons of the same run, compared on the same day after sowing.
 				Areas are crop-area weighted means of their cells (SPAM 2017), shown when at least half
 				the crop area has a season under way. Biomass of crops with a significant national trend
 				is moved to the current year, separately for each day of the season.
@@ -204,8 +202,9 @@
 		<p>Blank: the crop is not grown there.</p>
 		<p>
 			Hatched: the crop is grown but has no forecast this month, because its harvest falls outside
-			the forecast window or because the forecast has no skill there over 1994-2023. This is also
-			why the crop list changes from month to month.
+			the forecast window, because the model already harvested it before this month, or because
+			the forecast has had no skill there in past years. This is also why the crop list changes from
+			month to month.
 		</p>
 		<p>
 			Areas need at least half their crop area covered by forecast cells, so one skilful cell

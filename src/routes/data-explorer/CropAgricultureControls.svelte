@@ -32,6 +32,7 @@ import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 				options={cropOptions}
 				placeholder="Crop"
 				widthClass="w-28"
+				disabled={!cropOptions.length}
 			/>
 
 			{#if showSeasonSelect}

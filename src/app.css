@@ -175,3 +175,19 @@
 @keyframes fadeIn {
   to { opacity: 1; }
 }
+
+/* Map zoom buttons in the app's neutral chrome, readable in both themes. The
+   descendant selector outranks maplibre-gl.css, which loads after this file. */
+.maplibregl-map .maplibregl-ctrl-group {
+  background: color-mix(in oklab, var(--background) 92%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.maplibregl-map .maplibregl-ctrl-group button + button {
+  border-top-color: var(--border);
+}
+
+.dark .maplibregl-map .maplibregl-ctrl-group .maplibregl-ctrl-icon {
+  filter: invert(1);
+}

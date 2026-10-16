@@ -1,4 +1,5 @@
 <script>
+	import InfoTip from '$lib/components/InfoTip.svelte';
 	import { Select, SelectTrigger, SelectContent, SelectItem } from '$lib/components/ui/select';
 
 	let {
@@ -9,7 +10,10 @@
 		placeholder = 'Select option',
 		widthClass = 'w-32',
 		disabled = false,
-		triggerStyle = ''
+		triggerStyle = '',
+		labelClass = 'text-xs',
+		// A short explanation of the control, shown on hovering its label.
+		help = ''
 	} = $props();
 
 	const selectedLabel = $derived(
@@ -18,7 +22,13 @@
 </script>
 
 <div class="flex items-center gap-1.5">
-	{#if showLabel}<span class="text-xs font-medium text-muted-foreground">{label}</span>{/if}
+	{#if showLabel}
+		{#if help}
+			<InfoTip text={help} class="shrink-0 {labelClass} font-medium text-muted-foreground">{label}</InfoTip>
+		{:else}
+			<span class="{labelClass} font-medium text-muted-foreground">{label}</span>
+		{/if}
+	{/if}
 	<Select type="single" bind:value disabled={disabled}>
 		<SelectTrigger size="sm" class="{widthClass} min-w-0" style={triggerStyle}>
 			<span class="truncate">{selectedLabel}</span>

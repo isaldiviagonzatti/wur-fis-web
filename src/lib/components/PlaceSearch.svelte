@@ -8,14 +8,14 @@
 -->
 <script>
 	import Search from '@lucide/svelte/icons/search';
+	import X from '@lucide/svelte/icons/x';
 	import { isGeocodingAvailable, searchPlaces } from '$lib/geocode.js';
 
-	let { onSelect, placeholder = 'Find a place' } = $props();
+	let { onSelect, placeholder = 'Find a place', query = $bindable('') } = $props();
 
 	const DEBOUNCE_MS = 350;
 	const MIN_QUERY_LENGTH = 3;
 
-	let query = $state('');
 	let results = $state([]);
 	let open = $state(false);
 	let busy = $state(false);
@@ -62,6 +62,13 @@
 		timer = setTimeout(() => runSearch(query), DEBOUNCE_MS);
 	}
 
+	function clearQuery() {
+		clearTimeout(timer);
+		controller?.abort();
+		query = '';
+		reset();
+	}
+
 	function choose(result) {
 		query = result.name;
 		reset();
@@ -71,38 +78,50 @@
 
 {#if available}
 	<div class="relative">
-		<div class="flex items-center gap-1.5">
-			<Search size={12} class="text-muted-foreground" />
+		<div class="relative flex items-center gap-1.5">
+			<Search size={14} class="shrink-0 text-muted-foreground" />
+			<!-- type="text": the browser's own search clear button ignores the theme. -->
 			<input
-				type="search"
+				type="text"
+				role="searchbox"
 				bind:value={query}
 				oninput={handleInput}
 				onfocus={() => results.length && (open = true)}
 				onblur={() => setTimeout(() => (open = false), 150)}
 				{placeholder}
 				aria-label="Find a place"
-				class="h-7 w-full rounded-md border border-border bg-background px-2 text-xs outline-none focus:border-primary"
+				class="h-8 w-full rounded-md border border-border bg-background pr-7 pl-2 text-sm outline-none focus:border-primary"
 			/>
+			{#if query && !busy}
+				<button
+					type="button"
+					onclick={clearQuery}
+					aria-label="Clear search"
+					class="absolute right-1.5 cursor-pointer rounded-sm p-0.5 text-foreground/70 hover:text-foreground"
+				>
+					<X size={14} />
+				</button>
+			{/if}
 		</div>
 
 		{#if open && (results.length || error)}
 			<ul
-				class="absolute left-0 top-8 z-50 max-h-56 w-full min-w-56 overflow-auto rounded-md border border-border bg-popover py-1 shadow-lg"
+				class="absolute left-0 top-full z-50 mt-1 max-h-56 w-full min-w-56 overflow-auto rounded-md border border-border bg-popover py-1 shadow-lg"
 				style="background-color: var(--popover);"
 			>
 				{#if error}
-					<li class="px-2 py-1.5 text-[11px] text-muted-foreground">{error}</li>
+					<li class="px-2 py-1.5 text-xs text-muted-foreground">{error}</li>
 				{:else}
 					{#each results as result (result.id)}
 						<li>
 							<button
 								type="button"
 								onclick={() => choose(result)}
-								class="w-full cursor-pointer px-2 py-1.5 text-left text-xs hover:bg-accent"
+								class="w-full cursor-pointer px-2 py-1.5 text-left text-sm hover:bg-accent"
 							>
 								<span class="block font-medium text-foreground">{result.name}</span>
 								{#if result.context}
-									<span class="block text-[10px] text-muted-foreground">{result.context}</span>
+									<span class="block text-xs text-muted-foreground">{result.context}</span>
 								{/if}
 							</button>
 						</li>
@@ -112,7 +131,7 @@
 		{/if}
 
 		{#if busy}
-			<span class="absolute right-1 top-1.5 text-[10px] text-muted-foreground">…</span>
+			<span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">…</span>
 		{/if}
 	</div>
 {/if}

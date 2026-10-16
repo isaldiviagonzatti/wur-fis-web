@@ -42,8 +42,17 @@ export const SKILL_COLORS = ['#edf8fb', '#b2e2e2', '#66c2a4', '#2ca25f', '#006d2
 export const SKILL_STOPS = [0, 0.25, 0.5, 0.75, 1];
 export const SKILL_LEGEND_LABELS = ['0', '0.25', '0.5', '0.75', '1'];
 
-export const FORECAST_COLOR = '#35978f';
-export const HISTORICAL_COLOR = '#8c510a';
+// Chart series in fis-style's qualitative palette (Paul Tol muted), kept clear
+// of the map's brown-teal scale so no line reads as "below" or "above normal".
+// Indigo vanishes on the dark background, so cyan stands in for it there.
+const CHART_COLORS = {
+	light: { forecast: '#CC6677', reference: '#332288' },
+	dark: { forecast: '#CC6677', reference: '#88CCEE' }
+};
+
+export function chartColors(dark) {
+	return CHART_COLORS[dark ? 'dark' : 'light'];
+}
 
 const cache = new Map();
 
@@ -176,6 +185,23 @@ const COUNTRY_TITLES = { ghana: 'Ghana', kenya: 'Kenya', zimbabwe: 'Zimbabwe' };
 export function toSentenceCase(label) {
 	const text = String(label ?? '');
 	return text ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
+const SEASON_NAMES = { 1: 'first season', 2: 'second season' };
+
+/** "maize 2" reads as a variety; "Maize (second season)" says what the number is. */
+export function formatCropLabel(label) {
+	const text = toSentenceCase(label);
+	const match = text.match(/^(.*) ([12])$/);
+	return match ? `${match[1]} (${SEASON_NAMES[match[2]]})` : text;
+}
+
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "2026-09-30" as "30 Sep 2026", read as a UTC day. */
+export function formatDay(text) {
+	const date = new Date(`${text}T00:00:00Z`);
+	return `${date.getUTCDate()} ${SHORT_MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 export function formatCountryList(countries) {
