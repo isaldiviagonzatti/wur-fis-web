@@ -56,7 +56,7 @@
 		{xDomain}
 		yDomain={[0, yTop]}
 		padding={PAD}
-		tooltip={{ mode: 'bisect-x' }}
+		tooltipContext={{ mode: 'bisect-x' }}
 	>
 		<Svg>
 			<Axis placement="left" ticks={4} format={formatValue} />
@@ -67,10 +67,10 @@
 				y="mean"
 				defined={(d) => d.mean !== null}
 				stroke={colors.reference}
-				stroke-width={1.5}
+				strokeWidth={1.5}
 				stroke-dasharray="4 3"
 			/>
-			<Spline data={current} y="current" stroke={colors.forecast} stroke-width={2.25} />
+			<Spline data={current} y="current" stroke={colors.forecast} strokeWidth={3.5} />
 		</Svg>
 		<Tooltip.Root>
 			{#snippet children({ data })}

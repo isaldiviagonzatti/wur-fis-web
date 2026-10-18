@@ -1,14 +1,10 @@
 /**
- * MapLibre layer management for the yield forecast grid.
+ * The yield forecast's grid layer: cells coloured by percentile or skill.
  *
- * The forecast is a regular 0.1 degree lattice of a few thousand cells per
- * country, so it is drawn as GeoJSON squares coloured by percentile rather than
- * as a raster tile pyramid — the whole layer for one crop is a few tens of kB.
- *
- * A crop is shown for every country that has it, so cells from several
- * countries share one source. Each feature carries a `uid` of
- * `<country>:<index>` because the cell index is only unique within its own
- * country's payload.
+ * Layer mechanics live in cell-grid-map.js; this module only decides what the
+ * forecast cells carry and how they are coloured. Cells where the crop grows
+ * but no forecast is published are hatched, so blank map means only "the crop
+ * is not grown here".
  */
 import {
 	PERCENTILE_COLORS,
@@ -18,21 +14,16 @@ import {
 	buildCellFeatures,
 	buildNoForecastFeatures
 } from '$lib/yield-forecast.js';
-import { createNoDataPatternImage } from '$lib/no-data-pattern.js';
+import {
+	attachCellInteractions,
+	setCellFeatures,
+	setCellFillColor,
+	setCellOpacity,
+	setCellVisibility,
+	setSelectedCellUid
+} from '$lib/cell-grid-map.js';
 
-export const FORECAST_SOURCE = 'yield-forecast-cells';
-export const FORECAST_FILL_LAYER = 'yield-forecast-fill';
-export const FORECAST_OUTLINE_LAYER = 'yield-forecast-outline';
-export const FORECAST_SELECTED_LAYER = 'yield-forecast-selected';
-export const NO_FORECAST_SOURCE = 'yield-forecast-no-forecast';
-export const NO_FORECAST_LAYER = 'yield-forecast-no-forecast-fill';
-
-// Reuses the site-wide no-data hatch so the shading means the same thing here
-// as it does on the admin layers and the crop calendars.
-const NO_DATA_PATTERN_ID = 'fis-no-data-hatch';
-
-const EMPTY_COLLECTION = { type: 'FeatureCollection', features: [] };
-const NO_SELECTION = '__none__';
+const PREFIX = 'yield-forecast';
 
 function buildFillColorExpression(mode = 'percentile') {
 	if (mode === 'skill') {
@@ -44,60 +35,7 @@ function buildFillColorExpression(mode = 'percentile') {
 }
 
 export function setColorMode(map, mode) {
-	if (!map || !map.getLayer(FORECAST_FILL_LAYER)) return;
-	map.setPaintProperty(FORECAST_FILL_LAYER, 'fill-color', buildFillColorExpression(mode));
-}
-
-/**
- * Add the forecast source and layers once. Safe to call repeatedly.
- */
-export function ensureForecastLayers(map) {
-	if (!map || map.getSource(FORECAST_SOURCE)) return;
-
-	if (!map.hasImage(NO_DATA_PATTERN_ID)) {
-		map.addImage(NO_DATA_PATTERN_ID, createNoDataPatternImage());
-	}
-
-	// Added first so the coloured cells always draw over the hatch.
-	map.addSource(NO_FORECAST_SOURCE, { type: 'geojson', data: EMPTY_COLLECTION, tolerance: 0 });
-	map.addLayer({
-		id: NO_FORECAST_LAYER,
-		type: 'fill',
-		source: NO_FORECAST_SOURCE,
-		paint: { 'fill-pattern': NO_DATA_PATTERN_ID, 'fill-opacity': 0.7 }
-	});
-
-	map.addSource(FORECAST_SOURCE, {
-		type: 'geojson',
-		data: EMPTY_COLLECTION,
-		// MapLibre's default simplification collapses a 0.1 degree cell to nothing
-		// below about zoom 2.5, so the layer silently vanishes at continental view.
-		tolerance: 0
-	});
-
-	map.addLayer({
-		id: FORECAST_FILL_LAYER,
-		type: 'fill',
-		source: FORECAST_SOURCE,
-		paint: { 'fill-color': buildFillColorExpression(), 'fill-opacity': 0.85 }
-	});
-
-	map.addLayer({
-		id: FORECAST_OUTLINE_LAYER,
-		type: 'line',
-		source: FORECAST_SOURCE,
-		paint: { 'line-color': 'rgba(0,0,0,0.12)', 'line-width': 0.3 }
-	});
-
-	map.addLayer({
-		id: FORECAST_SELECTED_LAYER,
-		type: 'line',
-		source: FORECAST_SOURCE,
-		filter: ['==', ['get', 'uid'], NO_SELECTION],
-		paint: { 'line-color': '#1f2937',
-			'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1.2, 8, 2]
-		}
-	});
+	setCellFillColor(map, PREFIX, buildFillColorExpression(mode));
 }
 
 /**
@@ -107,25 +45,13 @@ export function ensureForecastLayers(map) {
  * @param {Array<{country: string, grid: object}>} entries
  */
 export function setForecastCells(map, entries) {
-	if (!map) return;
-	ensureForecastLayers(map);
-	const source = map.getSource(FORECAST_SOURCE);
-	if (!source) return;
-
-	const hidden = map.getSource(NO_FORECAST_SOURCE);
-	if (!entries?.length) {
-		source.setData(EMPTY_COLLECTION);
-		hidden?.setData(EMPTY_COLLECTION);
-		return;
-	}
-	source.setData({
-		type: 'FeatureCollection',
-		features: entries.flatMap(({ country, grid }) => buildCellFeatures(grid, country).features)
-	});
-	hidden?.setData({
-		type: 'FeatureCollection',
-		features: entries.flatMap(({ grid }) => buildNoForecastFeatures(grid).features)
-	});
+	setCellFeatures(
+		map,
+		PREFIX,
+		buildFillColorExpression(),
+		(entries ?? []).flatMap(({ country, grid }) => buildCellFeatures(grid, country).features),
+		(entries ?? []).flatMap(({ grid }) => buildNoForecastFeatures(grid).features)
+	);
 }
 
 export function clearForecastCells(map) {
@@ -134,64 +60,19 @@ export function clearForecastCells(map) {
 }
 
 export function setSelectedCell(map, uid) {
-	if (!map || !map.getLayer(FORECAST_SELECTED_LAYER)) return;
-	map.setFilter(FORECAST_SELECTED_LAYER, ['==', ['get', 'uid'], uid ?? NO_SELECTION]);
+	setSelectedCellUid(map, PREFIX, uid);
 }
 
-/** Fill opacity of the forecast cells, so the basemap underneath can be read. */
 export function setForecastOpacity(map, opacity) {
-	if (!map || !map.getLayer(FORECAST_FILL_LAYER)) return;
-	map.setPaintProperty(FORECAST_FILL_LAYER, 'fill-opacity', opacity);
-	if (map.getLayer(FORECAST_OUTLINE_LAYER)) {
-		map.setPaintProperty(FORECAST_OUTLINE_LAYER, 'line-opacity', opacity);
-	}
-	if (map.getLayer(NO_FORECAST_LAYER)) {
-		map.setPaintProperty(NO_FORECAST_LAYER, 'fill-opacity', opacity * 0.7);
-	}
+	setCellOpacity(map, PREFIX, opacity);
 }
 
 export function setForecastVisibility(map, visible) {
-	if (!map) return;
-	for (const layerId of [
-		NO_FORECAST_LAYER,
-		FORECAST_FILL_LAYER,
-		FORECAST_OUTLINE_LAYER,
-		FORECAST_SELECTED_LAYER
-	]) {
-		if (map.getLayer(layerId)) {
-			map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
-		}
-	}
+	setCellVisibility(map, PREFIX, visible);
 }
 
-/**
- * Wire click and hover on the forecast cells. Returns a teardown function.
- */
 export function attachForecastInteractions(map, { onSelect }) {
-	if (!map) return () => {};
-
-	const handleClick = (event) => {
-		const feature = event.features?.[0];
-		if (!feature) return;
-		const { uid, country, index } = feature.properties ?? {};
-		if (!uid) return;
-		setSelectedCell(map, uid);
-		onSelect?.({ uid, country, index });
-	};
-	const handleEnter = () => {
-		map.getCanvas().style.cursor = 'pointer';
-	};
-	const handleLeave = () => {
-		map.getCanvas().style.cursor = '';
-	};
-
-	map.on('click', FORECAST_FILL_LAYER, handleClick);
-	map.on('mouseenter', FORECAST_FILL_LAYER, handleEnter);
-	map.on('mouseleave', FORECAST_FILL_LAYER, handleLeave);
-
-	return () => {
-		map.off('click', FORECAST_FILL_LAYER, handleClick);
-		map.off('mouseenter', FORECAST_FILL_LAYER, handleEnter);
-		map.off('mouseleave', FORECAST_FILL_LAYER, handleLeave);
-	};
+	return attachCellInteractions(map, PREFIX, {
+		onSelect: ({ uid, country, index }) => onSelect?.({ uid, country, index })
+	});
 }

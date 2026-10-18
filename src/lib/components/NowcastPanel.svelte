@@ -85,7 +85,7 @@
 
 	<div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
 		<span class="inline-flex items-center gap-1.5">
-			<span class="h-0.5 w-4" style:background={colors.forecast}></span>
+			<span class="h-1 w-4 rounded-full" style:background={colors.forecast}></span>
 			This season
 		</span>
 		<span class="inline-flex items-center gap-1.5">

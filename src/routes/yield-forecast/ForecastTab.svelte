@@ -60,8 +60,9 @@
 		loadNowcastAdmin,
 		loadNowcastCell,
 		loadRunDescription,
-		snapToCellCentre
+		PERCENTILE_ZONE_SCALE
 	} from '$lib/yield-forecast.js';
+	import { snapToCellCentre } from '$lib/cell-grid-map.js';
 	import { CONTROL_HELP, LEGEND_HELP, METRIC_HELP, SECTION_HELP } from '$lib/yield-forecast-help.js';
 	import {
 		attachForecastInteractions,
@@ -77,10 +78,10 @@
 		clearZoneLayers,
 		isAdminLevel,
 		paintZones,
-		zoneIdProperty,
+		zoneAtPoint,
 		setSelectedZone,
 		setZoneOpacity
-	} from '$lib/yield-forecast-admin-map.js';
+	} from '$lib/admin-zone-map.js';
 
 	let {
 		crop = $bindable(),
@@ -274,14 +275,10 @@
 		return MONTH_NAMES[Number(month) - 1] ? `${MONTH_NAMES[Number(month) - 1]} ${year}` : runId;
 	}
 
-	/** The day the forecast was published, as "14 October 2026". */
-	function formatPublished(timestamp) {
-		const date = new Date(timestamp);
-		if (Number.isNaN(date.getTime())) return '';
-		return `${date.getUTCDate()} ${MONTH_NAMES[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
-	}
-
-	const lastUpdated = $derived(formatPublished(catalog?.generated_utc));
+	// The forecast starts on the 1st of its month, when that month's seasonal
+	// forecast is issued and the observed weather ends. It is the date of the
+	// data, so republishing a month never moves it.
+	const lastUpdated = $derived(latestRun ? `1 ${formatRunId(latestRun)}` : '');
 
 	const ALL_COUNTRIES = COUNTRY_OPTIONS.map(({ value }) => value);
 
@@ -388,30 +385,14 @@
 		return false;
 	}
 
-	/**
-	 * The zone containing a point.
-	 *
-	 * Answered from the grid payload, which records each cell's zone ids. Asking
-	 * the rendered map instead needs the point on screen with its tiles drawn,
-	 * which is a race every time the aggregation level changes.
-	 */
+	/** The zone containing a point, from the loaded grids' zone ids first. */
 	function resolveZoneAtPoint(mapInstance, level, point) {
-		// Data first: the grid payload records each cell's zone, so this is exact
-		// and works even when the point is off screen.
-		const cellLat = snapToCellCentre(point.lat);
-		const cellLon = snapToCellCentre(point.lon);
-		for (const entry of entries) {
-			const cell = entry.grid.cells.find(
-				(candidate) =>
-					Math.abs(candidate.lat - cellLat) < 1e-6 && Math.abs(candidate.lon - cellLon) < 1e-6
-			);
-			if (cell?.zones?.[level]) return cell.zones[level];
-		}
-		// Fall back to the rendered polygons for a point inside a published unit but
-		// on a cell this crop does not cover.
-		const pixel = mapInstance.project([point.lon, point.lat]);
-		const hits = mapInstance.queryRenderedFeatures(pixel, { layers: [`${level}-fill`] });
-		return hits?.[0]?.properties?.[zoneIdProperty(level)] ?? null;
+		return zoneAtPoint(
+			mapInstance,
+			level,
+			point,
+			entries.map((entry) => entry.grid)
+		);
 	}
 
 	/** Locate the cell at a given position, since indices differ between crops. */
@@ -470,7 +451,7 @@
 		if (!zones.length) return;
 		// The zone fill is a fresh copy of the admin tiles, so its paint and the
 		// lazily-added selection outline both have to be reapplied.
-		paintZones(mapInstance, adminLevel, zones, layerOpacity);
+		paintZones(mapInstance, adminLevel, zones, layerOpacity, PERCENTILE_ZONE_SCALE);
 		setSelectedZone(mapInstance, adminLevel, selectedZoneGid);
 	}
 
@@ -594,7 +575,7 @@
 				zones = payload.zones.filter((zone) => shownCountries.includes(zone.country));
 				loadedZoneKey = key;
 				loadError = '';
-				paintZones(mapInstance, level, zones, layerOpacity);
+				paintZones(mapInstance, level, zones, layerOpacity, PERCENTILE_ZONE_SCALE);
 				const point = untrack(() => anchor);
 				if (!point) {
 					selectedZoneGid = null;
@@ -727,7 +708,10 @@
 			<h3 class="mb-3 text-base font-semibold text-foreground">
 				<InfoTip text={SECTION_HELP.forecast}>Yield forecast</InfoTip>
 			</h3>
-			<div class="mb-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+			<!-- Below / near / above gets the widest column so its label stays on one line. -->
+			<div
+				class="mb-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.6fr)_minmax(0,0.9fr)]"
+			>
 				{#each result.metrics as metric (metric.label)}
 					<div class="flex flex-col items-center gap-0.5 text-center">
 						<InfoTip text={metric.text} class="text-[13px] text-muted-foreground">

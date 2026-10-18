@@ -19,6 +19,8 @@ import {
 	yieldForecastNowcastGridUrl,
 	yieldForecastRunUrl
 } from '$lib/data-sources.js';
+import { cellSquare } from '$lib/cell-grid-map.js';
+import { fetchJson } from '$lib/fetch-json.js';
 
 // ColorBrewer BrBG, colourblind-safe: brown below normal, teal above.
 export const PERCENTILE_COLORS = [
@@ -36,6 +38,12 @@ export const PERCENTILE_STOPS = [0, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100];
 // One label per colour: the legend only renders labels when the counts match,
 // and blanks keep every number aligned under its own swatch.
 export const PERCENTILE_LEGEND_LABELS = ['0', '', '25', '', '50', '', '75', '', '100'];
+// How admin-zone-map.js reads and colours an aggregated forecast unit.
+export const PERCENTILE_ZONE_SCALE = {
+	value: (zone) => zone.percentile,
+	stops: PERCENTILE_STOPS,
+	colors: PERCENTILE_COLORS
+};
 
 // Sequential teal for CRPSS, which is only published where it is positive.
 export const SKILL_COLORS = ['#edf8fb', '#b2e2e2', '#66c2a4', '#2ca25f', '#006d2c'];
@@ -52,18 +60,6 @@ const CHART_COLORS = {
 
 export function chartColors(dark) {
 	return CHART_COLORS[dark ? 'dark' : 'light'];
-}
-
-const cache = new Map();
-
-async function fetchJson(url) {
-	if (cache.has(url)) return cache.get(url);
-	const request = fetch(url).then((response) => {
-		if (!response.ok) throw new Error(`Failed to load ${url}: ${response.status}`);
-		return response.json();
-	});
-	cache.set(url, request);
-	return request;
 }
 
 export function loadCatalog() {
@@ -249,32 +245,6 @@ export function buildNoForecastFeatures(grid) {
 			geometry: cellSquare(lon[index], value, half)
 		}))
 	};
-}
-
-function cellSquare(lon, lat, half) {
-	return {
-		type: 'Polygon',
-		coordinates: [
-			[
-				[lon - half, lat - half],
-				[lon + half, lat - half],
-				[lon + half, lat + half],
-				[lon - half, lat + half],
-				[lon - half, lat - half]
-			]
-		]
-	};
-}
-
-/**
- * Snap a coordinate to the centre of the 0.1 degree cell containing it.
- *
- * The forecast grid is a regular lattice with centres on x.x5, so the containing
- * cell is arithmetic — no spatial index or point-in-polygon test is needed.
- */
-export function snapToCellCentre(value, resolution = 0.1) {
-	const steps = Math.floor(value / resolution + 1e-9);
-	return Number(((steps + 0.5) * resolution).toFixed(6));
 }
 
 /**

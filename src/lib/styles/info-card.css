@@ -1,0 +1,102 @@
+/*
+ * Info card: the hover popup on the map and the tooltip of the year charts.
+ * A shaded header carries where and when (the theme's muted surface, just off
+ * white or black); the body below carries the value.
+ */
+.info-card {
+	min-width: 9rem;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	background: var(--popover);
+	color: var(--popover-foreground);
+	font-size: 0.8rem;
+	line-height: 1.35;
+	box-shadow:
+		0 10px 15px -3px rgba(15, 23, 42, 0.1),
+		0 4px 6px -4px rgba(15, 23, 42, 0.1);
+}
+
+.info-card__meta {
+	padding: 0.55rem 0.8rem 0.5rem;
+	background: var(--muted);
+}
+
+.info-card__title {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--foreground);
+}
+
+.info-card__subtitle {
+	margin: 0.1rem 0 0;
+	color: var(--muted-foreground);
+}
+
+.info-card__body {
+	display: grid;
+	gap: 0.3rem;
+	padding: 0.55rem 0.8rem 0.6rem;
+}
+
+.info-card__value {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--foreground);
+}
+
+.info-card__row {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.info-card__swatch {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 9999px;
+}
+
+.info-card__label {
+	color: var(--muted-foreground);
+}
+
+.info-card__number {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--foreground);
+	text-align: right;
+}
+
+/* MapLibre's popup: the card brings its own surface, so strip the default one
+   and colour the tip like the part of the card it touches. */
+.info-card-popup .maplibregl-popup-content {
+	padding: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.info-card-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.info-card-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.info-card-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+	border-top-color: var(--popover);
+}
+
+.info-card-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.info-card-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.info-card-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+	border-bottom-color: var(--muted);
+}
+
+.info-card-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+	border-right-color: var(--muted);
+}
+
+.info-card-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+	border-left-color: var(--muted);
+}

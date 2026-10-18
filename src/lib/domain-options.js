@@ -71,32 +71,11 @@ export function countriesBounds(values) {
 	];
 }
 
-export const OBSERVED_DATASET_LABELS = {
-	yield: 'Observed yield',
-	production: 'Observed production',
-	harvested_area: 'Observed harvested area'
-};
-
-export const OBSERVED_DATASET_OPTIONS = Object.entries(OBSERVED_DATASET_LABELS).map(
-	([value, label]) => ({ value, label })
-);
-
-export const OBSERVED_BOUNDARY_OPTIONS = [
-	{ value: 'country', label: 'Country' },
-	{ value: 'admin1', label: 'Admin 1' },
-	{ value: 'admin2', label: 'Admin 2' }
-];
-
-export const OBSERVED_BOUNDARY_LABELS = Object.fromEntries(
-	OBSERVED_BOUNDARY_OPTIONS.map(({ value, label }) => [value, label])
-);
-
 // The level the forecast is reported at. Not a boundary choice: it changes what
 // the numbers are, from a 0.1 degree cell's percentile to an area-weighted
 // aggregate over a whole unit. The forecast is published per grid cell, so that
 // is the default. Ordered smallest to largest, which is the order the levels
-// nest in; listed here rather than spread from OBSERVED_BOUNDARY_OPTIONS, whose
-// own order the data explorer depends on.
+// nest in.
 export const YIELD_FORECAST_AGGREGATION_OPTIONS = [
 	{ value: 'grid', label: 'Grid cells' },
 	{ value: 'admin2', label: 'Admin 2' },

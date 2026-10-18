@@ -22,17 +22,16 @@ export const HOME_NAV_ITEMS = [
 		title: 'Data Explorer',
 		subtitle: 'Data underpinning the Foodshed Information Service',
 		description:
-			'Reference data behind the Foodshed Information Service. Crop calendars are available now; yield statistics, environmental layers, and climate climatologies are coming soon.'
+			'Reference data behind the Foodshed Information Service. Crop statistics and crop calendars are available now; environmental layers and climate climatologies are coming soon.'
 	}
 ];
 
 export const DATA_EXPLORER_NAV_ITEMS = [
 	{
-		href: '/data-explorer/crop-yields',
-		title: 'Crop Yields',
-		comingSoon: true,
+		href: '/data-explorer/crop-statistics',
+		title: 'Crop Statistics',
 		description:
-			'Observed yield, production, and harvested area statistics by country and administrative region for Ghana, Kenya, and Zimbabwe.'
+			'Reported yield, production, and harvested area since 1994 by country and region for Ghana, Kenya, and Zimbabwe, and how well the crop model follows their year-to-year ups and downs.'
 	},
 	{
 		href: '/data-explorer/crop-calendars',

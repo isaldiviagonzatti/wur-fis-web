@@ -23,6 +23,29 @@ export const ADMIN_PMTILES_URLS = {
 	aez: `${R2_BASE}/admin/v1/aez.pmtiles`
 };
 
+// Historical yields: static, so versioned by folder rather than by run.
+export const CROP_YIELDS_BASE = `${DATA_BASE}/crop-yields/v1`;
+export const CROP_YIELDS_CATALOG_URL = `${CROP_YIELDS_BASE}/catalog.json`;
+
+// Zone files are per level and crop across countries, like the forecast's admin files.
+export function cropYieldsZonesUrl(level, crop) {
+	return `${CROP_YIELDS_BASE}/zones/${level}/${crop}.json`;
+}
+
+export function cropYieldsGridUrl(country, crop) {
+	return `${CROP_YIELDS_BASE}/grid/${country}/${crop}.json`;
+}
+
+// Every crop's model area per cell, for the crop mix of a clicked cell.
+export function cropYieldsLanduseUrl(country) {
+	return `${CROP_YIELDS_BASE}/landuse/${country}.json`;
+}
+
+// Model and reported area per crop for every unit of a level.
+export function cropYieldsCropMixUrl(level) {
+	return `${CROP_YIELDS_BASE}/cropmix/${level}.json`;
+}
+
 export const YIELD_FORECAST_BASE = `${DATA_BASE}/yield-forecast`;
 export const YIELD_FORECAST_CATALOG_URL = `${YIELD_FORECAST_BASE}/catalog.json`;
 

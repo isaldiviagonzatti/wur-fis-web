@@ -9,7 +9,6 @@ const AEZ_HATCH_LAYER = 'aez-hatch';
 const AEZ_FILL_LAYER = 'aez-fill';
 const AEZ_SELECTED_FILL_LAYER = 'aez-selected-fill';
 const AEZ_OUTLINE_LAYER = 'aez-outline';
-const EMPTY_AEZ_FILTER = ['==', ['get', 'aez_name'], '__none__'];
 
 export function updateCalendarAezFill(map, { calendarData, crop, season, dataset, selectedAezKey }) {
 	if (!map) return;
@@ -37,24 +36,6 @@ export function updateCalendarAezFill(map, { calendarData, crop, season, dataset
 			AEZ_SELECTED_FILL_LAYER,
 			['==', getAezFeatureExpression(), selectedAezKey || '__none__']
 		);
-	}
-}
-
-export function resetObservedAezFill(map) {
-	if (!map) return;
-
-	if (map.getLayer(AEZ_HATCH_LAYER)) {
-		map.setPaintProperty(AEZ_HATCH_LAYER, 'fill-opacity', 0);
-	}
-
-	if (map.getLayer(AEZ_FILL_LAYER)) {
-		map.setPaintProperty(AEZ_FILL_LAYER, 'fill-color', '#4a90d9');
-		map.setPaintProperty(AEZ_FILL_LAYER, 'fill-opacity', 0.15);
-	}
-
-	if (map.getLayer(AEZ_SELECTED_FILL_LAYER)) {
-		map.setPaintProperty(AEZ_SELECTED_FILL_LAYER, 'fill-opacity', 0);
-		map.setFilter(AEZ_SELECTED_FILL_LAYER, EMPTY_AEZ_FILTER);
 	}
 }
 
