@@ -13,6 +13,9 @@
 	import SquaresIntersect from '@lucide/svelte/icons/squares-intersect';
 	import Layers from '@lucide/svelte/icons/layers';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import MessageSquare from '@lucide/svelte/icons/message-square';
+	import FeedbackDialog from '$lib/components/FeedbackDialog.svelte';
+	import { isFeedbackAvailable } from '$lib/feedback.js';
 	import { theme } from '$lib/theme.svelte.js';
 
 	let { children } = $props();
@@ -20,6 +23,7 @@
 	// Open by default: collapsed, the icons alone did not tell first-time users
 	// what they were or how to expand them. Narrow screens start collapsed.
 	let collapsed = $state(false);
+	let feedbackOpen = $state(false);
 	let collapseTimer;
 	const AUTO_COLLAPSE_DELAY_MS = 400;
 	const NARROW_SCREEN_QUERY = '(max-width: 767px)';
@@ -146,6 +150,25 @@
 
 		<!-- Bottom controls -->
 		<div class="safe-bottom flex flex-col gap-0.5 p-2">
+			{#if isFeedbackAvailable()}
+				<Tooltip.Root>
+					<Tooltip.Trigger asChild>
+						{#snippet child({ props })}
+							<button
+								{...props}
+								onclick={() => (feedbackOpen = true)}
+								class={getSidebarButtonClass()}
+							>
+								<MessageSquare size={16} class="shrink-0" />
+								{#if !collapsed}
+									<span>Feedback</span>
+								{/if}
+							</button>
+						{/snippet}
+					</Tooltip.Trigger>
+					{@render tooltipContent('Send feedback')}
+				</Tooltip.Root>
+			{/if}
 			<!-- Dark mode toggle -->
 			<Tooltip.Root>
 				<Tooltip.Trigger asChild>
@@ -250,4 +273,5 @@
 		</main>
 	</div>
 </div>
+<FeedbackDialog bind:open={feedbackOpen} />
 </Tooltip.Provider>
