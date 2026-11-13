@@ -40,9 +40,9 @@
 	import {
 		COUNTRY_OPTIONS,
 		YIELD_FORECAST_AGGREGATION_OPTIONS,
-		countriesBounds,
 		countryAt
 	} from '$lib/domain-options.js';
+	import { countriesView, showView } from '$lib/map-camera.js';
 	import { STUDY_AREA_VIEW } from '$lib/map-config.js';
 	import {
 		PERCENTILE_COLORS,
@@ -312,10 +312,7 @@
 	}
 
 	function frameCountries(selected) {
-		const bounds =
-			selected.length === ALL_COUNTRIES.length ? STUDY_AREA_VIEW.bounds : countriesBounds(selected);
-		if (!map || !bounds) return;
-		map.fitBounds(bounds, { ...STUDY_AREA_VIEW.fitBoundsOptions, duration: 900 });
+		if (map) showView(map, countriesView(selected));
 	}
 
 	/**
@@ -365,7 +362,7 @@
 		if (!map) return;
 		setSelectedCell(map, null);
 		clearZoneLayers(map);
-		map.fitBounds(STUDY_AREA_VIEW.bounds, { ...STUDY_AREA_VIEW.fitBoundsOptions, duration: 900 });
+		showView(map, STUDY_AREA_VIEW);
 	}
 
 	function clearCellSelection() {
@@ -916,6 +913,7 @@
 				{adminLevel}
 				onStyleReload={handleStyleReload}
 				initialView={STUDY_AREA_VIEW}
+				fitView={countriesView(countries)}
 				cooperativeGestures="touch"
 			/>
 		</MapPanel>

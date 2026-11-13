@@ -27,9 +27,9 @@
 	import {
 		COUNTRY_LABELS,
 		COUNTRY_OPTIONS,
-		countriesBounds,
 		countryAt
 	} from '$lib/domain-options.js';
+	import { countriesView, showView } from '$lib/map-camera.js';
 	import { STUDY_AREA_VIEW } from '$lib/map-config.js';
 	import { buildCropIndex, formatCropLabel } from '$lib/yield-forecast.js';
 	import {
@@ -250,9 +250,7 @@
 	function setCountries(next) {
 		countries = ALL_COUNTRIES.filter((name) => next.includes(name));
 		if (anchor && !countries.includes(countryAt(anchor.lat, anchor.lon))) clearSelection();
-		const bounds =
-			countries.length === ALL_COUNTRIES.length ? STUDY_AREA_VIEW.bounds : countriesBounds(countries);
-		if (map && bounds) map.fitBounds(bounds, { ...STUDY_AREA_VIEW.fitBoundsOptions, duration: 900 });
+		if (map) showView(map, countriesView(countries));
 	}
 
 	function clearSelection() {
@@ -269,7 +267,7 @@
 		variable = 'yield';
 		level = 'admin1';
 		chosenYear = null;
-		map?.fitBounds(STUDY_AREA_VIEW.bounds, { ...STUDY_AREA_VIEW.fitBoundsOptions, duration: 900 });
+		if (map) showView(map, STUDY_AREA_VIEW);
 	}
 
 	/** Select whatever contains `point` at the current level. */
@@ -643,6 +641,7 @@
 				adminLevel={level}
 				onStyleReload={() => (styleVersion += 1)}
 				initialView={STUDY_AREA_VIEW}
+				fitView={countriesView(countries)}
 				cooperativeGestures="touch"
 			/>
 		</MapPanel>

@@ -2,13 +2,15 @@
   MapLibre GL JS map component.
   Initialises on mount (browser-only). Exposes the map instance via bind:map
   for parent components to add layers. Swaps basemap style on dark mode toggle
-  and exposes an in-map projection toggle.
+  and exposes an in-map projection toggle. A fit button under the zoom buttons
+  brings the camera back to the page's selection after a drag or zoom.
 -->
 <script>
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import { BASEMAP_STYLE_URLS, FALLBACK_STYLE_URLS, MAP_DEFAULTS } from '$lib/map-config.js';
 	import { ADMIN_PMTILES_URLS } from '$lib/data-sources.js';
-	import { COUNTRY_VIEWS } from '$lib/domain-options.js';
+	import { COUNTRY_LABELS, COUNTRY_VIEWS } from '$lib/domain-options.js';
+	import { addFitControl, showView } from '$lib/map-camera.js';
 	import { createNoDataPatternImage } from '$lib/no-data-pattern.js';
 	import { theme } from '$lib/theme.svelte.js';
 
@@ -22,6 +24,10 @@
 		// only covers part of it can pass {bounds, fitBoundsOptions} to frame that
 		// instead, which stays correct at any container width.
 		initialView = undefined,
+		// Where the fit button returns: the page's selection, such as its ticked
+		// countries. Without one it returns to the country picked in "Zoom to",
+		// else to the opening view.
+		fitView = undefined,
 		// Ctrl + scroll to zoom and two fingers to pan, so scrolling the page past
 		// the map never moves it. 'touch' keeps only the two-finger rule, for touch
 		// screens; with a mouse the wheel then zooms directly.
@@ -47,6 +53,17 @@
 	let activeBasemapStyleUrl = '';
 	let previousFlyToCountry = '';
 	let projectionMode = $state('mercator');
+
+	const fitTarget = $derived(
+		fitView ?? COUNTRY_VIEWS[flyToCountry] ?? initialView ?? MAP_DEFAULTS
+	);
+	const fitLabel = $derived(
+		fitView
+			? 'Zoom back to the selected countries'
+			: flyToCountry
+				? `Zoom back to ${COUNTRY_LABELS[flyToCountry]}`
+				: 'Zoom back to the full view'
+	);
 
 	function getBasemapStyleUrl(isDark) {
 		return isDark ? BASEMAP_STYLE_URLS.dark : BASEMAP_STYLE_URLS.light;
@@ -225,9 +242,7 @@
 
 		previousFlyToCountry = flyToCountry;
 
-		const fly = () => {
-			map.flyTo({ center: target.center, zoom: target.zoom, duration: 900, essential: true });
-		};
+		const fly = () => showView(map, target);
 
 		// `load` has already fired by the time this component exposes `map`, and it
 		// only fires once, so waiting on it here would drop the camera move
@@ -320,6 +335,7 @@
 			mapInstance.keyboard.disableRotation();
 
 			mapInstance.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-left');
+			addFitControl(mapInstance, { getView: () => fitTarget, getLabel: () => fitLabel });
 			mapInstance.addControl(new maplibre.AttributionControl({ compact: true }), 'bottom-right');
 			attachStyleFallback(mapInstance);
 
@@ -349,6 +365,7 @@
 
 <div class="relative h-full w-full">
 	<div use:mountMap class="h-full w-full"></div>
+
 
 	<div class="pointer-events-none absolute right-3 top-3 z-10">
 		<div class="pointer-events-auto flex w-[8.5rem] flex-col gap-1.5 rounded-lg border border-border/80 bg-background/88 p-1.5 shadow-sm backdrop-blur">
