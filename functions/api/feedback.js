@@ -12,6 +12,7 @@ import {
 	FEEDBACK_CATEGORIES,
 	FEEDBACK_EMAIL_MAX_LENGTH,
 	FEEDBACK_MESSAGE_MAX_LENGTH,
+	FEEDBACK_NAME_MAX_LENGTH,
 	FEEDBACK_PAGE_MAX_LENGTH
 } from '../../src/lib/feedback-fields.js';
 
@@ -38,6 +39,7 @@ async function verifyTurnstile(secret, token, remoteip) {
 function readEntry(body) {
 	const category = String(body.category ?? '');
 	const message = String(body.message ?? '').trim();
+	const name = String(body.name ?? '').trim();
 	const email = String(body.email ?? '').trim();
 	const page = String(body.page ?? '').slice(0, FEEDBACK_PAGE_MAX_LENGTH);
 
@@ -46,10 +48,15 @@ function readEntry(body) {
 	if (message.length > FEEDBACK_MESSAGE_MAX_LENGTH) {
 		return { error: `Messages are limited to ${FEEDBACK_MESSAGE_MAX_LENGTH} characters.` };
 	}
+	if (name.length > FEEDBACK_NAME_MAX_LENGTH) {
+		return { error: `Names are limited to ${FEEDBACK_NAME_MAX_LENGTH} characters.` };
+	}
 	if (email.length > FEEDBACK_EMAIL_MAX_LENGTH || (email && !email.includes('@'))) {
 		return { error: 'Please check the email address.' };
 	}
-	return { entry: { category, message, email: email || null, page: page || null } };
+	return {
+		entry: { category, message, name: name || null, email: email || null, page: page || null }
+	};
 }
 
 export async function onRequestPost({ request, env }) {
@@ -73,12 +80,13 @@ export async function onRequestPost({ request, env }) {
 	}
 
 	await env.DB.prepare(
-		`INSERT INTO feedback (category, message, email, page, country, user_agent)
-		 VALUES (?, ?, ?, ?, ?, ?)`
+		`INSERT INTO feedback (category, message, name, email, page, country, user_agent)
+		 VALUES (?, ?, ?, ?, ?, ?, ?)`
 	)
 		.bind(
 			entry.category,
 			entry.message,
+			entry.name,
 			entry.email,
 			entry.page,
 			request.cf?.country ?? null,

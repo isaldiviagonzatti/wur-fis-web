@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 	created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
 	category TEXT NOT NULL,
 	message TEXT NOT NULL,
+	name TEXT,
 	email TEXT,
 	page TEXT,
 	country TEXT,

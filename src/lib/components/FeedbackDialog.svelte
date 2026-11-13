@@ -10,6 +10,7 @@
 		FEEDBACK_CATEGORIES,
 		FEEDBACK_EMAIL_MAX_LENGTH,
 		FEEDBACK_MESSAGE_MAX_LENGTH,
+		FEEDBACK_NAME_MAX_LENGTH,
 		submitFeedback,
 		turnstileWidget
 	} from '$lib/feedback.js';
@@ -18,6 +19,7 @@
 
 	let category = $state(FEEDBACK_CATEGORIES[0].value);
 	let message = $state('');
+	let name = $state('');
 	let email = $state('');
 	let token = $state('');
 	let sending = $state(false);
@@ -37,12 +39,14 @@
 			await submitFeedback({
 				category,
 				message,
+				name,
 				email,
 				page: page.url.pathname + page.url.search,
 				token
 			});
 			sent = true;
 			message = '';
+			name = '';
 			email = '';
 		} catch (error) {
 			errorMessage = error.message;
@@ -102,6 +106,18 @@
 						rows={5}
 						class="max-h-64"
 						placeholder="What happened, or what would you like to see?"
+					/>
+				</div>
+
+				<div class="grid gap-1.5">
+					<label for="feedback-name" class="text-xs font-medium text-muted-foreground">
+						Name (optional)
+					</label>
+					<Input
+						id="feedback-name"
+						bind:value={name}
+						maxlength={FEEDBACK_NAME_MAX_LENGTH}
+						autocomplete="name"
 					/>
 				</div>
 

@@ -11,6 +11,7 @@ import { env } from '$env/dynamic/public';
 export {
 	FEEDBACK_CATEGORIES,
 	FEEDBACK_MESSAGE_MAX_LENGTH,
+	FEEDBACK_NAME_MAX_LENGTH,
 	FEEDBACK_EMAIL_MAX_LENGTH
 } from './feedback-fields.js';
 

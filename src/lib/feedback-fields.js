@@ -11,5 +11,6 @@ export const FEEDBACK_CATEGORIES = [
 ];
 
 export const FEEDBACK_MESSAGE_MAX_LENGTH = 5000;
+export const FEEDBACK_NAME_MAX_LENGTH = 100;
 export const FEEDBACK_EMAIL_MAX_LENGTH = 254;
 export const FEEDBACK_PAGE_MAX_LENGTH = 500;
