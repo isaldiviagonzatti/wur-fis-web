@@ -10,7 +10,7 @@
 </script>
 
 <div class="flex h-12 shrink-0 items-center justify-center px-page">
-	<TabsList>
+	<TabsList class="site-title">
 		{#each tabs as tab (tab.value)}
 			<TabsTrigger value={tab.value}>{tab.label}</TabsTrigger>
 		{/each}

@@ -79,6 +79,19 @@
   color: var(--muted-foreground);
 }
 
+/* Section and page titles (header, page titles, home cards, page tabs, footer
+   links), all lower case like the site name. navigation.js keeps them in title
+   case, so dropping the text-transform here brings that case back everywhere. */
+@utility site-title {
+  text-transform: lowercase;
+
+  /* Browsers give buttons text-transform: none, so menu triggers and tabs would
+     keep their capitals without this. */
+  & button {
+    text-transform: inherit;
+  }
+}
+
 .dark {
   color-scheme: dark;
   --background: oklch(0.141 0.005 285.823);

@@ -45,7 +45,7 @@
 			{#each FOOTER_COLUMNS as column (column.title)}
 				<div>
 					<h2 class="mb-3 text-xs font-semibold tracking-wider uppercase">{column.title}</h2>
-					<ul class="space-y-2 text-sm">
+					<ul class="site-title space-y-2 text-sm">
 						{#each column.links as link (link.href)}
 							<li>
 								{#if link.external}

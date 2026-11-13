@@ -21,11 +21,11 @@
 		<!-- Set off by a shade, not a frame line. -->
 		<Card class="rounded-md border-0 bg-surface-tint">
 			<CardHeader>
-				<CardTitle>
+				<CardTitle class="site-title">
 					{#if item.comingSoon}
 						<span class="flex flex-wrap items-center gap-2">
 							{item.title}
-							<Badge variant="outline">Coming soon</Badge>
+							<Badge variant="outline" class="normal-case">Coming soon</Badge>
 						</span>
 					{:else}
 						<a href={item.href} class="underline underline-offset-4 hover:text-muted-foreground">

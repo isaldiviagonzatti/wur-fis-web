@@ -3,7 +3,8 @@
   explains itself without a section overview page. Pass a `page` entry from
   navigation.js, or a `title` and `description` (or children for rich text).
   `compact` fits it in one line above full-height tools. A `slogan` title (the
-  home page's) is a sentence, set centred, in italics, in balanced lines.
+  home page's) is a sentence: it keeps its case and is set centred, in italics,
+  in balanced lines, where a page name takes the site's title style.
 -->
 <script>
 	import { Badge } from '$lib/components/ui/badge';
@@ -28,7 +29,7 @@
 
 {#if compact}
 	<div class={cn('flex flex-wrap items-baseline gap-x-3 gap-y-1', className)}>
-		<h1 class="text-lg font-semibold tracking-tight text-foreground">{shownTitle}</h1>
+		<h1 class="site-title text-lg font-semibold tracking-tight text-foreground">{shownTitle}</h1>
 		{#if badge}<Badge variant="outline" class="self-center text-muted-foreground">{badge}</Badge>{/if}
 		{#if shownDescription}
 			<p class="text-sm text-muted-foreground">{shownDescription}</p>
@@ -41,7 +42,7 @@
 			<h1
 				class={[
 					'text-2xl font-semibold tracking-tight text-foreground sm:text-3xl',
-					slogan && 'text-center text-balance italic'
+					slogan ? 'text-center text-balance italic' : 'site-title'
 				]}
 			>
 				{shownTitle}

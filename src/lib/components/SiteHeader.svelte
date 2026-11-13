@@ -44,11 +44,11 @@
 <svelte:window onkeydown={(event) => event.key === 'Escape' && (menuOpen = false)} />
 
 {#snippet soon()}
-	<span class="text-[11px] font-normal text-muted-foreground">Soon</span>
+	<span class="text-[11px] font-normal text-muted-foreground normal-case">Soon</span>
 {/snippet}
 
 <header
-	class="relative z-40 shrink-0 border-b-[3px] border-brand-accent bg-brand text-brand-foreground"
+	class="site-title relative z-40 shrink-0 border-b-[3px] border-brand-accent bg-brand text-brand-foreground"
 	style="height: var(--header-height);"
 >
 	<!-- Three columns, the outer two of equal width, so the sections sit in the
