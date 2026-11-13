@@ -5,7 +5,7 @@
 	let { message = '' } = $props();
 </script>
 
-<div class="px-4 py-3">
+<div class="px-page py-3">
 	<MapPanel>
 		<Map />
 	</MapPanel>

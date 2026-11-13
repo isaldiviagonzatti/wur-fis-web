@@ -8,19 +8,19 @@
   --radius: 0.30rem;
   color-scheme: light;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  --foreground: var(--brand);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  --card-foreground: var(--brand);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
+  --popover-foreground: var(--brand);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --secondary-foreground: var(--brand);
   --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
+  --muted-foreground: var(--text-muted-light);
   --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --accent-foreground: var(--brand);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
@@ -40,24 +40,63 @@
   --sidebar-ring: oklch(0.705 0.015 286.067);
   --scrollbar-thumb: color-mix(in oklab, var(--muted-foreground) 35%, transparent);
   --scrollbar-thumb-hover: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+  /* Brand, from the Arctic reflection palette, without its bright blue
+     (#5289ad): saturated colour stays reserved for data. The band of the header
+     and footer, and the text colour of the whole site. Data colours live with
+     each map and chart. */
+  --brand: #243c4c; /* band; text in light mode */
+  --brand-foreground: #f4fcfb; /* text on the band; text in dark mode */
+  --brand-muted: #acbcbf; /* quieter text on the band; muted text in dark mode */
+  --brand-accent: #698696; /* line under the header, active section */
+  /* Slate is too light for small text on white (3.9:1); this step between it
+     and the band colour is the lightest that passes AA on white and on muted. */
+  --text-muted-light: color-mix(in srgb, var(--brand) 30%, var(--brand-accent));
+  /* Shade that sets a box off the page instead of a frame line (home page
+     cards): a palette slate mixed into the background, no new colour. 20% Mist
+     is #EEF2F2, where muted text still passes AA (4.65:1). */
+  --surface-tint: color-mix(in srgb, var(--brand-muted) 20%, var(--background));
+  /* Header bar plus its accent line; full-height pages subtract it. */
+  --header-height: 3.75rem;
+  /* Side margin of the header and of every page (`px-page`): 16px on phones,
+     growing with the window to 48px, so the edges of all pages line up. */
+  --page-gutter: clamp(1rem, 4vw, 3rem);
+  /* Control column beside the map in the forecast and crop statistics tools;
+     the Crop field above it takes the same width so their edges line up. */
+  --tool-panel-width: 18rem;
+}
+
+@utility px-page {
+  padding-inline: var(--page-gutter);
+}
+
+/* Field names in the tool panels (CROP, SHOW BY, YEAR): small capitals in a
+   light weight, so the values in the controls carry the emphasis. */
+@utility field-label {
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
 
 .dark {
   color-scheme: dark;
   --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
+  --foreground: var(--brand-foreground);
   --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
+  --card-foreground: var(--brand-foreground);
   --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
+  --popover-foreground: var(--brand-foreground);
+  --primary: var(--brand-foreground);
+  --primary-foreground: var(--brand);
   --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary-foreground: var(--brand-foreground);
   --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
+  --muted-foreground: var(--brand-muted);
+  /* Half band colour over the dark page: #16222C. */
+  --surface-tint: color-mix(in srgb, var(--brand) 50%, var(--background));
   --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent-foreground: var(--brand-foreground);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -113,6 +152,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-accent: var(--brand-accent);
+  --color-surface-tint: var(--surface-tint);
 }
 
 @layer base {
@@ -152,7 +196,9 @@
   body {
     @apply bg-background text-foreground;
     margin: 0;
-    font-family: "Inter", var(--font-sans);
+    /* Self-hosted (@fontsource-variable/inter, imported in +layout.svelte), so
+       every visitor gets Inter and its full 100-900 weight range. */
+    font-family: "Inter Variable", "Inter", var(--font-sans);
   }
 }
 
@@ -172,9 +218,6 @@
   padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
 }
 
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
 
 /* Map zoom buttons in the app's neutral chrome, readable in both themes. The
    descendant selector outranks maplibre-gl.css, which loads after this file. */

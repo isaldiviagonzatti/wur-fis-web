@@ -1,18 +1,10 @@
 <!--
-  Data Explorer landing — mosaic of available explorers.
+  Retired URL: the Data Explorer overview was dropped; each data page now
+  introduces itself. Old links go on to the first of them.
 -->
 <script>
-	import NavigationCardGrid from '$lib/components/NavigationCardGrid.svelte';
-	import { DATA_EXPLORER_NAV_ITEMS } from '$lib/navigation.js';
+	import ForwardPage from '$lib/components/ForwardPage.svelte';
+	import { PAGES } from '$lib/navigation.js';
 </script>
 
-<div class="mx-auto max-w-4xl px-8 py-12">
-	<div class="mb-10">
-		<h2 class="text-3xl font-semibold tracking-tight mb-3">Data Explorer</h2>
-		<p class="text-lg text-muted-foreground leading-relaxed">
-			Explore the data underpinning the Foodshed Information Service.
-		</p>
-	</div>
-
-	<NavigationCardGrid items={DATA_EXPLORER_NAV_ITEMS} />
-</div>
+<ForwardPage to={PAGES.cropStatistics.href} title={PAGES.cropStatistics.title} />

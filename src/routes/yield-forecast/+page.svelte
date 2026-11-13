@@ -1,69 +1,65 @@
 <!--
-  Yield Forecast overview — what the forecast is before the map, and the two
-  ways in: the forecast itself, or the guide first. The sidebar's Yield Forecast
-  link leads back here.
+  Yield Forecast tool — opens with its title and description, then a tab shell
+  delegating to per-tab components: Forecast | User Guide | Methodology.
 -->
 <script>
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import BookOpen from '@lucide/svelte/icons/book-open';
-	import FlaskConical from '@lucide/svelte/icons/flask-conical';
-	import TrendingUp from '@lucide/svelte/icons/trending-up';
+	import { replaceState } from '$app/navigation';
+	import PageIntro from '$lib/components/PageIntro.svelte';
+	import { Tabs, TabsContent } from '$lib/components/ui/tabs';
+	import PageTabList from '$lib/components/PageTabList.svelte';
 	import { COUNTRY_OPTIONS } from '$lib/domain-options.js';
+	import { PAGES } from '$lib/navigation.js';
+	import ForecastTab from './ForecastTab.svelte';
+	import MethodologyTab from './MethodologyTab.svelte';
+	import UserGuideTab from './UserGuideTab.svelte';
 
-	const FORECAST_PATH = '/yield-forecast/forecast';
-	const countries = new Intl.ListFormat('en', { type: 'conjunction' }).format(
-		COUNTRY_OPTIONS.map(({ label }) => label)
-	);
+	let activeTab = $state('forecast');
+	let crop = $state('');
+	let countries = $state(COUNTRY_OPTIONS.map(({ value }) => value));
+	let adminLevel = $state('grid');
+	let skillOverlay = $state(false);
+	let run = $state('');
 
-	// Links shared before the forecast moved to its own page carry ?run=; they
-	// meant the forecast, not this overview.
+	const LINKED_TABS = ['guide', 'methodology'];
+
+	// The open tab lives in the URL (?tab=guide, ?tab=methodology), so a link or a
+	// reload opens the same tab; the forecast tab needs no parameter.
 	onMount(() => {
-		if (new URL(window.location.href).searchParams.has('run')) {
-			goto(`${FORECAST_PATH}${window.location.search}`, { replaceState: true });
-		}
+		const tab = new URL(window.location.href).searchParams.get('tab');
+		if (LINKED_TABS.includes(tab)) activeTab = tab;
 	});
+
+	function selectTab(tab) {
+		activeTab = tab;
+		const url = new URL(window.location.href);
+		if (LINKED_TABS.includes(tab)) url.searchParams.set('tab', tab);
+		else url.searchParams.delete('tab');
+		replaceState(url, {});
+	}
 </script>
 
-<div class="mx-auto max-w-3xl space-y-8 px-4 py-8">
-	<div class="space-y-3">
-		<h1 class="text-2xl font-semibold tracking-tight text-foreground">Seasonal yield forecast</h1>
-		<p class="text-base leading-relaxed text-muted-foreground">
-			Will this season's harvest be better or worse than usual? This tool forecasts crop yields for
-			the growing season under way in {countries}, updated monthly.
-		</p>
-	</div>
+<div class="flex flex-col h-full">
+	<PageIntro page={PAGES.yieldForecast} class="px-page pt-6 pb-1" />
+	<Tabs bind:value={() => activeTab, selectTab} class="flex flex-col flex-1 overflow-hidden">
+		<PageTabList
+			tabs={[
+				{ value: 'forecast', label: 'Forecast' },
+				{ value: 'guide', label: 'User Guide' },
+				{ value: 'methodology', label: 'Methodology' }
+			]}
+		/>
 
-	<section class="space-y-3 text-base leading-relaxed text-muted-foreground">
-		<h2 class="text-lg font-semibold text-foreground">What you will see</h2>
-		<p>
-			A map shows where the yield of a crop is expected to be below, near or above normal for each
-			place. Click any place to see how the season has gone so far according to observed weather,
-			and the range of possible yields at harvest.
-		</p>
-	</section>
+		<TabsContent value="forecast" class="m-0 flex-1 overflow-auto p-0">
+			<ForecastTab bind:crop bind:countries bind:adminLevel bind:skillOverlay bind:run />
+		</TabsContent>
 
-	<div class="flex flex-wrap justify-center gap-3">
-		<a
-			href={FORECAST_PATH}
-			class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-		>
-			<TrendingUp size={16} />
-			Open the forecast
-		</a>
-		<a
-			href={`${FORECAST_PATH}?tab=guide`}
-			class="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-		>
-			<BookOpen size={16} />
-			Read the user guide
-		</a>
-		<a
-			href={`${FORECAST_PATH}?tab=methodology`}
-			class="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-		>
-			<FlaskConical size={16} />
-			Methodology
-		</a>
-	</div>
+		<TabsContent value="guide" class="m-0 flex-1 overflow-auto px-page py-4">
+			<UserGuideTab />
+		</TabsContent>
+
+		<TabsContent value="methodology" class="m-0 flex-1 overflow-auto px-page py-4">
+			<MethodologyTab />
+		</TabsContent>
+	</Tabs>
 </div>

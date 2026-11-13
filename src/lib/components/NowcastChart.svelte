@@ -11,6 +11,7 @@
 <script>
 	import { Area, Axis, Chart, Spline, Svg, Tooltip } from 'layerchart';
 	import { scaleLinear, scaleUtc } from 'd3-scale';
+	import InfoCard from '$lib/components/InfoCard.svelte';
 	import { theme } from '$lib/theme.svelte.js';
 	import { chartColors } from '$lib/yield-forecast.js';
 
@@ -44,6 +45,20 @@
 	const formatMonth = (date) => MONTHS[date.getUTCMonth()];
 	const formatDay = (date) => `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 	const formatValue = (value) => `${Math.round(value)}%`;
+
+	function tooltipRows(day) {
+		const items = [];
+		if (day.current !== null) {
+			items.push({ label: 'This season', value: formatValue(day.current), color: colors.forecast });
+		}
+		if (day.mean !== null) {
+			items.push({ label: 'Normal', value: formatValue(day.mean), color: colors.reference });
+		}
+		if (day.p05 !== null && day.p95 !== null) {
+			items.push({ label: 'Usual range', value: `${formatValue(day.p05)}–${formatValue(day.p95)}` });
+		}
+		return items;
+	}
 </script>
 
 <div class="nowcast-chart relative" style:height={`${height}px`}>
@@ -72,23 +87,10 @@
 			/>
 			<Spline data={current} y="current" stroke={colors.forecast} strokeWidth={3.5} />
 		</Svg>
-		<Tooltip.Root>
+		<!-- The same shaded card as the crop statistics charts, not LayerChart's own. -->
+		<Tooltip.Root variant="none">
 			{#snippet children({ data })}
-				<Tooltip.Header>{formatDay(data.date)}</Tooltip.Header>
-				<Tooltip.List>
-					{#if data.current !== null}
-						<Tooltip.Item label="This season" value={formatValue(data.current)} color={colors.forecast} />
-					{/if}
-					{#if data.mean !== null}
-						<Tooltip.Item label="Normal" value={formatValue(data.mean)} color={colors.reference} />
-					{/if}
-					{#if data.p05 !== null && data.p95 !== null}
-						<Tooltip.Item
-							label="Usual range"
-							value={`${formatValue(data.p05)}–${formatValue(data.p95)}`}
-						/>
-					{/if}
-				</Tooltip.List>
+				<InfoCard title={formatDay(data.date)} rows={tooltipRows(data)} />
 			{/snippet}
 		</Tooltip.Root>
 	</Chart>

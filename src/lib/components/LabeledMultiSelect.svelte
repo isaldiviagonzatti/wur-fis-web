@@ -11,8 +11,7 @@
 		value = $bindable([]),
 		options = [],
 		noneLabel = 'None',
-		widthClass = 'w-32',
-		labelClass = 'text-xs'
+		widthClass = 'w-32'
 	} = $props();
 
 	const summary = $derived(
@@ -26,7 +25,7 @@
 </script>
 
 <div class="flex items-center gap-1.5">
-	<span class="shrink-0 {labelClass} font-medium text-muted-foreground">{label}</span>
+	<span class="field-label shrink-0">{label}</span>
 	<Select type="multiple" bind:value>
 		<SelectTrigger size="sm" aria-label={label} class="{widthClass} min-w-0">
 			<span class="truncate">{summary}</span>

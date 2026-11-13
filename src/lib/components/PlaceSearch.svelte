@@ -8,7 +8,7 @@
 -->
 <script>
 	import Search from '@lucide/svelte/icons/search';
-	import X from '@lucide/svelte/icons/x';
+	import SearchClearButton from '$lib/components/SearchClearButton.svelte';
 	import { isGeocodingAvailable, searchPlaces } from '$lib/geocode.js';
 
 	let { onSelect, placeholder = 'Find a place', query = $bindable('') } = $props();
@@ -80,7 +80,6 @@
 	<div class="relative">
 		<div class="relative flex items-center gap-1.5">
 			<Search size={14} class="shrink-0 text-muted-foreground" />
-			<!-- type="text": the browser's own search clear button ignores the theme. -->
 			<input
 				type="text"
 				role="searchbox"
@@ -93,14 +92,7 @@
 				class="h-8 w-full rounded-md border border-border bg-background pr-7 pl-2 text-sm outline-none focus:border-primary"
 			/>
 			{#if query && !busy}
-				<button
-					type="button"
-					onclick={clearQuery}
-					aria-label="Clear search"
-					class="absolute right-1.5 cursor-pointer rounded-sm p-0.5 text-foreground/70 hover:text-foreground"
-				>
-					<X size={14} />
-				</button>
+				<SearchClearButton onclick={clearQuery} />
 			{/if}
 		</div>
 

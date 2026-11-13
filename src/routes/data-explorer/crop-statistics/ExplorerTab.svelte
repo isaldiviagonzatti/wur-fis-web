@@ -520,19 +520,16 @@
 	</div>
 {/snippet}
 
-<div class="shrink-0 px-4 pt-2">
-	<div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-		<div class="flex flex-wrap items-start gap-x-8 gap-y-3">
-			<div>
-				<h1 class="text-xl font-semibold tracking-tight text-foreground">Crop statistics</h1>
-			</div>
+<div class="shrink-0 px-page pt-2">
+	<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+		<div class="flex flex-wrap items-center gap-x-6 gap-y-2">
 			<LabeledSelect
 				label="Crop"
-				labelClass="text-sm"
 				bind:value={crop}
 				options={cropOptions}
 				placeholder={countries.length ? 'Select crop' : 'Select a country first'}
-				widthClass="w-64"
+				class="w-(--tool-panel-width) max-w-full"
+				widthClass="flex-1"
 				triggerStyle="height: 2.25rem; font-size: 0.9375rem;"
 				disabled={!cropOptions.length}
 			/>
@@ -548,14 +545,13 @@
 	</div>
 </div>
 
-<div class="grid gap-3 px-4 py-3 lg:grid-cols-[18rem_minmax(0,1fr)]">
+<div class="grid gap-3 px-page py-3 lg:grid-cols-[var(--tool-panel-width)_minmax(0,1fr)]">
 	<div class="space-y-6">
 		<div class="space-y-3">
 			<PlaceSearch bind:query={placeQuery} onSelect={handlePlaceSelect} />
 
 			<LabeledMultiSelect
 				label="Countries"
-				labelClass="text-sm"
 				bind:value={() => countries, setCountries}
 				options={COUNTRY_OPTIONS}
 				noneLabel="None selected"
@@ -564,7 +560,6 @@
 
 			<LabeledSelect
 				label="Show"
-				labelClass="text-sm"
 				help={CONTROL_HELP.variable}
 				bind:value={() => variable, setVariable}
 				options={VARIABLE_OPTIONS}
@@ -573,7 +568,6 @@
 
 			<LabeledSelect
 				label="Show by"
-				labelClass="text-sm"
 				help={CONTROL_HELP.showBy}
 				bind:value={level}
 				options={levelOptions}
@@ -583,7 +577,7 @@
 
 			<div class="space-y-1">
 				<div class="flex items-center justify-between text-sm">
-					<InfoTip text={CONTROL_HELP.year} class="font-medium text-muted-foreground">Year</InfoTip>
+					<InfoTip text={CONTROL_HELP.year} class="field-label">Year</InfoTip>
 					<span class="font-semibold tabular-nums text-foreground">
 						{yearIndex >= 0 ? years[yearIndex] : ''}
 					</span>
@@ -606,8 +600,8 @@
 				{/if}
 			</div>
 
-			<div class="flex items-center gap-2 text-xs text-muted-foreground">
-				<InfoTip text={CONTROL_HELP.opacity} class="shrink-0">Opacity</InfoTip>
+			<div class="flex items-center gap-2">
+				<InfoTip text={CONTROL_HELP.opacity} class="field-label shrink-0">Opacity</InfoTip>
 				<input
 					type="range"
 					min="0.2"
@@ -655,7 +649,7 @@
 	</div>
 </div>
 
-<div class="px-4 pb-4">
+<div class="px-page pb-4">
 	{#if hasSelection}
 		<CropYieldsPanel
 			title={panelTitle}

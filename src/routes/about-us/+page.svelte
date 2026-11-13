@@ -1,19 +1,23 @@
 <!--
-  About Us page — team and contact information for the Foodshed Information Service.
+  About Us page — team and contact information for the site.
 -->
 <script>
 	import { Separator } from '$lib/components/ui/separator';
+	import PageIntro from '$lib/components/PageIntro.svelte';
+	import PartnerLogos from '$lib/components/PartnerLogos.svelte';
+	import { SITE_NAME } from '$lib/navigation.js';
 </script>
 
 <div class="mx-auto max-w-3xl px-6 py-10">
-	<h2 class="text-3xl font-semibold tracking-tight mb-3">About Us</h2>
-	<p class="text-muted-foreground mb-8">
-		The Foodshed Information Service is developed at
-		<a href="https://www.wur.nl" class="underline underline-offset-2 hover:text-foreground transition-colors">Wageningen University &amp; Research</a>
-		as part of the EU Horizon Europe
-		<a href="https://www.safe4allafrica.eu/" class="underline underline-offset-2 hover:text-foreground transition-colors">SAFE4ALL</a>
-		project (grant No. 101137814).
-	</p>
+	<PageIntro title="About Us" class="mb-8">
+		<p class="max-w-3xl text-base leading-relaxed text-muted-foreground">
+			<span class="font-medium text-foreground">{SITE_NAME}</span> is developed at
+			<a href="https://www.wur.nl" class="underline underline-offset-2 hover:text-foreground transition-colors">Wageningen University &amp; Research</a>
+			as part of the EU Horizon Europe
+			<a href="https://www.safe4allafrica.eu/" class="underline underline-offset-2 hover:text-foreground transition-colors">SAFE4ALL</a>
+			project (grant No. 101137814).
+		</p>
+	</PageIntro>
 
 	<Separator class="mb-8" />
 
@@ -55,6 +59,14 @@
 				and migration in Sub-Saharan Africa through user-centred climate services co-developed
 				with communities, municipalities, and national partners in Ghana, Kenya, and Zimbabwe.
 			</p>
+		</section>
+
+		<Separator />
+
+		<!-- Partners -->
+		<section>
+			<h3 class="text-lg font-semibold mb-4">Partners and funding</h3>
+			<PartnerLogos class="border border-border" />
 		</section>
 
 		<Separator />

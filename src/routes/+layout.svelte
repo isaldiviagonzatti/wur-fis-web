@@ -1,277 +1,56 @@
+<!--
+  App shell: the brand header on top, then the page, which scrolls with the
+  footer below it. Holds the feedback dialog, opened by the floating button in
+  the bottom-right corner and by the footer, and the tooltip provider that
+  InfoTip needs.
+-->
 <script>
 	import favicon from '$lib/assets/favicon.svg';
+	import '@fontsource-variable/inter';
+	// Fetched only by pages that set italic text (the home page's slogan).
+	import '@fontsource-variable/inter/wght-italic.css';
 	import '../app.css';
-	import { cn } from '$lib/utils.js';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
-	import { page } from '$app/state';
 	import { Tooltip } from 'bits-ui';
-	import Sun from '@lucide/svelte/icons/sun';
-	import Moon from '@lucide/svelte/icons/moon';
-	import Gitlab from '@lucide/svelte/icons/gitlab';
-	import TrendingUp from '@lucide/svelte/icons/trending-up';
-	import SquaresIntersect from '@lucide/svelte/icons/squares-intersect';
-	import Layers from '@lucide/svelte/icons/layers';
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-	import MessageSquare from '@lucide/svelte/icons/message-square';
+	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 	import FeedbackDialog from '$lib/components/FeedbackDialog.svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
+	import SiteHeader from '$lib/components/SiteHeader.svelte';
 	import { isFeedbackAvailable } from '$lib/feedback.js';
 	import { theme } from '$lib/theme.svelte.js';
 
 	let { children } = $props();
 
-	// Open by default: collapsed, the icons alone did not tell first-time users
-	// what they were or how to expand them. Narrow screens start collapsed.
-	let collapsed = $state(false);
 	let feedbackOpen = $state(false);
-	let collapseTimer;
-	const AUTO_COLLAPSE_DELAY_MS = 400;
-	const NARROW_SCREEN_QUERY = '(max-width: 767px)';
-	const sidebarLabelClass = 'text-sm font-semibold leading-tight transition-colors';
-	const sidebarItemBaseClass =
-		'flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors';
-	const sidebarButtonBaseClass =
-		'cursor-pointer flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:text-foreground';
+	const openFeedback = isFeedbackAvailable() ? () => (feedbackOpen = true) : null;
 
-	function toggleDarkMode() {
-		theme.dark = !theme.dark;
-		document.documentElement.classList.toggle('dark', theme.dark);
-	}
-
-	afterNavigate(({ to, type }) => {
+	afterNavigate(({ type }) => {
 		// count.js only counts the initial page load; client-side navigations are counted here.
 		if (type !== 'enter') window.goatcounter?.count?.();
-		const path = to?.url.pathname;
-		if (!path || path === '/' || !window.matchMedia(NARROW_SCREEN_QUERY).matches) return;
-		clearTimeout(collapseTimer);
-		collapseTimer = setTimeout(() => {
-			collapsed = true;
-		}, AUTO_COLLAPSE_DELAY_MS);
 	});
 
 	onMount(() => {
 		document.documentElement.classList.toggle('dark', theme.dark);
-		if (window.matchMedia(NARROW_SCREEN_QUERY).matches) collapsed = true;
-		return () => clearTimeout(collapseTimer);
 	});
-
-	const navItems = [
-		{ href: '/yield-forecast', label: 'Yield Forecast', icon: TrendingUp },
-		{ href: '/foodshed', label: 'Foodshed Atlas', icon: SquaresIntersect },
-		{ href: '/data-explorer', label: 'Data Explorer', icon: Layers }
-	];
-
-	const sidebarWidthClass = $derived(collapsed ? 'w-14' : 'w-50');
-	const sidebarJustifyClass = $derived(collapsed ? 'justify-center' : '');
-	const homeLinkClass = $derived(
-		cn(
-			sidebarLabelClass,
-			page.url.pathname === '/'
-				? 'text-foreground'
-				: 'text-muted-foreground hover:text-foreground'
-		)
-	);
-
-	function getNavItemClass(active) {
-		return cn(
-			sidebarItemBaseClass,
-			sidebarJustifyClass,
-			active ? 'font-medium text-foreground' : 'text-muted-foreground hover:text-foreground'
-		);
-	}
-
-	function getSidebarButtonClass() {
-		return cn(sidebarButtonBaseClass, sidebarJustifyClass);
-	}
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-		rel="stylesheet"
-	/>
 </svelte:head>
 
-{#snippet tooltipContent(label)}
-	<Tooltip.Content
-		sideOffset={8}
-		side="right"
-		class="bg-popover text-popover-foreground z-[9999] rounded-md border px-2.5 py-1 text-xs font-medium shadow-md"
-	>
-		{label}
-	</Tooltip.Content>
-{/snippet}
-
 <Tooltip.Provider delayDuration={300}>
-<div class="app-shell flex overflow-hidden bg-background text-foreground">
-	<!-- Left sidebar -->
-	<aside class={cn('flex flex-col text-foreground transition-all duration-200', sidebarWidthClass)}>
-		<!-- Logo / title -->
-			<div class={cn('flex h-12 items-center overflow-hidden px-4', sidebarJustifyClass || 'justify-start')}>
-				{#if collapsed}
-					<a href="/" class={homeLinkClass}>FIS</a>
-				{:else}
-					<a
-						href="/"
-						class={homeLinkClass}
-						style="opacity: 0; animation: fadeIn 180ms ease 150ms forwards;"
-					>
-						Foodshed Information Service
-					</a>
-				{/if}
-			</div>
-
-		<!-- Nav links -->
-		<nav class="flex flex-col gap-0.5 p-2 flex-1">
-			{#each navItems as item (item.href)}
-				{@const active = page.url.pathname.startsWith(item.href)}
-				<Tooltip.Root>
-					<Tooltip.Trigger asChild>
-						{#snippet child({ props })}
-								<a
-									href={item.href}
-									{...props}
-									class={getNavItemClass(active)}
-							>
-								<item.icon size={16} class="shrink-0" />
-								{#if !collapsed}
-									<span class="truncate">{item.label}</span>
-								{/if}
-							</a>
-						{/snippet}
-					</Tooltip.Trigger>
-					{@render tooltipContent(item.label)}
-				</Tooltip.Root>
-			{/each}
-		</nav>
-
-		<!-- Bottom controls -->
-		<div class="safe-bottom flex flex-col gap-0.5 p-2">
-			{#if isFeedbackAvailable()}
-				<Tooltip.Root>
-					<Tooltip.Trigger asChild>
-						{#snippet child({ props })}
-							<button
-								{...props}
-								onclick={() => (feedbackOpen = true)}
-								class={getSidebarButtonClass()}
-							>
-								<MessageSquare size={16} class="shrink-0" />
-								{#if !collapsed}
-									<span>Feedback</span>
-								{/if}
-							</button>
-						{/snippet}
-					</Tooltip.Trigger>
-					{@render tooltipContent('Send feedback')}
-				</Tooltip.Root>
-			{/if}
-			<!-- Dark mode toggle -->
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild>
-						{#snippet child({ props })}
-								<button
-									{...props}
-									onclick={toggleDarkMode}
-									class={getSidebarButtonClass()}
-							>
-							{#if theme.dark}
-								<Sun size={16} class="shrink-0" />
-							{:else}
-								<Moon size={16} class="shrink-0" />
-							{/if}
-							{#if !collapsed}
-								<span>{theme.dark ? 'Light mode' : 'Dark mode'}</span>
-							{/if}
-						</button>
-					{/snippet}
-				</Tooltip.Trigger>
-				{@render tooltipContent(theme.dark ? 'Light mode' : 'Dark mode')}
-			</Tooltip.Root>
-			<!-- Collapse toggle -->
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild>
-						{#snippet child({ props })}
-							<button
-								{...props}
-								onclick={() => (collapsed = !collapsed)}
-								class={getSidebarButtonClass()}
-							>
-							<ChevronLeft size={16} class="shrink-0 transition-transform {collapsed ? 'rotate-180' : ''}" />
-							{#if !collapsed}
-								<span>Collapse</span>
-							{/if}
-						</button>
-					{/snippet}
-				</Tooltip.Trigger>
-				{@render tooltipContent(collapsed ? 'Expand sidebar' : 'Collapse sidebar')}
-			</Tooltip.Root>
-		</div>
-	</aside>
-
-	<!-- Main area -->
-	<div class="flex flex-1 flex-col overflow-hidden">
-		<!-- Page content -->
+	<div class="app-shell flex flex-col overflow-hidden bg-background text-foreground">
+		<SiteHeader />
 		<main class="flex-1 overflow-auto">
 			<div class="flex min-h-full flex-col">
 				<div class="flex-1">
 					{@render children()}
 				</div>
-
-				<!-- Footer -->
-				<footer class="safe-bottom mt-4 px-3 py-2 sm:px-6">
-					<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-						<!-- Logos -->
-						<div class="flex items-center gap-3 sm:gap-6">
-							<a href="https://www.wur.nl" target="_blank" rel="noopener" class="shrink-0">
-								<img
-									src="/wur-logo.svg"
-									alt="Wageningen University & Research"
-									class="h-6 w-auto shrink-0 sm:h-7"
-								/>
-							</a>
-							<a href="https://www.safe4allafrica.eu/" target="_blank" rel="noopener" class="shrink-0">
-								<img
-									src="/safe4all-logo-vertical.svg"
-									alt="SAFE4ALL"
-									class="h-7 w-auto shrink-0 sm:h-8"
-								/>
-							</a>
-							<div class="shrink-0">
-								<img
-									src="/eu-flag.svg"
-									alt="European Union"
-									class="h-7 w-auto shrink-0 sm:h-8"
-								/>
-							</div>
-						</div>
-
-						<!-- About us + GitLab -->
-						<div class="flex min-w-0 items-center gap-3 sm:gap-4">
-							<a
-								href="/about-us"
-								class="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors sm:text-xs"
-							>
-								About Us
-							</a>
-							<a
-								href="https://git.wur.nl/phd-isaldiviagonzatti/fis-web"
-								target="_blank"
-								rel="noopener"
-								title="GitLab repository"
-								class="text-muted-foreground hover:text-foreground transition-colors"
-							>
-								<Gitlab class="h-4 w-4 sm:h-5 sm:w-5" />
-							</a>
-						</div>
-					</div>
-				</footer>
+				<SiteFooter onfeedback={openFeedback} />
 			</div>
 		</main>
 	</div>
-</div>
-<FeedbackDialog bind:open={feedbackOpen} />
+	{#if openFeedback}<FeedbackButton onclick={openFeedback} />{/if}
+	<FeedbackDialog bind:open={feedbackOpen} />
 </Tooltip.Provider>

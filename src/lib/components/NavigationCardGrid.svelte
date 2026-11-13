@@ -18,7 +18,8 @@
 
 <div class="grid gap-5 sm:grid-cols-2">
 	{#each items as item (item.href)}
-		<Card>
+		<!-- Set off by a shade, not a frame line. -->
+		<Card class="rounded-md border-0 bg-surface-tint">
 			<CardHeader>
 				<CardTitle>
 					{#if item.comingSoon}

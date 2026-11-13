@@ -120,19 +120,22 @@
 	// run.json of the selected older month, once loaded.
 	let runDescription = $state(null);
 
-	// Fired once at component init. Not an effect: it has no reactive input, so
-	// making it one would only obscure that it runs exactly once.
-	loadCatalog()
-		.then((loaded) => {
-			catalog = loaded;
-			// A shared link names its month; one no longer published falls back to the latest.
-			if (!browser || run) return;
-			const requested = new URL(window.location.href).searchParams.get('run');
-			if (requested && requested !== loaded.latest_run && loaded.runs?.includes(requested)) {
-				run = requested;
-			}
-		})
-		.catch((error) => (loadError = `Could not load the forecast catalog. ${error.message}`));
+	// Fired once at component init in the browser. Not an effect: it has no
+	// reactive input, so making it one would only obscure that it runs exactly
+	// once. The page is prerendered, and the data is not needed to build it.
+	if (browser) {
+		loadCatalog()
+			.then((loaded) => {
+				catalog = loaded;
+				// A shared link names its month; one no longer published falls back to the latest.
+				if (run) return;
+				const requested = new URL(window.location.href).searchParams.get('run');
+				if (requested && requested !== loaded.latest_run && loaded.runs?.includes(requested)) {
+					run = requested;
+				}
+			})
+			.catch((error) => (loadError = `Could not load the forecast catalog. ${error.message}`));
+	}
 
 	const latestRun = $derived(catalog?.latest_run ?? null);
 	const isLatestRun = $derived(!run || run === latestRun);
@@ -756,29 +759,26 @@
 	</div>
 {/snippet}
 
-<div class="shrink-0 px-4 pt-2">
-	<div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-		<div class="flex flex-wrap items-start gap-x-8 gap-y-3">
-		<div>
-			<h1 class="text-xl font-semibold tracking-tight text-foreground">Seasonal yield forecast</h1>
+<div class="shrink-0 px-page pt-2">
+	<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+		<div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+			<!-- Nothing is drawn without a crop, so it sits at the top rather than
+			     among the controls that only decide where and how it is shown. -->
+			<LabeledSelect
+				label="Crop"
+				bind:value={crop}
+				options={cropOptions}
+				placeholder={countries.length ? 'Select crop' : 'Select a country first'}
+				class="w-(--tool-panel-width) max-w-full"
+				widthClass="flex-1"
+				triggerStyle="height: 2.25rem; font-size: 0.9375rem;"
+				disabled={!cropOptions.length}
+			/>
 			{#if catalog && !isLatestRun}
-				<p class="mt-0.5 text-sm text-muted-foreground">Forecast of {formatRunId(shownRun)}</p>
+				<p class="text-sm text-muted-foreground">Forecast of {formatRunId(shownRun)}</p>
 			{:else if lastUpdated}
-				<p class="mt-0.5 text-sm text-muted-foreground">Last updated {lastUpdated}</p>
+				<p class="text-sm text-muted-foreground">Last updated {lastUpdated}</p>
 			{/if}
-		</div>
-		<!-- Nothing is drawn without a crop, so it sits by the title rather than
-		     among the controls that only decide where and how it is shown. -->
-		<LabeledSelect
-			label="Crop"
-			labelClass="text-sm"
-			bind:value={crop}
-			options={cropOptions}
-			placeholder={countries.length ? 'Select crop' : 'Select a country first'}
-			widthClass="w-64"
-			triggerStyle="height: 2.25rem; font-size: 0.9375rem;"
-			disabled={!cropOptions.length}
-		/>
 		</div>
 		<button
 			type="button"
@@ -803,7 +803,7 @@
 	{/if}
 </div>
 
-<div class="grid gap-3 px-4 py-3 lg:grid-cols-[18rem_minmax(0,1fr)]">
+<div class="grid gap-3 px-page py-3 lg:grid-cols-[var(--tool-panel-width)_minmax(0,1fr)]">
 	<!-- Controls and legend share the left column so the map keeps its aspect and
 	     the density plot below can use the full width. -->
 	<div class="space-y-6">
@@ -812,7 +812,6 @@
 
 			<LabeledMultiSelect
 				label="Countries"
-				labelClass="text-sm"
 				bind:value={() => countries, setCountries}
 				options={COUNTRY_OPTIONS}
 				noneLabel="None selected"
@@ -821,7 +820,6 @@
 
 			<LabeledSelect
 				label="Show by"
-				labelClass="text-sm"
 				help={CONTROL_HELP.showBy}
 				bind:value={adminLevel}
 				options={YIELD_FORECAST_AGGREGATION_OPTIONS}
@@ -830,7 +828,7 @@
 			/>
 
 			<div class="flex items-center justify-between gap-2">
-				<InfoTip text={CONTROL_HELP.skill} class="text-sm font-medium text-muted-foreground">
+				<InfoTip text={CONTROL_HELP.skill} class="field-label">
 					Colour by skill
 				</InfoTip>
 				<button
@@ -855,8 +853,8 @@
 				</button>
 			</div>
 
-			<div class="flex items-center gap-2 text-xs text-muted-foreground">
-				<InfoTip text={CONTROL_HELP.opacity} class="shrink-0">Opacity</InfoTip>
+			<div class="flex items-center gap-2">
+				<InfoTip text={CONTROL_HELP.opacity} class="field-label shrink-0">Opacity</InfoTip>
 				<input
 					type="range"
 					min="0.2"
@@ -913,7 +911,7 @@
 	</div>
 </div>
 
-<div class="px-4 pb-4">
+<div class="px-page pb-4">
 	<div class={PANEL}>
 		{#if anchorUnresolved}
 			<!-- The coordinate names a cell, so it is only a heading in the grid

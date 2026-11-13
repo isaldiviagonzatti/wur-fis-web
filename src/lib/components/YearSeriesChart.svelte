@@ -15,7 +15,7 @@
 <script>
 	import { Axis, Chart, Points, Rule, Spline, Svg, Tooltip } from 'layerchart';
 	import { scaleLinear } from 'd3-scale';
-	import '$lib/styles/info-card.css';
+	import InfoCard from '$lib/components/InfoCard.svelte';
 
 	let {
 		years = [],
@@ -102,22 +102,16 @@
 		</Svg>
 		<Tooltip.Root variant="none">
 			{#snippet children({ data })}
-				<div class="info-card">
-					<div class="info-card__meta">
-						<p class="info-card__title">{data.year}</p>
-					</div>
-					<div class="info-card__body">
-						{#each tooltipSeries as entry (entry.key)}
-							{#if data[entry.key] !== null}
-								<div class="info-card__row">
-									<span class="info-card__swatch" style:background={entry.color}></span>
-									<span class="info-card__label">{entry.label}</span>
-									<span class="info-card__number">{formatValue(data[entry.key])}</span>
-								</div>
-							{/if}
-						{/each}
-					</div>
-				</div>
+				<InfoCard
+					title={data.year}
+					rows={tooltipSeries
+						.filter((entry) => data[entry.key] !== null)
+						.map((entry) => ({
+							label: entry.label,
+							value: formatValue(data[entry.key]),
+							color: entry.color
+						}))}
+				/>
 			{/snippet}
 		</Tooltip.Root>
 	</Chart>

@@ -6,8 +6,11 @@
 	import { onMount } from 'svelte';
 	import { replaceState } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
+	import PageIntro from '$lib/components/PageIntro.svelte';
+	import { Tabs, TabsContent } from '$lib/components/ui/tabs';
+	import PageTabList from '$lib/components/PageTabList.svelte';
 	import { COUNTRY_OPTIONS } from '$lib/domain-options.js';
+	import { PAGES } from '$lib/navigation.js';
 	import ExplorerTab from './ExplorerTab.svelte';
 	import MethodologyTab from './MethodologyTab.svelte';
 	import UserGuideTab from './UserGuideTab.svelte';
@@ -36,24 +39,25 @@
 </script>
 
 <div class="flex flex-col h-full">
+	<PageIntro page={PAGES.cropStatistics} class="px-page pt-6 pb-1" />
 	<Tabs bind:value={() => activeTab, selectTab} class="flex flex-col flex-1 overflow-hidden">
-		<div style="height: 3rem; display: flex; align-items: center; padding: 0 1rem;">
-			<TabsList>
-				<TabsTrigger value="explorer">Explorer</TabsTrigger>
-				<TabsTrigger value="guide">User Guide</TabsTrigger>
-				<TabsTrigger value="methodology">Methodology</TabsTrigger>
-			</TabsList>
-		</div>
+		<PageTabList
+			tabs={[
+				{ value: 'explorer', label: 'Explorer' },
+				{ value: 'guide', label: 'User Guide' },
+				{ value: 'methodology', label: 'Methodology' }
+			]}
+		/>
 
 		<TabsContent value="explorer" class="m-0 flex-1 overflow-auto p-0">
 			<ExplorerTab bind:countries bind:crop bind:variable bind:level bind:chosenYear />
 		</TabsContent>
 
-		<TabsContent value="guide" class="flex-1 overflow-auto p-4 m-0">
+		<TabsContent value="guide" class="m-0 flex-1 overflow-auto px-page py-4">
 			<UserGuideTab />
 		</TabsContent>
 
-		<TabsContent value="methodology" class="flex-1 overflow-auto p-4 m-0">
+		<TabsContent value="methodology" class="m-0 flex-1 overflow-auto px-page py-4">
 			<MethodologyTab />
 		</TabsContent>
 	</Tabs>

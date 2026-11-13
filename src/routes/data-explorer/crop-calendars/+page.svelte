@@ -5,6 +5,8 @@
   shows its calendar right below, without switching views.
 -->
 <script>
+	import PageIntro from '$lib/components/PageIntro.svelte';
+	import { PAGES } from '$lib/navigation.js';
 	import Map from '$lib/components/Map.svelte';
 	import MapPanel from '$lib/components/MapPanel.svelte';
 	import CropCalendarChart from '$lib/components/CropCalendarChart.svelte';
@@ -186,13 +188,8 @@
 	});
 </script>
 
-<div class="flex flex-col gap-3 px-4 py-3">
-	<div>
-		<h1 class="text-xl font-semibold tracking-tight text-foreground">Crop calendars</h1>
-		<p class="text-sm text-muted-foreground">
-			Sowing and harvest timing of each crop by agro-ecological zone.
-		</p>
-	</div>
+<div class="flex flex-col gap-3 px-page py-3">
+	<PageIntro page={PAGES.cropCalendars} class="pt-3 pb-1" />
 
 	<div class="flex flex-col gap-2">
 		<CropAgricultureControls
