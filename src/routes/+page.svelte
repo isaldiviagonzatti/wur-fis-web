@@ -6,10 +6,11 @@
 	import NavigationCardGrid from '$lib/components/NavigationCardGrid.svelte';
 	import PageIntro from '$lib/components/PageIntro.svelte';
 	import { Separator } from '$lib/components/ui/separator';
-	import { HOME_NAV_ITEMS, SITE_SLOGAN } from '$lib/navigation.js';
+	import { HOME_FEATURE, HOME_NAV_ITEMS, SITE_SLOGAN } from '$lib/navigation.js';
 </script>
 
-<div class="mx-auto max-w-4xl px-8 py-12">
+<!-- Wide enough for four card columns: three for the data pages, one for the planner. -->
+<div class="mx-auto max-w-6xl px-8 py-12">
 	<!-- Hero: the slogan alone, with as much space below as above it. -->
 	<PageIntro title={SITE_SLOGAN} slogan class="pt-8 pb-20 sm:pt-16 sm:pb-28" />
 
@@ -28,5 +29,5 @@
 	</div>
 
 	<!-- Cards -->
-	<NavigationCardGrid items={HOME_NAV_ITEMS} />
+	<NavigationCardGrid items={HOME_NAV_ITEMS} feature={HOME_FEATURE} />
 </div>

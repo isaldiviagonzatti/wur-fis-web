@@ -11,17 +11,16 @@
 	import { CONTROL_HELP, LEGEND_HELP, SECTION_HELP } from '$lib/crop-yields-help.js';
 
 	const controls = [
-		['Find a place', 'Jumps to a town or city, ticks its country and selects the area it falls in.'],
 		['Countries', 'All are ticked at first. Untick countries to show only the others; the crop list follows.'],
 		[
 			'Crop',
 			'Every crop the model grows in at least one ticked country. Where the model grows a crop in two seasons, it is listed for the whole year and for each season.'
 		],
+		['Find a place', 'Jumps to a town or city, ticks its country and selects the area it falls in.'],
 		['Show', CONTROL_HELP.variable],
 		['Show by', CONTROL_HELP.showBy],
 		['Year', CONTROL_HELP.year],
-		['Opacity', CONTROL_HELP.opacity],
-		['Clear all', 'Clears every choice and returns the map to its starting view.']
+		['Opacity', CONTROL_HELP.opacity]
 	];
 
 	const variables = [
@@ -38,8 +37,9 @@
 	<section class="space-y-3 text-sm text-muted-foreground">
 		<h2 class="text-base font-semibold text-foreground">Using the map</h2>
 		<p>
-			Pick a crop and what to show, then click an area or grid cell to see its history below the
-			map. The map opens on the latest year with data; move the year slider to look back.
+			Pick a crop and what to show, then click an area or grid cell to see its history beside the
+			map (below it on smaller screens). Clear area, or Clear cell, in its heading removes it. The
+			map opens on the latest year with data; move the year slider to look back.
 		</p>
 		<dl class="space-y-1.5">
 			{#each controls as [name, text] (name)}

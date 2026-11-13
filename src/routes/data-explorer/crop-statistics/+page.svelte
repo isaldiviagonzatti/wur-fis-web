@@ -40,7 +40,7 @@
 
 <div class="flex flex-col h-full">
 	<PageIntro page={PAGES.cropStatistics} class="px-page pt-6 pb-1" />
-	<Tabs bind:value={() => activeTab, selectTab} class="flex flex-col flex-1 overflow-hidden">
+	<Tabs bind:value={() => activeTab, selectTab} class="flex flex-col flex-1 overflow-x-clip">
 		<PageTabList
 			tabs={[
 				{ value: 'explorer', label: 'Explorer' },
@@ -49,7 +49,9 @@
 			]}
 		/>
 
-		<TabsContent value="explorer" class="m-0 flex-1 overflow-auto p-0">
+		<!-- Clip, not hidden or auto: those make a scroll container that never scrolls,
+		     which would keep the map from staying in view (MapToolLayout). -->
+		<TabsContent value="explorer" class="m-0 flex-1 overflow-x-clip p-0">
 			<ExplorerTab bind:countries bind:crop bind:variable bind:level bind:chosenYear />
 		</TabsContent>
 

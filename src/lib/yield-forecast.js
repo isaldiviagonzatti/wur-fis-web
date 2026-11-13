@@ -20,7 +20,13 @@ import {
 	yieldForecastRunUrl
 } from '$lib/data-sources.js';
 import { cellSquare } from '$lib/cell-grid-map.js';
+import { COUNTRY_OPTIONS } from '$lib/domain-options.js';
 import { fetchJson } from '$lib/fetch-json.js';
+
+// The forecast opens on one country, the first alphabetically; the others are a tick away.
+export const DEFAULT_FORECAST_COUNTRIES = [
+	[...COUNTRY_OPTIONS].sort((left, right) => left.label.localeCompare(right.label))[0].value
+];
 
 // ColorBrewer BrBG, colourblind-safe: brown below normal, teal above.
 export const PERCENTILE_COLORS = [
@@ -217,6 +223,17 @@ const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'S
 export function formatDay(text) {
 	const date = new Date(`${text}T00:00:00Z`);
 	return `${date.getUTCDate()} ${SHORT_MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
+
+const MONTH_NAMES = [
+	'January', 'February', 'March', 'April', 'May', 'June',
+	'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+/** "2026-08" reads as a code; "August 2026" reads as a date. */
+export function formatRunId(runId) {
+	const [year, month] = String(runId ?? '').split('-');
+	return MONTH_NAMES[Number(month) - 1] ? `${MONTH_NAMES[Number(month) - 1]} ${year}` : runId;
 }
 
 export function formatCountryList(countries) {

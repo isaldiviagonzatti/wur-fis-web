@@ -7,7 +7,7 @@
   from its own trend, per grid cell or aggregated to the same areas, because its
   absolute yields are not comparable with the statistics.
 
-  The year slider drives the map; the panel below always shows the whole period
+  The year slider drives the map; the details panel always shows the whole period
   with the chosen year marked. Selection follows the forecast page: the clicked
   point is kept, and changing level or crop re-resolves it to whatever contains
   that point.
@@ -15,13 +15,13 @@
 <script>
 	import { untrack } from 'svelte';
 	import { browser } from '$app/environment';
-	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import ColorScaleLegend from '$lib/components/ColorScaleLegend.svelte';
 	import InfoTip from '$lib/components/InfoTip.svelte';
-	import LabeledMultiSelect from '$lib/components/LabeledMultiSelect.svelte';
+	import LabeledChecklist from '$lib/components/LabeledChecklist.svelte';
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import Map from '$lib/components/Map.svelte';
-	import MapPanel from '$lib/components/MapPanel.svelte';
+	import MapFrame from '$lib/components/MapFrame.svelte';
+	import MapToolLayout from '$lib/components/MapToolLayout.svelte';
 	import PlaceSearch from '$lib/components/PlaceSearch.svelte';
 	import CropYieldsPanel from './CropYieldsPanel.svelte';
 	import {
@@ -30,7 +30,7 @@
 		countryAt
 	} from '$lib/domain-options.js';
 	import { countriesView, showView } from '$lib/map-camera.js';
-	import { STUDY_AREA_VIEW } from '$lib/map-config.js';
+	import { STUDY_AREA_VIEW, TOOL_MAP_FRAME_HEIGHT, placeCardMapHeight } from '$lib/map-config.js';
 	import { buildCropIndex, formatCropLabel } from '$lib/yield-forecast.js';
 	import {
 		ANOMALY_COLORS,
@@ -202,12 +202,27 @@
 			: `${cropName} in ${selectedZone.zone_name}, ${country}`;
 	});
 	const hasSelection = $derived(isGrid ? Boolean(cellData) : Boolean(selectedZone));
+	// Beside the place card (xl), the map ends where the card's year charts do,
+	// above the crop mix, or, where they end high up (a grid cell has one chart),
+	// where the card does.
+	let cardHeaderHeight = $state(null);
+	let metricsHeight = $state(null);
+	let chartsHeight = $state(null);
+	let cardBodyHeight = $state(null);
+	const chartsBottom = $derived(
+		chartsHeight == null || cardBodyHeight == null
+			? null
+			: placeCardMapHeight(cardHeaderHeight, [
+					metricsHeight + chartsHeight,
+					cardBodyHeight - metricsHeight - chartsHeight
+				])
+	);
 	// A point is held but nothing at this level and crop contains it.
 	const anchorUnresolved = $derived(
 		Boolean(anchor) && !hasSelection && (isGrid ? grids.length > 0 : zoneKey === `${level}:${crop}`)
 	);
 
-	const legend = $derived.by(() => {
+	const scaleLegend = $derived.by(() => {
 		const spec = VARIABLES[variable];
 		if (spec.kind === 'anomaly') {
 			return {
@@ -257,17 +272,6 @@
 		anchor = null;
 		selectedGid = null;
 		selectedCell = null;
-	}
-
-	function startOver() {
-		clearSelection();
-		placeQuery = '';
-		countries = ALL_COUNTRIES;
-		crop = DEFAULT_CROP;
-		variable = 'yield';
-		level = 'admin1';
-		chosenYear = null;
-		if (map) showView(map, STUDY_AREA_VIEW);
 	}
 
 	/** Select whatever contains `point` at the current level. */
@@ -518,176 +522,171 @@
 	</div>
 {/snippet}
 
-<div class="shrink-0 px-page pt-2">
-	<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-		<div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-			<LabeledSelect
-				label="Crop"
-				bind:value={crop}
-				options={cropOptions}
-				placeholder={countries.length ? 'Select crop' : 'Select a country first'}
-				class="w-(--tool-panel-width) max-w-full"
-				widthClass="flex-1"
-				triggerStyle="height: 2.25rem; font-size: 0.9375rem;"
-				disabled={!cropOptions.length}
-			/>
-		</div>
-		<button
-			type="button"
-			onclick={startOver}
-			class="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-		>
-			<RotateCcw size={14} />
-			Clear all
-		</button>
-	</div>
-</div>
-
-<div class="grid gap-3 px-page py-3 lg:grid-cols-[var(--tool-panel-width)_minmax(0,1fr)]">
-	<div class="space-y-6">
-		<div class="space-y-3">
-			<PlaceSearch bind:query={placeQuery} onSelect={handlePlaceSelect} />
-
-			<LabeledMultiSelect
-				label="Countries"
-				bind:value={() => countries, setCountries}
-				options={COUNTRY_OPTIONS}
-				noneLabel="None selected"
-				widthClass="w-full"
-			/>
-
-			<LabeledSelect
-				label="Show"
-				help={CONTROL_HELP.variable}
-				bind:value={() => variable, setVariable}
-				options={VARIABLE_OPTIONS}
-				widthClass="w-full"
-			/>
-
-			<LabeledSelect
-				label="Show by"
-				help={CONTROL_HELP.showBy}
-				bind:value={level}
-				options={levelOptions}
-				placeholder="Select level"
-				widthClass="w-full"
-			/>
-
-			<div class="space-y-1">
-				<div class="flex items-center justify-between text-sm">
-					<InfoTip text={CONTROL_HELP.year} class="field-label">Year</InfoTip>
-					<span class="font-semibold tabular-nums text-foreground">
-						{yearIndex >= 0 ? years[yearIndex] : ''}
-					</span>
-				</div>
-				<input
-					type="range"
-					min="0"
-					max={Math.max(years.length - 1, 0)}
-					step="1"
-					bind:value={() => yearIndex, (index) => (chosenYear = years[Number(index)] ?? null)}
-					disabled={!years.length}
-					aria-label="Year shown on the map"
-					class="h-1 w-full cursor-pointer accent-foreground disabled:cursor-not-allowed disabled:opacity-40"
+<MapToolLayout class="px-page pt-3 pb-4" mapHeight={chartsBottom}>
+	{#snippet controls()}
+		<div class="space-y-8">
+			<div class="space-y-5">
+				<LabeledChecklist
+					label="Countries"
+					bind:value={() => countries, setCountries}
+					options={COUNTRY_OPTIONS}
 				/>
-				{#if years.length}
-					<div class="flex justify-between text-[11px] text-muted-foreground">
-						<span>{years[0]}</span>
-						<span>{years[years.length - 1]}</span>
+
+				<LabeledSelect
+					label="Crop"
+					bind:value={crop}
+					options={cropOptions}
+					placeholder={countries.length ? 'Select crop' : 'Select a country first'}
+					class="w-full"
+					widthClass="flex-1"
+					triggerStyle="height: 2.25rem; font-size: 0.9375rem;"
+					disabled={!cropOptions.length}
+				/>
+			</div>
+
+			<div class="space-y-5">
+				<PlaceSearch bind:query={placeQuery} onSelect={handlePlaceSelect} />
+
+				<LabeledSelect
+					label="Show"
+					help={CONTROL_HELP.variable}
+					bind:value={() => variable, setVariable}
+					options={VARIABLE_OPTIONS}
+					widthClass="w-full"
+				/>
+
+				<LabeledSelect
+					label="Show by"
+					help={CONTROL_HELP.showBy}
+					bind:value={level}
+					options={levelOptions}
+					placeholder="Select level"
+					widthClass="w-full"
+				/>
+
+				<div class="space-y-1">
+					<div class="flex items-center justify-between text-sm">
+						<InfoTip text={CONTROL_HELP.year} class="field-label">Year</InfoTip>
+						<span class="font-semibold tabular-nums text-foreground">
+							{yearIndex >= 0 ? years[yearIndex] : ''}
+						</span>
 					</div>
-				{/if}
-			</div>
+					<input
+						type="range"
+						min="0"
+						max={Math.max(years.length - 1, 0)}
+						step="1"
+						bind:value={() => yearIndex, (index) => (chosenYear = years[Number(index)] ?? null)}
+						disabled={!years.length}
+						aria-label="Year shown on the map"
+						class="h-1 w-full cursor-pointer accent-foreground disabled:cursor-not-allowed disabled:opacity-40"
+					/>
+					{#if years.length}
+						<div class="flex justify-between text-[11px] text-muted-foreground">
+							<span>{years[0]}</span>
+							<span>{years[years.length - 1]}</span>
+						</div>
+					{/if}
+				</div>
 
-			<div class="flex items-center gap-2">
-				<InfoTip text={CONTROL_HELP.opacity} class="field-label shrink-0">Opacity</InfoTip>
-				<input
-					type="range"
-					min="0.2"
-					max="1"
-					step="0.05"
-					bind:value={layerOpacity}
-					aria-label="Data layer opacity"
-					class="h-1 w-full cursor-pointer accent-foreground"
+				<div class="flex items-center gap-2">
+					<InfoTip text={CONTROL_HELP.opacity} class="field-label shrink-0">Opacity</InfoTip>
+					<input
+						type="range"
+						min="0.2"
+						max="1"
+						step="0.05"
+						bind:value={layerOpacity}
+						aria-label="Data layer opacity"
+						class="h-1 w-full cursor-pointer accent-foreground"
+					/>
+				</div>
+			</div>
+		</div>
+	{/snippet}
+
+	{#snippet mapArea()}
+		<div class="space-y-2">
+			{#if loadError}
+				<div
+					class="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+				>
+					{loadError}
+				</div>
+			{/if}
+			<MapFrame class={TOOL_MAP_FRAME_HEIGHT}>
+				<Map
+					bind:map
+					adminLevel={level}
+					onStyleReload={() => (styleVersion += 1)}
+					initialView={STUDY_AREA_VIEW}
+					fitView={countriesView(countries)}
+					cooperativeGestures="touch"
 				/>
-			</div>
+				{#snippet legend()}
+					{#if scaleLegend}
+						<ColorScaleLegend
+							title={scaleLegend.title}
+							subtitle={scaleLegend.subtitle}
+							help={scaleLegend.help}
+							colors={scaleLegend.colors}
+							labels={scaleLegend.labels}
+							noDataLabel={scaleLegend.noData}
+							barHeightClass="h-5"
+							containerClass=""
+							large
+						/>
+					{/if}
+				{/snippet}
+			</MapFrame>
 		</div>
+	{/snippet}
 
-		{#if legend}
-			<ColorScaleLegend
-				title={legend.title}
-				subtitle={legend.subtitle}
-				help={legend.help}
-				colors={legend.colors}
-				labels={legend.labels}
-				noDataLabel={legend.noData}
-				barHeightClass="h-5"
-				containerClass=""
-				large
+	{#snippet details()}
+		{#if hasSelection}
+			<CropYieldsPanel
+				title={panelTitle}
+				{level}
+				{variable}
+				{years}
+				{yearIndex}
+				cropId={crop.replace(/_[12]$/, '')}
+				faoItems={cropEntries.find((entry) => entry.country === selectionCountry)?.fao_items ?? []}
+				zone={isGrid ? null : selectedZone}
+				cell={isGrid ? cellData : null}
+				{province}
+				{cropMixRequest}
+				notes={catalog?.countries[selectionCountry]?.notes ?? []}
+				clearLabel={isGrid ? 'Clear cell' : 'Clear area'}
+				onClear={clearSelection}
+				bind:headerHeight={cardHeaderHeight}
+				bind:metricsHeight
+				bind:chartsHeight
+				bind:bodyHeight={cardBodyHeight}
+				selectableCrops={cropIndex.map((entry) => entry.id)}
+				onSelectCrop={(id) => (crop = id)}
 			/>
-		{/if}
-	</div>
-
-	<div class="space-y-2">
-		{#if loadError}
-			<div
-				class="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-			>
-				{loadError}
+		{:else if anchorUnresolved}
+			<div class="mb-2 flex justify-end">
+				<button
+					type="button"
+					onclick={clearSelection}
+					class="cursor-pointer text-[13px] text-muted-foreground hover:text-foreground"
+				>
+					Clear
+				</button>
 			</div>
+			{@render emptyState(
+				`No ${cropName.toLowerCase() || 'crop'} data for this ${isGrid ? 'location' : 'area'} at this level.`
+			)}
+		{:else if !countries.length}
+			{@render emptyState('Select at least one country')}
+		{:else}
+			{@render emptyState(
+				isGrid
+					? 'Click any cell to see its yield anomalies against its province'
+					: `Click any ${level === 'country' ? 'country' : 'area'} to see its yield history`
+			)}
 		{/if}
-		<MapPanel heightClass="h-[52vh] min-h-[340px] max-h-[620px]">
-			<Map
-				bind:map
-				adminLevel={level}
-				onStyleReload={() => (styleVersion += 1)}
-				initialView={STUDY_AREA_VIEW}
-				fitView={countriesView(countries)}
-				cooperativeGestures="touch"
-			/>
-		</MapPanel>
-	</div>
-</div>
-
-<div class="px-page pb-4">
-	{#if hasSelection}
-		<CropYieldsPanel
-			title={panelTitle}
-			{level}
-			{variable}
-			{years}
-			{yearIndex}
-			cropId={crop.replace(/_[12]$/, '')}
-			faoItems={cropEntries.find((entry) => entry.country === selectionCountry)?.fao_items ?? []}
-			zone={isGrid ? null : selectedZone}
-			cell={isGrid ? cellData : null}
-			{province}
-			{cropMixRequest}
-			notes={catalog?.countries[selectionCountry]?.notes ?? []}
-			clearLabel={isGrid ? 'Clear cell' : 'Clear area'}
-			onClear={clearSelection}
-			selectableCrops={cropIndex.map((entry) => entry.id)}
-			onSelectCrop={(id) => (crop = id)}
-		/>
-	{:else if anchorUnresolved}
-		<div class="mb-2 flex justify-end">
-			<button
-				type="button"
-				onclick={clearSelection}
-				class="cursor-pointer text-[13px] text-muted-foreground hover:text-foreground"
-			>
-				Clear
-			</button>
-		</div>
-		{@render emptyState(
-			`No ${cropName.toLowerCase() || 'crop'} data for this ${isGrid ? 'location' : 'area'} at this level.`
-		)}
-	{:else if !countries.length}
-		{@render emptyState('Select at least one country')}
-	{:else}
-		{@render emptyState(
-			isGrid
-				? 'Click any cell to see its yield anomalies against its province'
-				: `Click any ${level === 'country' ? 'country' : 'area'} to see its yield history`
-		)}
-	{/if}
-</div>
+	{/snippet}
+</MapToolLayout>

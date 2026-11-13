@@ -27,6 +27,12 @@ export const PAGES = {
 		description:
 			'Pick the parts of the food system you want to study, then lay out methods, indicators and data on a board, with suggestions drawn from the foodshed literature. Use it alone or in a workshop, and export your plan as an image or a table.'
 	},
+	cropStatistics: {
+		href: '/data-explorer/crop-statistics',
+		title: 'Crop Statistics',
+		description:
+			'Reported yield, production, and harvested area since 1994 by country and region for Ghana, Kenya, and Zimbabwe, and how well the crop model follows their year-to-year ups and downs.'
+	},
 	atlas: {
 		href: '/foodshed/atlas',
 		title: 'Foodshed Atlas',
@@ -35,12 +41,6 @@ export const PAGES = {
 		comingSoon: true,
 		description:
 			'Maps of foodsheds showing how domestic production, trade, and food demand combine to determine food availability in Ghana, Kenya, and Zimbabwe, today and under long-term scenarios (SSP2-4.5 and SSP3-7.0).'
-	},
-	cropStatistics: {
-		href: '/data-explorer/crop-statistics',
-		title: 'Crop Statistics',
-		description:
-			'Reported yield, production, and harvested area since 1994 by country and region for Ghana, Kenya, and Zimbabwe, and how well the crop model follows their year-to-year ups and downs.'
 	},
 	cropCalendars: {
 		href: '/data-explorer/crop-calendars',
@@ -64,7 +64,10 @@ export const PAGES = {
 	}
 };
 
+// The order of PAGES is the order of the home cards.
 export const HOME_NAV_ITEMS = Object.values(PAGES);
+/** The home card that takes a column of its own beside the others on wide screens. */
+export const HOME_FEATURE = PAGES.planner;
 export const FOODSHED_NAV_ITEMS = [PAGES.planner, PAGES.atlas];
 export const DATA_EXPLORER_NAV_ITEMS = [
 	PAGES.cropStatistics,

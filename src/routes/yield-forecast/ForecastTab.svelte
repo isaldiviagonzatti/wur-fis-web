@@ -1,8 +1,11 @@
 <!--
-  ForecastTab — controls bar, forecast map, and the distribution panel for the
-  selected grid cell or administrative unit.
+  ForecastTab — control column, forecast map, and the distribution panel for the
+  selected grid cell or administrative unit. The page above it shows when the
+  forecast was last updated.
 
-  Countries and crop are the primary controls. All countries start ticked; the
+  Countries and crop are the primary controls, in that order, at the top of the
+  control column. The
+  page opens on the first country alphabetically (DEFAULT_FORECAST_COUNTRIES); the
   crop list offers only crops forecast this month in a ticked country, and a crop
   is drawn for every ticked country that has it. A crop is always selected: the
   page opens on, and falls back to, the crop forecast on the most grid cells in
@@ -12,8 +15,8 @@
   reference distribution, a quantity that is comparable across countries.
 
   Changing crop never moves the camera. Only the deliberate navigation actions
-  do: ticking countries (frames them), picking a search result (also ticks its
-  country), and Clear all.
+  do: ticking countries (frames them) and picking a search result (also ticks
+  its country).
 
   Only cells the forecast beats its climatology on are published, so an absent
   cell means "no skill here", not "no crop here".
@@ -27,13 +30,15 @@
 	import { untrack } from 'svelte';
 	import { browser } from '$app/environment';
 	import { replaceState } from '$app/navigation';
-	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import ColorScaleLegend from '$lib/components/ColorScaleLegend.svelte';
 	import InfoTip from '$lib/components/InfoTip.svelte';
-	import LabeledMultiSelect from '$lib/components/LabeledMultiSelect.svelte';
+	import LabeledChecklist from '$lib/components/LabeledChecklist.svelte';
 	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import Map from '$lib/components/Map.svelte';
-	import MapPanel from '$lib/components/MapPanel.svelte';
+	import MapFrame from '$lib/components/MapFrame.svelte';
+	import MapToolLayout from '$lib/components/MapToolLayout.svelte';
+	import PlaceCard from '$lib/components/PlaceCard.svelte';
+	import PlaceCardSection from '$lib/components/PlaceCardSection.svelte';
 	import NowcastPanel from '$lib/components/NowcastPanel.svelte';
 	import PlaceSearch from '$lib/components/PlaceSearch.svelte';
 	import YieldDensityChart from '$lib/components/YieldDensityChart.svelte';
@@ -43,7 +48,7 @@
 		countryAt
 	} from '$lib/domain-options.js';
 	import { countriesView, showView } from '$lib/map-camera.js';
-	import { STUDY_AREA_VIEW } from '$lib/map-config.js';
+	import { TOOL_MAP_FRAME_HEIGHT, placeCardMapHeight } from '$lib/map-config.js';
 	import {
 		PERCENTILE_COLORS,
 		PERCENTILE_LEGEND_LABELS,
@@ -55,6 +60,7 @@
 		formatCountryList,
 		formatCropLabel,
 		formatDay,
+		formatRunId,
 		formatSigned,
 		formatTercileSplit,
 		loadAdmin,
@@ -187,7 +193,7 @@
 		Boolean(anchor) &&
 			(showZones ? isZoneDataCurrent && !selectedZone : isLoadedCropCurrent && !selectedCell)
 	);
-	// What the panel below the map reports: the selected area at an admin level,
+	// What the details panel reports: the selected area at an admin level,
 	// otherwise the selected cell. Both read the same way, so one layout serves.
 	const result = $derived.by(() => {
 		if (showZones && selectedZone) {
@@ -248,10 +254,16 @@
 
 	// The month's crop nowcast (season so far from observed weather), when it has one.
 	const nowcastInfo = $derived(runInfo?.nowcast ?? null);
-	// Season so far and the forecast each get a box, so the observed part is not
-	// read as part of the forecast.
-	const RESULT_BOX = 'rounded-lg border border-border bg-background/70 p-4';
-	// Controls, legend and results panel: no fill or frame, only grouping.
+	// Heights of the place card's header and sections. Beside the card (xl), the
+	// map ends where the season so far does, or, when that is only a line of text
+	// (not sown yet) or the month has none, where the forecast does.
+	let cardHeaderHeight = $state(null);
+	let seasonHeight = $state(null);
+	let forecastHeight = $state(null);
+	const mapMatchHeight = $derived(
+		placeCardMapHeight(cardHeaderHeight, nowcastInfo ? [seasonHeight, forecastHeight] : [forecastHeight])
+	);
+	// Controls and results panel: no fill or frame, only grouping.
 	const PANEL = '';
 	const nowcastZoneRequest = $derived(
 		nowcastInfo && showZones && selectedZone && runId && crop
@@ -273,22 +285,6 @@
 				)
 			: null
 	);
-
-	const MONTH_NAMES = [
-		'January', 'February', 'March', 'April', 'May', 'June',
-		'July', 'August', 'September', 'October', 'November', 'December'
-	];
-
-	/** "2026-08" reads as a code; "August 2026" reads as a date. */
-	function formatRunId(runId) {
-		const [year, month] = String(runId ?? '').split('-');
-		return MONTH_NAMES[Number(month) - 1] ? `${MONTH_NAMES[Number(month) - 1]} ${year}` : runId;
-	}
-
-	// The forecast starts on the 1st of its month, when that month's seasonal
-	// forecast is issued and the observed weather ends. It is the date of the
-	// data, so republishing a month never moves it.
-	const lastUpdated = $derived(latestRun ? `1 ${formatRunId(latestRun)}` : '');
 
 	const ALL_COUNTRIES = COUNTRY_OPTIONS.map(({ value }) => value);
 
@@ -343,26 +339,6 @@
 		if (next) url.searchParams.set('run', next);
 		else url.searchParams.delete('run');
 		replaceState(url, {});
-	}
-
-	/** Back to the opening state, camera included, without reloading the page. */
-	function startOver() {
-		anchorZones = {};
-		placeQuery = '';
-		countries = ALL_COUNTRIES;
-		crop = '';
-		if (runInfo) keepCropAvailable(runInfo);
-		adminLevel = 'grid';
-		skillOverlay = false;
-		// Without this the panel keeps reporting the last clicked cell, which then
-		// reads as "no data here" for a crop that is no longer selected.
-		anchor = null;
-		selected = null;
-		selectedZoneGid = null;
-		if (!map) return;
-		setSelectedCell(map, null);
-		clearZoneLayers(map);
-		showView(map, STUDY_AREA_VIEW);
 	}
 
 	function clearCellSelection() {
@@ -673,15 +649,12 @@
 
 
 {#snippet nowcastBox(request)}
-	<section class={RESULT_BOX}>
-		<h3 class="mb-3 text-base font-semibold text-foreground">
-			<InfoTip text={SECTION_HELP.seasonSoFar}>
-				<span>
-					Season so far
-					<span class="font-normal text-muted-foreground">(up to {formatDay(nowcastInfo.through)})</span>
-				</span>
-			</InfoTip>
-		</h3>
+	<PlaceCardSection
+		title="Season so far"
+		help={SECTION_HELP.seasonSoFar}
+		note="(up to {formatDay(nowcastInfo.through)})"
+		bind:height={seasonHeight}
+	>
 		{#await request}
 			<p class="text-sm text-muted-foreground">Loading the season so far…</p>
 		{:then entry}
@@ -693,49 +666,50 @@
 		{:catch error}
 			<p class="text-sm text-destructive">Could not load the season so far. {error.message}</p>
 		{/await}
-	</section>
+	</PlaceCardSection>
 {/snippet}
 
 {#snippet resultPanel(nowcastRequest, chart)}
-	<div class="mb-3 flex flex-col gap-1 sm:grid sm:grid-cols-[1fr_minmax(0,auto)_1fr] sm:items-center sm:gap-3">
-		<span class="hidden sm:block"></span>
-		<p class="text-center text-base font-semibold text-foreground">{result.title}</p>
-		<div class="flex justify-end">
-			<button
-				type="button"
-				onclick={result.onClear}
-				class="cursor-pointer text-[13px] text-muted-foreground hover:text-foreground"
+	<PlaceCard
+		title={result.title}
+		clearLabel={result.clearLabel}
+		onClear={result.onClear}
+		bind:headerHeight={cardHeaderHeight}
+	>
+		<!-- Season so far and the forecast get a section each, so the observed part is
+		     not read as part of the forecast. -->
+		<div
+			class={[
+				'grid divide-y divide-brand-muted/50',
+				nowcastInfo && '@4xl:grid-cols-2 @4xl:divide-x @4xl:divide-y-0'
+			]}
+		>
+			{#if nowcastInfo}
+				{@render nowcastBox(nowcastRequest)}
+			{/if}
+			<PlaceCardSection
+				title="Yield forecast"
+				help={SECTION_HELP.forecast}
+				bind:height={forecastHeight}
 			>
-				{result.clearLabel}
-			</button>
+				<!-- Below / near / above gets the widest column so its label stays on one line. -->
+				<div
+					class="mb-3 grid grid-cols-2 gap-x-4 gap-y-3 @lg:grid-cols-[minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.6fr)_minmax(0,0.9fr)]"
+				>
+					{#each result.metrics as metric (metric.label)}
+						<div class="flex flex-col items-center gap-0.5 text-center">
+							<InfoTip text={metric.text} class="text-[13px] text-muted-foreground">
+								{metric.label}
+							</InfoTip>
+							<p class="text-base font-semibold text-foreground">{metric.value}</p>
+						</div>
+					{/each}
+				</div>
+				<p class="mb-2 text-[13px] text-muted-foreground">{result.summary}</p>
+				{@render chart()}
+			</PlaceCardSection>
 		</div>
-	</div>
-
-	<div class={['grid items-start gap-4', nowcastInfo && 'lg:grid-cols-2']}>
-		{#if nowcastInfo}
-			{@render nowcastBox(nowcastRequest)}
-		{/if}
-		<section class={RESULT_BOX}>
-			<h3 class="mb-3 text-base font-semibold text-foreground">
-				<InfoTip text={SECTION_HELP.forecast}>Yield forecast</InfoTip>
-			</h3>
-			<!-- Below / near / above gets the widest column so its label stays on one line. -->
-			<div
-				class="mb-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.6fr)_minmax(0,0.9fr)]"
-			>
-				{#each result.metrics as metric (metric.label)}
-					<div class="flex flex-col items-center gap-0.5 text-center">
-						<InfoTip text={metric.text} class="text-[13px] text-muted-foreground">
-							{metric.label}
-						</InfoTip>
-						<p class="text-base font-semibold text-foreground">{metric.value}</p>
-					</div>
-				{/each}
-			</div>
-			<p class="mb-2 text-[13px] text-muted-foreground">{result.summary}</p>
-			{@render chart()}
-		</section>
-	</div>
+	</PlaceCard>
 {/snippet}
 
 {#snippet zoneChart()}
@@ -767,203 +741,188 @@
 	</div>
 {/snippet}
 
-<div class="shrink-0 px-page pt-2">
-	<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-		<div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-			<!-- Nothing is drawn without a crop, so it sits at the top rather than
-			     among the controls that only decide where and how it is shown. -->
-			<LabeledSelect
-				label="Crop"
-				bind:value={crop}
-				options={cropOptions}
-				placeholder={countries.length ? 'Select crop' : 'Select a country first'}
-				class="w-(--tool-panel-width) max-w-full"
-				widthClass="flex-1"
-				triggerStyle="height: 2.25rem; font-size: 0.9375rem;"
-				disabled={!cropOptions.length}
-			/>
-			{#if catalog && !isLatestRun}
-				<p class="text-sm text-muted-foreground">Forecast of {formatRunId(shownRun)}</p>
-			{:else if lastUpdated}
-				<p class="text-sm text-muted-foreground">Last updated {lastUpdated}</p>
-			{/if}
-		</div>
+{#if catalog && !isLatestRun}
+	<p class="px-page pt-2 text-sm text-muted-foreground">
+		Showing the forecast of {formatRunId(shownRun)}, not the latest ({formatRunId(latestRun)}).
 		<button
 			type="button"
-			onclick={startOver}
-			class="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+			onclick={() => selectRun(latestRun)}
+			class="cursor-pointer font-medium text-foreground underline underline-offset-2 hover:no-underline"
 		>
-			<RotateCcw size={14} />
-			Clear all
+			Show latest
 		</button>
-	</div>
-	{#if catalog && !isLatestRun}
-		<p class="mt-1 text-sm text-muted-foreground">
-			Older forecast. The latest is {formatRunId(latestRun)}.
-			<button
-				type="button"
-				onclick={() => selectRun(latestRun)}
-				class="cursor-pointer font-medium text-foreground underline underline-offset-2 hover:no-underline"
-			>
-				Show latest
-			</button>
-		</p>
-	{/if}
-</div>
+	</p>
+{/if}
 
-<div class="grid gap-3 px-page py-3 lg:grid-cols-[var(--tool-panel-width)_minmax(0,1fr)]">
-	<!-- Controls and legend share the left column so the map keeps its aspect and
-	     the density plot below can use the full width. -->
-	<div class="space-y-6">
-		<div class="space-y-3 {PANEL}">
-			<PlaceSearch bind:query={placeQuery} onSelect={handlePlaceSelect} />
-
-			<LabeledMultiSelect
-				label="Countries"
-				bind:value={() => countries, setCountries}
-				options={COUNTRY_OPTIONS}
-				noneLabel="None selected"
-				widthClass="w-full"
-			/>
-
-			<LabeledSelect
-				label="Show by"
-				help={CONTROL_HELP.showBy}
-				bind:value={adminLevel}
-				options={YIELD_FORECAST_AGGREGATION_OPTIONS}
-				placeholder="Select level"
-				widthClass="w-full"
-			/>
-
-			<div class="flex items-center justify-between gap-2">
-				<InfoTip text={CONTROL_HELP.skill} class="field-label">
-					Colour by skill
-				</InfoTip>
-				<button
-					type="button"
-					role="switch"
-					aria-checked={skillOverlay}
-					aria-label="Colour by skill"
-					onclick={() => (skillOverlay = !skillOverlay)}
-					disabled={showZones}
-					title={showZones ? 'Skill is only available per grid cell' : ''}
-					class={[
-						'relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-						skillOverlay ? 'border-primary bg-primary' : 'border-border bg-muted'
-					]}
-				>
-					<span
-						class={[
-							'inline-block size-3.5 rounded-full bg-background shadow-sm transition-transform',
-							skillOverlay ? 'translate-x-[1.1rem]' : 'translate-x-0.5'
-						]}
-					></span>
-				</button>
-			</div>
-
-			<div class="flex items-center gap-2">
-				<InfoTip text={CONTROL_HELP.opacity} class="field-label shrink-0">Opacity</InfoTip>
-				<input
-					type="range"
-					min="0.2"
-					max="1"
-					step="0.05"
-					bind:value={layerOpacity}
-					aria-label="Forecast layer opacity"
-					class="h-1 w-full cursor-pointer accent-foreground"
+<MapToolLayout class="px-page pt-3 pb-4" mapHeight={mapMatchHeight}>
+	{#snippet controls()}
+		<div class="space-y-8">
+			<!-- Countries, then crop, come first: nothing is drawn without them, and
+			     the crop list depends on the countries. The controls below only
+			     decide where and how the forecast is shown. -->
+			<div class="space-y-5">
+				<LabeledChecklist
+					label="Countries"
+					bind:value={() => countries, setCountries}
+					options={COUNTRY_OPTIONS}
+				/>
+				<LabeledSelect
+					label="Crop"
+					bind:value={crop}
+					options={cropOptions}
+					placeholder={countries.length ? 'Select crop' : 'Select a country first'}
+					class="w-full"
+					widthClass="flex-1"
+					triggerStyle="height: 2.25rem; font-size: 0.9375rem;"
+					disabled={!cropOptions.length}
 				/>
 			</div>
+
+			<div class="space-y-5 {PANEL}">
+				<PlaceSearch bind:query={placeQuery} onSelect={handlePlaceSelect} />
+
+				<LabeledSelect
+					label="Show by"
+					help={CONTROL_HELP.showBy}
+					bind:value={adminLevel}
+					options={YIELD_FORECAST_AGGREGATION_OPTIONS}
+					placeholder="Select level"
+					widthClass="w-full"
+				/>
+
+				<div class="flex items-center justify-between gap-2">
+					<InfoTip text={CONTROL_HELP.skill} class="field-label">
+						Colour by skill
+					</InfoTip>
+					<button
+						type="button"
+						role="switch"
+						aria-checked={skillOverlay}
+						aria-label="Colour by skill"
+						onclick={() => (skillOverlay = !skillOverlay)}
+						disabled={showZones}
+						title={showZones ? 'Skill is only available per grid cell' : ''}
+						class={[
+							'relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+							skillOverlay ? 'border-primary bg-primary' : 'border-border bg-muted'
+						]}
+					>
+						<span
+							class={[
+								'inline-block size-3.5 rounded-full bg-background shadow-sm transition-transform',
+								skillOverlay ? 'translate-x-[1.1rem]' : 'translate-x-0.5'
+							]}
+						></span>
+					</button>
+				</div>
+
+				<div class="flex items-center gap-2">
+					<InfoTip text={CONTROL_HELP.opacity} class="field-label shrink-0">Opacity</InfoTip>
+					<input
+						type="range"
+						min="0.2"
+						max="1"
+						step="0.05"
+						bind:value={layerOpacity}
+						aria-label="Forecast layer opacity"
+						class="h-1 w-full cursor-pointer accent-foreground"
+					/>
+				</div>
+			</div>
 		</div>
+	{/snippet}
 
-		{#if skillOverlay && !showZones}
-			<ColorScaleLegend
-				title="Forecast skill"
-				subtitle="Higher means a more reliable forecast"
-				help={LEGEND_HELP.skill}
-				colors={SKILL_COLORS}
-				labels={SKILL_LEGEND_LABELS}
-				barHeightClass="h-5"
-				containerClass={PANEL}
-				large
-			/>
-		{:else}
-			<ColorScaleLegend
-				title="Yield compared with past years"
-				subtitle="Brown is below the usual yield, green above it"
-				help={showZones ? LEGEND_HELP.percentileAreas : LEGEND_HELP.percentileCells}
-				colors={PERCENTILE_COLORS}
-				labels={PERCENTILE_LEGEND_LABELS}
-				noDataLabel={showZones ? '' : 'No forecast'}
-				barHeightClass="h-5"
-				containerClass={PANEL}
-				large
-			/>
-		{/if}
-	</div>
+	{#snippet mapArea()}
+		<div class="space-y-2">
+			{#if loadError}
+				<div class="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+					{loadError}
+				</div>
+			{/if}
+			<MapFrame class={TOOL_MAP_FRAME_HEIGHT}>
+				<Map
+					bind:map
+					{adminLevel}
+					onStyleReload={handleStyleReload}
+					initialView={countriesView(countries)}
+					fitView={countriesView(countries)}
+					cooperativeGestures="touch"
+				/>
+				{#snippet legend()}
+					{#if skillOverlay && !showZones}
+						<ColorScaleLegend
+							title="Forecast skill"
+							subtitle="Higher means a more reliable forecast"
+							help={LEGEND_HELP.skill}
+							colors={SKILL_COLORS}
+							labels={SKILL_LEGEND_LABELS}
+							barHeightClass="h-5"
+							containerClass=""
+							large
+						/>
+					{:else}
+						<ColorScaleLegend
+							title="Yield compared with past years"
+							subtitle="Brown is below the usual yield, green above it"
+							help={showZones ? LEGEND_HELP.percentileAreas : LEGEND_HELP.percentileCells}
+							colors={PERCENTILE_COLORS}
+							labels={PERCENTILE_LEGEND_LABELS}
+							noDataLabel={showZones ? '' : 'No forecast'}
+							barHeightClass="h-5"
+							containerClass=""
+							large
+						/>
+					{/if}
+				{/snippet}
+			</MapFrame>
+		</div>
+	{/snippet}
 
-	<div class="space-y-2">
-		{#if loadError}
-			<div class="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-				{loadError}
-			</div>
-		{/if}
-		<MapPanel heightClass="h-[52vh] min-h-[340px] max-h-[620px]">
-			<Map
-				bind:map
-				{adminLevel}
-				onStyleReload={handleStyleReload}
-				initialView={STUDY_AREA_VIEW}
-				fitView={countriesView(countries)}
-				cooperativeGestures="touch"
-			/>
-		</MapPanel>
-	</div>
-</div>
-
-<div class="px-page pb-4">
-	<div class={PANEL}>
-		{#if anchorUnresolved}
-			<!-- The coordinate names a cell, so it is only a heading in the grid
-			     view. At an admin level the reported unit is the area, and a point
-			     inside it would misdescribe what is missing. -->
-			<div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-				{#if showZones}
-					<span></span>
-				{:else}
-					<p class="text-sm font-medium text-foreground">
-						{anchor.lat.toFixed(2)}°, {anchor.lon.toFixed(2)}°
-					</p>
-				{/if}
-				<button
-					type="button"
-					onclick={clearCellSelection}
-					class="cursor-pointer text-[13px] text-muted-foreground hover:text-foreground"
-				>
-					Clear
-				</button>
-			</div>
-			{@render emptyState(
-				`No ${activeCrop ? formatCropLabel(activeCrop.label).toLowerCase() : 'forecast'} data for this ${showZones ? 'area' : 'location'} in this initialisation.`
-			)}
-		{:else if result}
-			{@render resultPanel(
-				showZones ? nowcastZoneRequest : nowcastCellRequest,
-				showZones ? zoneChart : cellChart
-			)}
-		{:else if !countries.length}
-			{@render emptyState('Select at least one country to see the forecast')}
-		{:else if showZones}
-			{@render emptyState(
-				zones.length
-					? `Click any ${zoneLevelLabel.toLowerCase()} area to see its forecast distribution`
-					: 'Select a crop to load the forecast'
-			)}
-		{:else}
-			{@render emptyState(
-				totalCells
-					? 'Click any of the cells to see its forecast distribution'
-					: 'Select a crop to load the forecast'
-			)}
-		{/if}
-	</div>
-</div>
+	{#snippet details()}
+		<div class={PANEL}>
+			{#if anchorUnresolved}
+				<!-- The coordinate names a cell, so it is only a heading in the grid
+				     view. At an admin level the reported unit is the area, and a point
+				     inside it would misdescribe what is missing. -->
+				<div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+					{#if showZones}
+						<span></span>
+					{:else}
+						<p class="text-sm font-medium text-foreground">
+							{anchor.lat.toFixed(2)}°, {anchor.lon.toFixed(2)}°
+						</p>
+					{/if}
+					<button
+						type="button"
+						onclick={clearCellSelection}
+						class="cursor-pointer text-[13px] text-muted-foreground hover:text-foreground"
+					>
+						Clear
+					</button>
+				</div>
+				{@render emptyState(
+					`No ${activeCrop ? formatCropLabel(activeCrop.label).toLowerCase() : 'forecast'} data for this ${showZones ? 'area' : 'location'} in this initialisation.`
+				)}
+			{:else if result}
+				{@render resultPanel(
+					showZones ? nowcastZoneRequest : nowcastCellRequest,
+					showZones ? zoneChart : cellChart
+				)}
+			{:else if !countries.length}
+				{@render emptyState('Select at least one country to see the forecast')}
+			{:else if showZones}
+				{@render emptyState(
+					zones.length
+						? `Click any ${zoneLevelLabel.toLowerCase()} area to see its forecast distribution`
+						: 'Select a crop to load the forecast'
+				)}
+			{:else}
+				{@render emptyState(
+					totalCells
+						? 'Click any of the cells to see its forecast distribution'
+						: 'Select a crop to load the forecast'
+				)}
+			{/if}
+		</div>
+	{/snippet}
+</MapToolLayout>

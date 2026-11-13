@@ -1,8 +1,9 @@
 <!--
   SiteHeader — the brand bar at the top of every page: the service name, the
   main sections (those with several pages open a short dropdown) and the theme
-  toggle. On narrow screens the sections fold into a menu. Feedback floats in
-  the bottom-right corner instead (FeedbackButton).
+  toggle. On narrow screens the sections fold into a menu, where a section with
+  several pages lists them only once tapped, closing any other open one.
+  Feedback floats in the bottom-right corner instead (FeedbackButton).
 -->
 <script>
 	import { afterNavigate } from '$app/navigation';
@@ -17,10 +18,21 @@
 	import { theme } from '$lib/theme.svelte.js';
 
 	let menuOpen = $state(false);
+	// The section whose pages are listed in the phone menu; one at a time.
+	let openSection = $state(null);
 
 	afterNavigate(() => {
 		menuOpen = false;
 	});
+
+	function toggleMenu() {
+		menuOpen = !menuOpen;
+		openSection = null;
+	}
+
+	function toggleSection(href) {
+		openSection = openSection === href ? null : href;
+	}
 
 	// Hover and focus lift the text from Mist to Ice; no box behind it.
 	const sectionLinkClass =
@@ -60,7 +72,7 @@
 				aria-label={menuOpen ? 'Close the menu' : 'Open the menu'}
 				aria-expanded={menuOpen}
 				aria-controls="site-menu"
-				onclick={() => (menuOpen = !menuOpen)}
+				onclick={toggleMenu}
 			>
 				{#if menuOpen}<X size={18} />{:else}<Menu size={18} />{/if}
 			</button>
@@ -148,8 +160,23 @@
 				{#each SITE_NAV as section (section.href)}
 					<li>
 						{#if section.items}
-							<span class="block px-2 pt-2 pb-1 text-sm font-medium">{section.title}</span>
-							<ul class="mb-1 ml-2 border-l border-border pl-2">
+							{@const expanded = openSection === section.href}
+							{@const listId = `site-menu-${section.href.replaceAll('/', '')}`}
+							<button
+								type="button"
+								class="group flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-2 text-sm font-medium hover:bg-muted"
+								aria-expanded={expanded}
+								aria-controls={listId}
+								onclick={() => toggleSection(section.href)}
+							>
+								{section.title}
+								<ChevronDown
+									size={14}
+									class="transition-transform duration-200 group-aria-expanded:rotate-180"
+									aria-hidden="true"
+								/>
+							</button>
+							<ul id={listId} hidden={!expanded} class="mb-1 ml-2 border-l border-border pl-2">
 								{#each section.items as item (item.href)}
 									<li>
 										<a

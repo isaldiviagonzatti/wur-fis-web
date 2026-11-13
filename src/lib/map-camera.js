@@ -1,7 +1,7 @@
 /**
  * Camera helpers shared by the maps: the view that frames the ticked study
- * countries, and moving a map to a view (the country filters, "Clear all" and
- * the map's fit button all go through here).
+ * countries, and moving a map to a view (the country filters, the zone pickers
+ * of the crop calendars and the map's fit button all go through here).
  */
 import { mount, unmount } from 'svelte';
 import MapFitButton from '$lib/components/MapFitButton.svelte';

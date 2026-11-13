@@ -2,6 +2,9 @@
   Horizontal Gantt chart showing sowing → maturity for each crop in a selected AEZ.
   Rows are shown in alphabetical crop order.
   Wrap-around seasons (maturity < sowing) are drawn as two segments.
+  Drawn at the width it is given, not scaled, so its text keeps one size
+  whether the chart sits beside the map or below it; narrower than
+  MIN_CHART_WIDTH it scrolls sideways.
 -->
 <script>
 	import {
@@ -15,9 +18,14 @@
 	let { entries = [] } = $props();
 
 	const ROW_HEIGHT = 28;
-	const LABEL_WIDTH = 160;
-	const CHART_WIDTH = 600;
-	const MONTH_WIDTH = CHART_WIDTH / 12;
+	// Fits the longest label in the data, "Tropical cereals sorghum (short)" (180 px).
+	const LABEL_WIDTH = 196;
+	const MIN_CHART_WIDTH = 300;
+	// Until the container is measured (and when prerendering).
+	const DEFAULT_WIDTH = 760;
+	let width = $state(0);
+	const chartWidth = $derived(Math.max((width || DEFAULT_WIDTH) - LABEL_WIDTH, MIN_CHART_WIDTH));
+	const monthWidth = $derived(chartWidth / 12);
 	const CHART_PADDING_TOP = 24; // space for month axis labels
 	const CHART_PADDING_BOTTOM = 8;
 	const BAR_HEIGHT = 14;
@@ -41,7 +49,7 @@
 	}
 
 	function markerX(month) {
-		return LABEL_WIDTH + monthX(month) * CHART_WIDTH;
+		return LABEL_WIDTH + monthX(month) * chartWidth;
 	}
 
 	const sortedEntries = $derived.by(() =>
@@ -62,21 +70,20 @@
 		<p class="text-xs text-muted-foreground">Click an agro-ecological zone on the map  or select from the dropdown</p>
 	</div>
 {:else}
-	<div class="w-full overflow-x-auto">
+	<div class="w-full overflow-x-auto" bind:clientWidth={width}>
 		<svg
-			width="100%"
-			viewBox="0 0 {LABEL_WIDTH + CHART_WIDTH} {svgHeight}"
-			preserveAspectRatio="xMidYMid meet"
-			class="w-full"
-			style="min-width: 480px;"
+			width={LABEL_WIDTH + chartWidth}
+			height={svgHeight}
+			viewBox="0 0 {LABEL_WIDTH + chartWidth} {svgHeight}"
+			class="block"
 		>
 			<!-- Month axis labels -->
 			{#each MONTH_LABELS as label, i (`month-label-${label}`)}
 				<text
-					x={LABEL_WIDTH + (i / 12) * CHART_WIDTH + CHART_WIDTH / 24}
+					x={LABEL_WIDTH + (i / 12) * chartWidth + chartWidth / 24}
 					y={CHART_PADDING_TOP - 6}
 					text-anchor="middle"
-					font-size="9"
+					font-size="11"
 					fill="currentColor"
 					opacity="0.5"
 				>{label}</text>
@@ -85,9 +92,9 @@
 			<!-- Month grid lines -->
 			{#each MONTH_LABELS as _, i (`month-line-${i}`)}
 				<line
-					x1={LABEL_WIDTH + (i / 12) * CHART_WIDTH}
+					x1={LABEL_WIDTH + (i / 12) * chartWidth}
 					y1={CHART_PADDING_TOP - 4}
-					x2={LABEL_WIDTH + (i / 12) * CHART_WIDTH}
+					x2={LABEL_WIDTH + (i / 12) * chartWidth}
 					y2={svgHeight - CHART_PADDING_BOTTOM}
 					stroke="currentColor"
 					stroke-opacity="0.08"
@@ -109,13 +116,13 @@
 					x={LABEL_WIDTH - 8}
 					y={y + ROW_HEIGHT / 2 + 4}
 					text-anchor="end"
-					font-size="10"
+					font-size="12"
 					fill="currentColor"
 					opacity="0.8"
 				>
 					{getCalendarDisplayLabel(entry)}
 					{#if entry.season !== 'annual'}
-						<tspan font-size="8" opacity="0.5"> ({getCalendarDisplaySeasonLabel(entry)})</tspan>
+						<tspan font-size="10" opacity="0.5"> ({getCalendarDisplaySeasonLabel(entry)})</tspan>
 					{/if}
 				</text>
 
@@ -123,7 +130,7 @@
 				<rect
 					x={LABEL_WIDTH}
 					y={barY}
-					width={CHART_WIDTH}
+					width={chartWidth}
 					height={BAR_HEIGHT}
 					rx={BAR_RADIUS}
 					fill="currentColor"
@@ -133,9 +140,9 @@
 				<!-- Bar segment(s) -->
 				{#each segments as seg, segmentIndex (`${entry.crop}-${entry.season}-${segmentIndex}`)}
 					<rect
-						x={LABEL_WIDTH + seg.x * CHART_WIDTH}
+						x={LABEL_WIDTH + seg.x * chartWidth}
 						y={barY}
-						width={seg.width * CHART_WIDTH}
+						width={seg.width * chartWidth}
 						height={BAR_HEIGHT}
 						rx={BAR_RADIUS}
 						fill={CALENDAR_STAGE_COLORS.season}
@@ -147,15 +154,15 @@
 					<rect
 						x={sowingX}
 						y={barY}
-						width={MONTH_WIDTH / 2}
+						width={monthWidth / 2}
 						height={BAR_HEIGHT}
 						rx={BAR_RADIUS}
 						fill={CALENDAR_STAGE_COLORS.sowing}
 					/>
 					<rect
-						x={sowingX + MONTH_WIDTH / 2}
+						x={sowingX + monthWidth / 2}
 						y={barY}
-						width={MONTH_WIDTH / 2}
+						width={monthWidth / 2}
 						height={BAR_HEIGHT}
 						rx={BAR_RADIUS}
 						fill={CALENDAR_STAGE_COLORS.harvest}
@@ -164,7 +171,7 @@
 					<rect
 						x={sowingX}
 						y={barY}
-						width={MONTH_WIDTH}
+						width={monthWidth}
 						height={BAR_HEIGHT}
 						rx={BAR_RADIUS}
 						fill={CALENDAR_STAGE_COLORS.sowing}
@@ -172,7 +179,7 @@
 					<rect
 						x={harvestX}
 						y={barY}
-						width={MONTH_WIDTH}
+						width={monthWidth}
 						height={BAR_HEIGHT}
 						rx={BAR_RADIUS}
 						fill={CALENDAR_STAGE_COLORS.harvest}

@@ -83,7 +83,7 @@
 		<NowcastChart rows={waterRows} {through} yMax={100} />
 	</div>
 
-	<div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+	<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
 		<span class="inline-flex items-center gap-1.5">
 			<span class="h-1 w-4 rounded-full" style:background={colors.forecast}></span>
 			This season

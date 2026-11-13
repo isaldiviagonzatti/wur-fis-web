@@ -6,27 +6,22 @@
   brings the camera back to the page's selection after a drag or zoom.
 -->
 <script>
-	import LabeledSelect from '$lib/components/LabeledSelect.svelte';
 	import { BASEMAP_STYLE_URLS, FALLBACK_STYLE_URLS, MAP_DEFAULTS } from '$lib/map-config.js';
 	import { ADMIN_PMTILES_URLS } from '$lib/data-sources.js';
-	import { COUNTRY_LABELS, COUNTRY_VIEWS } from '$lib/domain-options.js';
-	import { addFitControl, showView } from '$lib/map-camera.js';
+	import { addFitControl } from '$lib/map-camera.js';
 	import { createNoDataPatternImage } from '$lib/no-data-pattern.js';
 	import { theme } from '$lib/theme.svelte.js';
 
 	let {
 		map = $bindable(null),
 		adminLevel = 'admin1',
-		flyToCountry = $bindable(''),
-		countryOptions = [],
 		onStyleReload = undefined,
 		// Opening camera. Defaults to the shared continental view; pages whose data
 		// only covers part of it can pass {bounds, fitBoundsOptions} to frame that
 		// instead, which stays correct at any container width.
 		initialView = undefined,
 		// Where the fit button returns: the page's selection, such as its ticked
-		// countries. Without one it returns to the country picked in "Zoom to",
-		// else to the opening view.
+		// countries. Without one it returns to the opening view.
 		fitView = undefined,
 		// Ctrl + scroll to zoom and two fingers to pan, so scrolling the page past
 		// the map never moves it. 'touch' keeps only the two-finger rule, for touch
@@ -51,18 +46,11 @@
 		'aez-selected-fill'
 	]);
 	let activeBasemapStyleUrl = '';
-	let previousFlyToCountry = '';
 	let projectionMode = $state('mercator');
 
-	const fitTarget = $derived(
-		fitView ?? COUNTRY_VIEWS[flyToCountry] ?? initialView ?? MAP_DEFAULTS
-	);
+	const fitTarget = $derived(fitView ?? initialView ?? MAP_DEFAULTS);
 	const fitLabel = $derived(
-		fitView
-			? 'Zoom back to the selected countries'
-			: flyToCountry
-				? `Zoom back to ${COUNTRY_LABELS[flyToCountry]}`
-				: 'Zoom back to the full view'
+		fitView ? 'Zoom back to the selected countries' : 'Zoom back to the full view'
 	);
 
 	function getBasemapStyleUrl(isDark) {
@@ -230,27 +218,6 @@
 		setAdminLayerVisibility(map, adminLevel);
 	});
 
-	$effect(() => {
-		if (!flyToCountry) {
-			previousFlyToCountry = '';
-			return;
-		}
-		if (!map || flyToCountry === previousFlyToCountry) return;
-
-		const target = COUNTRY_VIEWS[flyToCountry];
-		if (!target) return;
-
-		previousFlyToCountry = flyToCountry;
-
-		const fly = () => showView(map, target);
-
-		// `load` has already fired by the time this component exposes `map`, and it
-		// only fires once, so waiting on it here would drop the camera move
-		// forever. `idle` fires again after the next render settles.
-		if (map.isStyleLoaded()) fly();
-		else map.once('idle', fly);
-	});
-
 	// Swap basemap style when dark mode changes, then re-add custom layers after load.
 	$effect(() => {
 		const isDark = theme.dark;
@@ -387,17 +354,6 @@
 					</button>
 				{/each}
 			</div>
-
-			{#if countryOptions.length}
-				<LabeledSelect
-					showLabel={false}
-					bind:value={flyToCountry}
-					options={countryOptions}
-					placeholder="Zoom to"
-					widthClass="w-full"
-					triggerStyle="height: auto; padding-top: 0.35rem; padding-bottom: 0.35rem; background: color-mix(in oklab, var(--background) 92%, transparent); backdrop-filter: blur(6px);"
-				/>
-			{/if}
 		</div>
 	</div>
 </div>

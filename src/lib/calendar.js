@@ -215,6 +215,17 @@ export function getCalendarEntriesForAez(calendarData, country, aezName) {
 	return getCalendarDataIndex(calendarData).entriesByAezKey.get(getAezFeatureKey(country, aezName)) ?? EMPTY_ENTRIES;
 }
 
+/** The crop's seasons in one zone, ordered as getCalendarSeasonOptions; empty where the zone has no calendar for the crop. */
+export function getCalendarSeasonOptionsForAez(calendarData, selectedCrop, country, aezName) {
+	const seasons = new Set(
+		getCalendarEntriesForAez(calendarData, country, aezName)
+			.filter((entry) => getCalendarEntryKey(entry) === selectedCrop)
+			.map(getCalendarSeasonKey)
+	);
+	if (!seasons.size) return EMPTY_OPTIONS;
+	return getCalendarSeasonOptions(calendarData, selectedCrop).filter(({ value }) => seasons.has(value));
+}
+
 export function getCalendarEntryForAez(calendarData, { country, aezName, crop, season }) {
 	if (!country || !aezName || !crop || !season) return null;
 	return (

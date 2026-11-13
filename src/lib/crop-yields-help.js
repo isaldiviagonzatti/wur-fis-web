@@ -8,7 +8,7 @@ export const CONTROL_HELP = {
 		'Reported values come from official statistics: HarvestStat for regions, provinces and counties, FAOSTAT for countries.',
 	showBy:
 		'Admin 1 areas (regions, provinces or counties) or whole countries. Grid cells (about 11 km) exist only for the model, since statistics are reported per area.',
-	year: 'The year whose values colour the map and are reported below it. Agreement is one number for the whole period, so with agreement shown the year only moves the panel below the map.',
+	year: 'The year whose values colour the map and are reported for the selected place. Agreement is one number for the whole period, so with agreement shown the year only moves the mark in the place\'s charts.',
 	opacity: 'Fade the data layer to see borders and place names underneath.'
 };
 

@@ -36,13 +36,12 @@
 	});
 
 	const controls = [
-		['Find a place', 'Jumps to a town or city, ticks its country and selects the unit it falls in.'],
-		['Countries', 'All are ticked at first. Untick countries to show only the others; the crop list follows.'],
+		['Countries', 'One country is ticked at first. Tick more to compare them on one map; the crop list follows.'],
 		['Crop', 'Crops forecast this month in at least one ticked country. Crops grown twice a year are listed per season.'],
+		['Find a place', 'Jumps to a town or city, ticks its country and selects the unit it falls in.'],
 		['Show by', CONTROL_HELP.showBy],
 		['Colour by skill', CONTROL_HELP.skill],
-		['Opacity', CONTROL_HELP.opacity],
-		['Clear all', 'Clears every choice and returns the map to its starting view.']
+		['Opacity', CONTROL_HELP.opacity]
 	];
 
 	const metrics = Object.values(METRIC_HELP).map(({ label, text }) => [label, text]);
@@ -51,7 +50,10 @@
 <div class="mx-auto max-w-3xl space-y-8">
 	<section class="space-y-3 text-sm text-muted-foreground">
 		<h2 class="text-base font-semibold text-foreground">Using the map</h2>
-		<p>Pick a crop, then click a coloured cell or area to see its forecast below the map.</p>
+		<p>
+			Pick countries and a crop, then click a coloured cell or area to see its forecast beside
+			the map (below it on smaller screens). Clear cell, or Clear area, in its heading removes it.
+		</p>
 		<dl class="space-y-1.5">
 			{#each controls as [name, text] (name)}
 				<div class="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-2">

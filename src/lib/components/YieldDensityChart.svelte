@@ -118,26 +118,9 @@
 	function formatPercent(value) {
 		return `${value > 0 ? '+' : ''}${Math.round(value)}%`;
 	}
-
-	// One decimal so the marker matches the anomaly quoted in the panel above,
-	// while the axis ticks stay as whole percents.
-	function formatMean(value) {
-		return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
-	}
 </script>
 
 <div class="space-y-2">
-	<div class="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground">
-		<span class="inline-flex items-center gap-1.5">
-			<span class="h-2 w-4 rounded-sm" style:background={colors.forecast}></span>
-			Forecast ensemble
-		</span>
-		<span class="inline-flex items-center gap-1.5">
-			<span class="h-2 w-4 rounded-sm" style:background={colors.reference}></span>
-			Reference years
-		</span>
-	</div>
-
 	{#if hasCurves}
 		<div class="density-chart relative" style:height={`${height}px`}>
 			<Chart
@@ -215,10 +198,19 @@
 			{/if}
 		</div>
 
-		<div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+		<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+			<!-- Reference first, then everything drawn in the forecast colour together. -->
+			<span class="inline-flex items-center gap-1.5">
+				<span class="h-2 w-4 rounded-sm" style:background={colors.reference}></span>
+				Reference years
+			</span>
+			<span class="inline-flex items-center gap-1.5">
+				<span class="h-2 w-4 rounded-sm" style:background={colors.forecast}></span>
+				Forecast ensemble
+			</span>
 			{#if forecastLeft}
 				<span class="inline-flex items-center gap-1" style:color={colors.forecast}>
-					▲ Forecast mean ({formatMean(forecastMean)})
+					▲ Forecast mean
 				</span>
 			{/if}
 			{#if memberDots.length}
