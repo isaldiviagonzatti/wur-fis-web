@@ -18,6 +18,15 @@ export const PAGES = {
 		description:
 			"Monthly forecasts of how this season's crop yields compare with normal in Ghana, Kenya, and Zimbabwe, from the LPJmL crop model driven by ECMWF seasonal weather forecasts. For any place, see how the season has gone so far and the range of possible yields at harvest."
 	},
+	planner: {
+		href: '/foodshed/planner',
+		title: 'Foodshed Planner',
+		menuTitle: 'Planner',
+		subtitle: 'Design a food-system analysis',
+		badge: 'Preview',
+		description:
+			'Pick the parts of the food system you want to study, then lay out methods, indicators and data on a board, with suggestions drawn from the foodshed literature. Use it alone or in a workshop, and export your plan as an image or a table.'
+	},
 	atlas: {
 		href: '/foodshed/atlas',
 		title: 'Foodshed Atlas',
@@ -56,7 +65,7 @@ export const PAGES = {
 };
 
 export const HOME_NAV_ITEMS = Object.values(PAGES);
-export const FOODSHED_NAV_ITEMS = [PAGES.atlas];
+export const FOODSHED_NAV_ITEMS = [PAGES.planner, PAGES.atlas];
 export const DATA_EXPLORER_NAV_ITEMS = [
 	PAGES.cropStatistics,
 	PAGES.cropCalendars,

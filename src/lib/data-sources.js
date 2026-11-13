@@ -16,6 +16,9 @@ export const DATA_BASE = env.PUBLIC_DATA_BASE || R2_BASE;
 
 export const CALENDAR_URL = `${DATA_BASE}/agriculture/v1/crop_calendar.json`;
 
+// Foodshed Planner content: definitions, cards and the papers of the foodshed review.
+export const PLANNER_URL = `${DATA_BASE}/foodshed-planner/v1/planner.json`;
+
 export const ADMIN_PMTILES_URLS = {
 	country: `${R2_BASE}/admin/v1/country.pmtiles`,
 	admin1: `${R2_BASE}/admin/v1/admin1.pmtiles`,

@@ -1,0 +1,57 @@
+/* Foodshed Planner board. Zone colours are the TOL muted palette, which the
+   site already uses for data; dark mode swaps to the lighter members of the
+   same palette so the zones stay legible. Everything else is neutral chrome. */
+
+.planner {
+	--zone-drivers: #999933;
+	--zone-activities: #882255;
+	--zone-outcomes: #44aa99;
+	--zone-resilience: #332288;
+	--planner-line: color-mix(in oklab, var(--foreground) 32%, transparent);
+}
+
+.dark .planner {
+	--zone-drivers: #ddcc77;
+	--zone-activities: #cc6677;
+	--zone-outcomes: #44aa99;
+	--zone-resilience: #88ccee;
+}
+
+.planner .svelte-flow {
+	--xy-background-color: var(--background);
+	--xy-edge-stroke: var(--planner-line);
+	--xy-edge-stroke-selected: var(--foreground);
+	--xy-edge-stroke-width: 1.25;
+	--xy-controls-button-background-color: var(--background);
+	--xy-controls-button-background-color-hover: var(--accent);
+	--xy-controls-button-color: var(--foreground);
+	--xy-controls-button-color-hover: var(--foreground);
+	--xy-controls-button-border-color: var(--border);
+	--xy-controls-box-shadow: none;
+	--xy-attribution-background-color: transparent;
+	font-family: inherit;
+}
+
+.planner .svelte-flow__controls {
+	border: 1px solid var(--border);
+	border-radius: 0.375rem;
+	overflow: hidden;
+}
+
+.planner .svelte-flow__attribution a {
+	color: var(--muted-foreground);
+}
+
+/* Links attach to a hidden handle at the centre of each node; the opaque node
+   hides the part of the line under it, so links meet nodes at their border. */
+.planner .svelte-flow__handle.center-handle {
+	top: 50%;
+	left: 50%;
+	width: 1px;
+	height: 1px;
+	min-width: 0;
+	min-height: 0;
+	opacity: 0;
+	border: 0;
+	pointer-events: none;
+}
