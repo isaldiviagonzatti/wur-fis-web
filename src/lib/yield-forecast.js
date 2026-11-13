@@ -160,19 +160,38 @@ export function nowcastRows(block, sowingDate, stepDays, scale = 1) {
 /**
  * Invert the catalog into one entry per crop, listing the countries that have
  * it, so the crop selector can be the primary control and still say where each
- * crop is available for this initialization.
+ * crop is available for this initialization. `cells` holds each country's
+ * number of published grid cells for the crop.
  */
 export function buildCropIndex(catalog) {
 	const crops = new Map();
 	for (const [country, entry] of Object.entries(catalog?.countries ?? {})) {
 		for (const crop of entry.crops ?? []) {
 			if (!crops.has(crop.id)) {
-				crops.set(crop.id, { id: crop.id, label: crop.label, countries: [] });
+				crops.set(crop.id, { id: crop.id, label: crop.label, countries: [], cells: {} });
 			}
-			crops.get(crop.id).countries.push(country);
+			const item = crops.get(crop.id);
+			item.countries.push(country);
+			item.cells[country] = crop.n_cells ?? 0;
 		}
 	}
 	return [...crops.values()].sort((left, right) => left.label.localeCompare(right.label));
+}
+
+/**
+ * The crop to show when none is chosen: the one forecast on the most grid cells
+ * in the countries each entry lists, so the map opens as full as the month
+ * allows. Read from the month's own crop lists, which change every month, so no
+ * crop is ever named in code. Ties go to the first in `cropIndex` order
+ * (alphabetical). Empty when there is no crop.
+ */
+export function defaultCropId(cropIndex) {
+	let best = null;
+	for (const entry of cropIndex) {
+		const cells = entry.countries.reduce((sum, country) => sum + (entry.cells[country] ?? 0), 0);
+		if (!best || cells > best.cells) best = { id: entry.id, cells };
+	}
+	return best?.id ?? '';
 }
 
 const COUNTRY_TITLES = { ghana: 'Ghana', kenya: 'Kenya', zimbabwe: 'Zimbabwe' };

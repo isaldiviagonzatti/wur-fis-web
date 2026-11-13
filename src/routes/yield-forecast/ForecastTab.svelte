@@ -4,7 +4,10 @@
 
   Countries and crop are the primary controls. All countries start ticked; the
   crop list offers only crops forecast this month in a ticked country, and a crop
-  is drawn for every ticked country that has it. Comparing countries on one map
+  is drawn for every ticked country that has it. A crop is always selected: the
+  page opens on, and falls back to, the crop forecast on the most grid cells in
+  the ticked countries (`defaultCropId`), never a crop named in code, because the
+  list changes every month. Comparing countries on one map
   is only defensible because it is coloured by percentile within each cell's own
   reference distribution, a quantity that is comparable across countries.
 
@@ -47,6 +50,7 @@
 		SKILL_COLORS,
 		SKILL_LEGEND_LABELS,
 		buildCropIndex,
+		defaultCropId,
 		describePercentile,
 		formatCountryList,
 		formatCropLabel,
@@ -128,11 +132,14 @@
 			.then((loaded) => {
 				catalog = loaded;
 				// A shared link names its month; one no longer published falls back to the latest.
-				if (run) return;
-				const requested = new URL(window.location.href).searchParams.get('run');
-				if (requested && requested !== loaded.latest_run && loaded.runs?.includes(requested)) {
-					run = requested;
+				if (!run) {
+					const requested = new URL(window.location.href).searchParams.get('run');
+					if (requested && requested !== loaded.latest_run && loaded.runs?.includes(requested)) {
+						run = requested;
+					}
 				}
+				// An older month picks its crop once its own description arrives.
+				if (!run || run === loaded.latest_run) keepCropAvailable(loaded);
 			})
 			.catch((error) => (loadError = `Could not load the forecast catalog. ${error.message}`));
 	}
@@ -295,11 +302,13 @@
 			.filter((entry) => entry.countries.length);
 	}
 
-	/** A crop the month or the ticked countries do not have is dropped, as if never picked. */
-	function dropUnavailableCrop(description) {
-		if (crop && !availableCrops(description, countries).some((entry) => entry.id === crop)) {
-			crop = '';
-		}
+	/**
+	 * Keep a crop the month and the ticked countries have selected: none yet, or
+	 * one they do not have, gives way to the one forecast on the most cells.
+	 */
+	function keepCropAvailable(description) {
+		const available = availableCrops(description, countries);
+		if (!available.some((entry) => entry.id === crop)) crop = defaultCropId(available);
 	}
 
 	function frameCountries(selected) {
@@ -310,14 +319,15 @@
 	}
 
 	/**
-	 * Tick or untick countries. A crop none of them has is dropped, and so is a
-	 * selection in an unticked country, which would describe a place no longer drawn.
+	 * Tick or untick countries. A crop none of them has gives way to their most
+	 * covered one, and a selection in an unticked country is dropped, since it
+	 * would describe a place no longer drawn.
 	 */
 	function setCountries(next) {
 		const ordered = ALL_COUNTRIES.filter((name) => next.includes(name));
 		const removed = countries.filter((name) => !ordered.includes(name));
 		countries = ordered;
-		if (runInfo) dropUnavailableCrop(runInfo);
+		if (runInfo) keepCropAvailable(runInfo);
 		if (anchor && removed.includes(countryAt(anchor.lat, anchor.lon))) {
 			if (showZones) clearZoneSelection();
 			else clearCellSelection();
@@ -330,7 +340,7 @@
 		if (next === run) return;
 		run = next;
 		loadError = '';
-		if (!next) dropUnavailableCrop(catalog);
+		if (!next) keepCropAvailable(catalog);
 		// The latest needs no parameter, so its link stays the plain page URL.
 		const url = new URL(window.location.href);
 		if (next) url.searchParams.set('run', next);
@@ -342,8 +352,9 @@
 	function startOver() {
 		anchorZones = {};
 		placeQuery = '';
-		crop = '';
 		countries = ALL_COUNTRIES;
+		crop = '';
+		if (runInfo) keepCropAvailable(runInfo);
 		adminLevel = 'grid';
 		skillOverlay = false;
 		// Without this the panel keeps reporting the last clicked cell, which then
@@ -467,7 +478,7 @@
 		loadRunDescription(id)
 			.then((description) => {
 				if (cancelled) return;
-				dropUnavailableCrop(description);
+				keepCropAvailable(description);
 				runDescription = description;
 			})
 			.catch((error) => {
