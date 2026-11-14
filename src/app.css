@@ -61,15 +61,19 @@
   /* Header bar plus its accent line; full-height pages subtract it. */
   --header-height: 3.75rem;
   /* Side margin of the header and of every page (`px-page`): 16px on phones,
-     growing with the window to 48px, so the edges of all pages line up. */
-  --page-gutter: clamp(1rem, 4vw, 3rem);
+     growing with the window to 80px, so the edges of all pages line up. */
+  --page-gutter: clamp(1rem, 6vw - 0.5rem, 5rem);
+  /* Widest the content gets; on wider windows `px-page` centres it, so lines
+     stay short enough to read. */
+  --page-max-width: 96rem;
   /* Control column beside the map in the forecast and crop statistics tools;
      the Crop field above it takes the same width so their edges line up. */
   --tool-panel-width: 18rem;
 }
 
+/* Only on boxes as wide as the page: the percentage is of the box's container. */
 @utility px-page {
-  padding-inline: var(--page-gutter);
+  padding-inline: max(var(--page-gutter), (100% - var(--page-max-width)) / 2);
 }
 
 /* Field names in the tool panels (CROP, SHOW BY, YEAR): small capitals in a

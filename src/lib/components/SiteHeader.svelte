@@ -14,7 +14,8 @@
 	import Moon from '@lucide/svelte/icons/moon';
 	import Sun from '@lucide/svelte/icons/sun';
 	import X from '@lucide/svelte/icons/x';
-	import { SITE_NAME, SITE_NAV, SITE_WORDMARK } from '$lib/navigation.js';
+	import logo from '$lib/assets/logo.svg?raw';
+	import { SITE_NAME, SITE_NAV } from '$lib/navigation.js';
 	import { theme } from '$lib/theme.svelte.js';
 
 	let menuOpen = $state(false);
@@ -77,14 +78,13 @@
 				{#if menuOpen}<X size={18} />{:else}<Menu size={18} />{/if}
 			</button>
 
+			<!-- The logo file is drawn in the band colour; here it takes the text colour. -->
 			<a
 				href="/"
 				aria-label="{SITE_NAME}, home"
-				class="flex shrink-0 flex-col items-end text-[17px] leading-[0.85] font-semibold tracking-tight text-brand-foreground"
+				class="flex h-10 shrink-0 text-brand-foreground [&>svg]:h-full [&>svg]:w-auto [&>svg]:fill-current"
 			>
-				<span>{SITE_WORDMARK.top}</span>
-				<!-- At 0.75 em the capitals stand as tall as the lower case above. -->
-				<span class="text-[0.75em] uppercase">{SITE_WORDMARK.bottom}</span>
+				{@html logo}
 			</a>
 		</div>
 
