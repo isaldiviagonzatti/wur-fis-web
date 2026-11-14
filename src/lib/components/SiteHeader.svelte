@@ -14,7 +14,7 @@
 	import Moon from '@lucide/svelte/icons/moon';
 	import Sun from '@lucide/svelte/icons/sun';
 	import X from '@lucide/svelte/icons/x';
-	import { SITE_NAME, SITE_NAME_LINES, SITE_NAV } from '$lib/navigation.js';
+	import { SITE_NAME, SITE_NAV, SITE_WORDMARK } from '$lib/navigation.js';
 	import { theme } from '$lib/theme.svelte.js';
 
 	let menuOpen = $state(false);
@@ -80,9 +80,11 @@
 			<a
 				href="/"
 				aria-label="{SITE_NAME}, home"
-				class="flex shrink-0 flex-col text-[15px] leading-[1.15] font-semibold tracking-tight text-brand-foreground"
+				class="flex shrink-0 flex-col items-end text-[17px] leading-[0.85] font-semibold tracking-tight text-brand-foreground"
 			>
-				{#each SITE_NAME_LINES as line (line)}<span>{line}</span>{/each}
+				<span>{SITE_WORDMARK.top}</span>
+				<!-- At 0.75 em the capitals stand as tall as the lower case above. -->
+				<span class="text-[0.75em] uppercase">{SITE_WORDMARK.bottom}</span>
 			</a>
 		</div>
 

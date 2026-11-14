@@ -5,8 +5,9 @@
  * itself.
  */
 /** The site's name, always in lower case; the header sets it on two lines. */
-export const SITE_NAME = 'food, shed to hub';
-export const SITE_NAME_LINES = ['food,', 'shed to hub'];
+export const SITE_NAME = 'foodshed lab';
+/** The header's two lines: "lab" in capitals, flush right under "foodshed". */
+export const SITE_WORDMARK = { top: 'foodshed', bottom: 'lab' };
 /** The home page's headline. A sentence, so it keeps its case. */
 export const SITE_SLOGAN = 'Connecting data to plan for food security and system resilience.';
 
