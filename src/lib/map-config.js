@@ -3,6 +3,7 @@
  * Basemap: Protomaps hosted API (light for light mode, dark for dark mode).
  */
 import { env } from '$env/dynamic/public';
+import { theme } from '$lib/theme.svelte.js';
 
 export const FALLBACK_STYLE_URLS = {
 	light: 'https://tiles.openfreemap.org/styles/positron',
@@ -23,6 +24,18 @@ export const BASEMAP_STYLE_URLS = {
 	light: buildProtomapsStyleUrl('white'),
 	dark: buildProtomapsStyleUrl('dark')
 };
+
+/**
+ * Paint of the outline round the clicked cell or region: dark on the light
+ * basemap, white on the dark one. Read when the layer is added; a theme switch
+ * swaps the basemap, which drops the layer, and the page adds it again.
+ */
+export function selectedOutlinePaint() {
+	return {
+		'line-color': theme.dark ? '#ffffff' : '#1f2937',
+		'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1.2, 8, 2]
+	};
+}
 
 // Frames Ghana, Kenya and Zimbabwe together. Expressed as bounds rather than a
 // centre and zoom: a fixed zoom is only correct for one container width, and at

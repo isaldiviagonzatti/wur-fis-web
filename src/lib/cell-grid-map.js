@@ -12,6 +12,7 @@
  * that has it.
  */
 import { createNoDataPatternImage } from '$lib/no-data-pattern.js';
+import { selectedOutlinePaint } from '$lib/map-config.js';
 
 // The site-wide no-data hatch, so shading means the same thing here as on the
 // admin layers and the crop calendars.
@@ -112,10 +113,7 @@ export function ensureCellLayers(map, prefix, fillColor) {
 		type: 'line',
 		source: layer.source,
 		filter: ['==', ['get', 'uid'], NO_SELECTION],
-		paint: {
-			'line-color': '#1f2937',
-			'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1.2, 8, 2]
-		}
+		paint: selectedOutlinePaint()
 	});
 }
 

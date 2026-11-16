@@ -13,6 +13,7 @@
  * map keeps meaning "nothing published here".
  */
 import { findCellIndex } from '$lib/cell-grid-map.js';
+import { selectedOutlinePaint } from '$lib/map-config.js';
 
 const GID_PROPERTY = { country: 'GID_0', admin1: 'GID_1', admin2: 'GID_2' };
 const NO_SELECTION = '__none__';
@@ -115,10 +116,7 @@ export function ensureZoneSelectedLayer(map, level) {
 		source: level,
 		'source-layer': level,
 		filter: ['==', ['get', GID_PROPERTY[level]], NO_SELECTION],
-		paint: {
-			'line-color': '#1f2937',
-			'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1.2, 8, 2]
-		}
+		paint: selectedOutlinePaint()
 	});
 }
 
