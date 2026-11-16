@@ -15,7 +15,7 @@ export const PAGES = {
 		title: 'Yield Forecast',
 		subtitle: 'Seasonal crop yield outlooks',
 		description:
-			"Monthly forecasts of how this season's crop yields compare with normal in Ghana, Kenya, and Zimbabwe, from the LPJmL crop model driven by ECMWF seasonal weather forecasts. For any place, see how the season has gone so far and the range of possible yields at harvest."
+			"Forecasts, updated monthly, of how this season's crop yields compare with normal, including how the season has gone so far and the range of possible yields at harvest."
 	},
 	planner: {
 		href: '/foodshed/planner',
@@ -23,14 +23,17 @@ export const PAGES = {
 		menuTitle: 'Planner',
 		subtitle: 'Design a food-system analysis',
 		badge: 'Preview',
+		comingSoon: true,
+		// Off the header menu until it is ready; /foodshed/planner still opens it.
+		unlisted: true,
 		description:
-			'Pick the parts of the food system you want to study, then lay out methods, indicators and data on a board, with suggestions drawn from the foodshed literature. Use it alone or in a workshop, and export your plan as an image or a table.'
+			'Pick the parts of the food system you want to study, then lay out foodshed methods, indicators and data on the board to help you plan your analysis.'
 	},
 	cropStatistics: {
 		href: '/data-explorer/crop-statistics',
 		title: 'Crop Statistics',
 		description:
-			'Reported yield, production, and harvested area since 1994 by country and region for Ghana, Kenya, and Zimbabwe, and how well the crop model follows their year-to-year ups and downs.'
+			'See reported yield, production, and harvested area by country and region. Also includes information about how our crop model performs against reported statistics.'
 	},
 	atlas: {
 		href: '/foodshed/atlas',
@@ -39,27 +42,27 @@ export const PAGES = {
 		subtitle: 'Where food comes from, today and in the future',
 		comingSoon: true,
 		description:
-			'Maps of foodsheds showing how domestic production, trade, and food demand combine to determine food availability in Ghana, Kenya, and Zimbabwe, today and under long-term scenarios (SSP2-4.5 and SSP3-7.0).'
+			'Analysis showing how production, distribution and trade, and food demand combine to shape foodsheds today and under long-term scenarios.'
 	},
 	cropCalendars: {
 		href: '/data-explorer/crop-calendars',
 		title: 'Crop Calendars',
 		description:
-			'Sowing and harvest timing by agro-ecological zone. Click an AEZ on the map to see the full crop calendar chart.'
+			'Sowing and harvest timing for major crops by agro-ecological zone.'
 	},
 	environment: {
 		href: '/data-explorer/environment',
 		title: 'Environment',
 		comingSoon: true,
 		description:
-			'Spatial environmental reference layers including soil texture, land use, and elevation for Ghana, Kenya, and Zimbabwe.'
+			'Spatial environmental layers used in our analysis, including topography, hydrology, soils, and land cover and use.'
 	},
 	climate: {
 		href: '/data-explorer/climate',
 		title: 'Climate',
 		comingSoon: true,
 		description:
-			'ERA5-Land climatology layers covering long-term temperature and precipitation patterns across the study region.'
+			'Climatology layers covering long-term averages and variability of temperature, precipitation, radiation, and wind, as well as climate change scenarios.'
 	}
 };
 
@@ -81,10 +84,12 @@ export const DATA_EXPLORER_NAV_ITEMS = [
  * section name already says "Foodshed"); its `href` is only the URL prefix that
  * marks it active.
  */
+const listed = (items) => items.filter((item) => !item.unlisted);
+
 export const SITE_NAV = [
 	{ href: PAGES.yieldForecast.href, title: 'Yield Forecast' },
-	{ href: '/foodshed', title: 'Foodshed', items: FOODSHED_NAV_ITEMS },
-	{ href: '/data-explorer', title: 'Data Explorer', items: DATA_EXPLORER_NAV_ITEMS },
+	{ href: '/foodshed', title: 'Foodshed', items: listed(FOODSHED_NAV_ITEMS) },
+	{ href: '/data-explorer', title: 'Data Explorer', items: listed(DATA_EXPLORER_NAV_ITEMS) },
 	{ href: '/about-us', title: 'About' }
 ];
 

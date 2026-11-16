@@ -44,7 +44,7 @@
 			<h1
 				class={[
 					'text-2xl font-semibold tracking-tight text-foreground sm:text-3xl',
-					slogan ? 'text-center text-balance italic' : 'site-title'
+					slogan ? 'text-center text-balance' : 'site-title'
 				]}
 			>
 				{shownTitle}
