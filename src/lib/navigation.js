@@ -4,8 +4,8 @@
  * footer link to. There are no section overview pages: each page introduces
  * itself.
  */
-/** The site's name, always in lower case; the header shows it as the logo (assets/logo.svg). */
-export const SITE_NAME = 'foodshed lab';
+/** The site's name, for labels and titles; the header shows it as the logo (assets/logo.svg). */
+export const SITE_NAME = 'Foodshed Information Service';
 /** The home page's headline. A sentence, so it keeps its case. */
 export const SITE_SLOGAN = 'Connecting data to plan for food security and system resilience.';
 
