@@ -22,7 +22,9 @@ export const PAGES = {
 		title: 'Foodshed Planner',
 		menuTitle: 'Planner',
 		subtitle: 'Design a food-system analysis',
-		// Off the header menu until it is ready; /foodshed/planner still opens it.
+		// Until it is ready: a home card without a link, off the header menu and footer;
+		// /foodshed/planner still opens it.
+		comingSoon: true,
 		unlisted: true,
 		description:
 			'Set out what your plan should achieve, then choose the parts of the food system to study and the methods, indicators and data to study them with.'
