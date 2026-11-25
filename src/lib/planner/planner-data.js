@@ -1,11 +1,7 @@
 /**
- * Read-only access to the planner content (planner.json): lookups by id and
- * the evidence-based suggestions.
- *
- * Every element and card carries the codes of the reviewed papers it matches.
- * A suggestion ranks cards by how strongly their papers overlap an element's
- * papers, using the Ochiai coefficient (shared / sqrt(n_card * n_element)), so
- * methods that appear in most papers do not crowd out specific ones.
+ * The planner's content (planner.json, built from the foodshed review by
+ * fis-data-prep) and read-only lookups on it. Everything that carries papers
+ * gets a `paperSet` for the evidence functions in evidence.js.
  */
 import { fetchJson } from '$lib/fetch-json.js';
 import { PLANNER_URL } from '$lib/data-sources.js';
@@ -18,74 +14,38 @@ export const CARD_KINDS = [
 
 export const KIND_LABELS = Object.fromEntries(CARD_KINDS.map((k) => [k.value, k.singular]));
 
+// Elements the planner may suggest adding; outcomes and resilience capacities
+// are only ever the user's own choice.
+const SUGGESTABLE = (element) =>
+	element.zone === 'drivers' || element.zone === 'activities' || element.subzone === 'properties';
+
 export async function loadPlannerContent() {
 	return indexContent(await fetchJson(PLANNER_URL));
 }
 
-function indexContent(content) {
-	const withSets = (entries) =>
-		new Map(entries.map((entry) => [entry.id, { ...entry, paperSet: new Set(entry.papers) }]));
+export function indexContent(content) {
+	const withSet = (entry) => ({ ...entry, paperSet: new Set(entry.papers) });
+	const byId = (entries) => new Map(entries.map((entry) => [entry.id, entry]));
+	const elements = content.elements.map(withSet);
+	const cards = content.cards.map(withSet);
+	const actors = content.actors.map(withSet);
+	const topics = content.topics.map(withSet);
 	return {
 		...content,
-		zonesById: new Map(content.zones.map((zone) => [zone.id, zone])),
-		elementsById: withSets(content.elements),
-		cardsById: withSets(content.cards)
+		elements,
+		cards,
+		actors,
+		topics,
+		cardKinds: CARD_KINDS,
+		paperCount: Object.keys(content.papers).length,
+		suggestable: elements.filter(SUGGESTABLE),
+		zonesById: byId(content.zones),
+		subzonesById: byId(content.subzones),
+		elementsById: byId(elements),
+		cardsById: byId(cards),
+		actorsById: byId(actors),
+		topicsById: byId(topics)
 	};
-}
-
-function ochiai(a, b) {
-	if (!a.size || !b.size) return { shared: 0, score: 0 };
-	let shared = 0;
-	for (const code of a) if (b.has(code)) shared++;
-	return { shared, score: shared / Math.sqrt(a.size * b.size) };
-}
-
-/**
- * Cards of each kind ranked for a set of elements. A card's score is its best
- * overlap with any of the elements, and `element` names the one it fits best.
- */
-export function suggestCards(content, elementIds, perKind = 5) {
-	const elements = elementIds.map((id) => content.elementsById.get(id)).filter(Boolean);
-	const ranked = { method: [], indicator: [], data: [] };
-	if (!elements.length) return ranked;
-	for (const card of content.cardsById.values()) {
-		let best = null;
-		for (const element of elements) {
-			const fit = ochiai(card.paperSet, element.paperSet);
-			if (fit.shared && (!best || fit.score > best.score)) best = { ...fit, element: element.id };
-		}
-		if (best) ranked[card.kind].push({ card, ...best });
-	}
-	for (const kind in ranked) {
-		ranked[kind] = ranked[kind].sort((a, b) => b.score - a.score).slice(0, perKind);
-	}
-	return ranked;
-}
-
-/** Elements a card's papers most often address. */
-export function elementsForCard(content, cardId, n = 4) {
-	const card = content.cardsById.get(cardId);
-	return [...content.elementsById.values()]
-		.map((element) => ({ element, ...ochiai(card.paperSet, element.paperSet) }))
-		.filter((fit) => fit.shared)
-		.sort((a, b) => b.score - a.score)
-		.slice(0, n);
-}
-
-/** Cards of the other kinds most often used in the same papers as this card. */
-export function relatedCards(content, cardId, perKind = 3) {
-	const card = content.cardsById.get(cardId);
-	const related = {};
-	for (const { value } of CARD_KINDS) {
-		if (value === card.kind) continue;
-		related[value] = [...content.cardsById.values()]
-			.filter((other) => other.kind === value)
-			.map((other) => ({ card: other, ...ochiai(card.paperSet, other.paperSet) }))
-			.filter((fit) => fit.shared)
-			.sort((a, b) => b.score - a.score)
-			.slice(0, perKind);
-	}
-	return related;
 }
 
 /** Papers by code, most recent first. */
@@ -93,19 +53,38 @@ export function papersFor(content, codes) {
 	return codes
 		.map((code) => ({ code, ...content.papers[code] }))
 		.filter((paper) => paper.title)
-		.sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+		.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || a.title.localeCompare(b.title));
 }
 
-/** Cards of one kind grouped as the library lists them, filtered by a search query. */
-export function libraryGroups(content, kind, query) {
+/** "Lauk et al. (2022)" */
+export function paperCitation(paper) {
+	return `${paper.authors}${paper.year ? ` (${paper.year})` : ''}`;
+}
+
+/**
+ * Cards of one kind matching a search query, which also searches the names the
+ * papers use, so "land footprint" finds Land resource demand. A card found
+ * through one of its names carries that name as `hit`.
+ */
+export function searchCards(content, kind, query) {
 	const q = query.trim().toLowerCase();
-	const groups = new Map();
-	for (const card of content.cardsById.values()) {
-		if (card.kind !== kind) continue;
-		const haystack = [card.label, card.group, card.description, ...card.named].join(' ').toLowerCase();
-		if (q && !haystack.includes(q)) continue;
-		if (!groups.has(card.group)) groups.set(card.group, []);
-		groups.get(card.group).push(card);
+	const cards = content.cards.filter((card) => card.kind === kind);
+	if (!q) return cards.map((card) => ({ card, hit: null }));
+	const found = [];
+	for (const card of cards) {
+		if (`${card.label} ${card.description}`.toLowerCase().includes(q)) {
+			found.push({ card, hit: null });
+			continue;
+		}
+		const item = card.items.find((entry) => entry.name.toLowerCase().includes(q));
+		if (item) found.push({ card, hit: item.name });
 	}
-	return [...groups].map(([label, cards]) => ({ label, cards }));
+	return found;
+}
+
+/** Elements of a zone, or of a subzone, in content order. */
+export function elementsIn(content, { zone, subzone }) {
+	return content.elements.filter((element) =>
+		subzone ? element.subzone === subzone : element.zone === zone
+	);
 }

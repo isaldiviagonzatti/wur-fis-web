@@ -1,9 +1,10 @@
 <!--
   PlannerBoard — the interactive board: the food-system diagram, its fixed
-  elements, and the cards and notes the user places. Dropping a card from the
-  library, or dragging a card onto an element, docks it there. While the user
-  has not panned or zoomed, the board stays fitted when its space changes, as
-  when a side panel is shown or hidden. Must be inside a SvelteFlowProvider.
+  elements, zone names and objective, and the cards and notes the user
+  places. Dropping a card from the library, or dragging a card onto an
+  element, docks it there. While the user has not panned or zoomed, the board
+  stays fitted when its space changes, as when the toolshed below it is
+  resized. Must be inside a SvelteFlowProvider.
 -->
 <script>
 	import {
@@ -21,21 +22,32 @@
 	import CardNode from './CardNode.svelte';
 	import ElementNode from './ElementNode.svelte';
 	import NoteNode from './NoteNode.svelte';
+	import ObjectiveNode from './ObjectiveNode.svelte';
+	import ZoneNode from './ZoneNode.svelte';
 	import { BOARD_BOUNDS, spiralOffsets } from '$lib/planner/board-layout.js';
 	import { CARD_DRAG_TYPE } from '$lib/planner/card-kinds.js';
 	import { downloadBoardPng } from '$lib/planner/plan-export.js';
+	import { isPlaced } from '$lib/planner/plan-state.js';
 	import { theme } from '$lib/theme.svelte.js';
 
 	let {
 		nodes = $bindable(),
 		edges = $bindable(),
 		title = '',
+		byline = '',
+		capacities = [],
 		onselect,
 		ondropcard,
 		ondock
 	} = $props();
 
-	const nodeTypes = { element: ElementNode, card: CardNode, note: NoteNode };
+	const nodeTypes = {
+		element: ElementNode,
+		zone: ZoneNode,
+		objective: ObjectiveNode,
+		card: CardNode,
+		note: NoteNode
+	};
 	const { screenToFlowPosition, getIntersectingNodes, getNodesBounds, fitBounds } =
 		useSvelteFlow();
 
@@ -87,7 +99,7 @@
 	}
 
 	function onnodedragstop({ targetNode }) {
-		if (!targetNode || targetNode.type === 'element') return;
+		if (!targetNode || !isPlaced(targetNode)) return;
 		const element = elementUnder(targetNode);
 		if (element) ondock(targetNode.id, element.id);
 	}
@@ -120,7 +132,7 @@
 	}
 
 	export function downloadPng() {
-		const placed = nodes.filter((node) => node.type !== 'element');
+		const placed = nodes.filter(isPlaced);
 		return downloadBoardPng({
 			viewportElement: container.querySelector('.svelte-flow__viewport'),
 			boardBounds: BOARD_BOUNDS,
@@ -155,7 +167,7 @@
 		{onnodedragstop}
 		{onmove}
 	>
-		<BoardBackground {title} />
+		<BoardBackground {title} {byline} {capacities} />
 		<Background variant={BackgroundVariant.Dots} gap={24} size={1} patternColor="var(--border)" />
 		<Controls showLock={false} showFitView={false} position="bottom-left">
 			<ControlButton onclick={fitBoard} title="Fit the board" aria-label="Fit the board">

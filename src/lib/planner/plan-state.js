@@ -1,39 +1,70 @@
 /**
- * A plan as the board holds it (Svelte Flow nodes and edges) and as it is
- * stored (a small plain object). Food-system elements are rebuilt from the
- * content on every load; only the user's cards, notes, links, scope and title
- * are saved, so a plan file stays valid when the content is updated.
+ * A plan as the board holds it (Svelte Flow nodes and edges, plus the
+ * profile) and as it is stored (a small plain object). The diagram's elements
+ * and labels are rebuilt from the content on every load; only the user's
+ * answers, scope, cards, notes, links and title are saved, so a plan file
+ * stays valid when the content is updated.
  */
-import { CARD_WIDTH, ELEMENT_POSITIONS, ELEMENT_WIDTH, dockPosition } from './board-layout.js';
+import { CARD_WIDTH, ELEMENT_LAYOUT, OBJECTIVE, ZONE_LABELS, dockPosition } from './board-layout.js';
+import { emptyProfile, normaliseProfile } from './profile.js';
 
 export const PLAN_FORMAT = 'fis-foodshed-plan';
-const PLAN_VERSION = 1;
-const STORAGE_KEY = 'fis-foodshed-planner:v1';
+const PLAN_VERSION = 2;
+const STORAGE_KEY = 'fis-foodshed-planner:v2';
 
+export const OBJECTIVE_ID = 'objective';
 const CENTRE = [0.5, 0.5];
+const FIXED = { draggable: false, deletable: false, connectable: false };
 
 function newId(prefix) {
 	return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
-export function elementNodes(content, scope = []) {
-	return content.elements
-		.filter((element) => ELEMENT_POSITIONS[element.id])
-		.map((element) => ({
+function elementNodes(content, scope) {
+	return content.elements.map((element) => {
+		const { x, y, width, origin = CENTRE, accent = null } = ELEMENT_LAYOUT[element.id];
+		return {
 			id: element.id,
 			type: 'element',
-			position: ELEMENT_POSITIONS[element.id],
-			origin: CENTRE,
-			draggable: false,
-			deletable: false,
-			connectable: false,
+			position: { x, y },
+			origin,
+			...FIXED,
 			data: {
 				label: element.label,
 				zone: element.zone,
-				width: ELEMENT_WIDTH[element.zone],
+				items: element.items ?? null,
+				width,
+				accent,
 				inScope: scope.includes(element.id)
 			}
-		}));
+		};
+	});
+}
+
+function zoneLabelNodes(content) {
+	const labelled = [...content.zones, ...content.subzones].filter((zone) => ZONE_LABELS[zone.id]);
+	return labelled.map((zone) => {
+		const { x, y, align } = ZONE_LABELS[zone.id];
+		return {
+			id: `zone:${zone.id}`,
+			type: 'zone',
+			position: { x, y },
+			origin: [align === 'middle' ? 0.5 : 0, 0.5],
+			...FIXED,
+			data: { label: zone.label, zone: zone.zone ?? zone.id, sub: Boolean(zone.zone) }
+		};
+	});
+}
+
+function objectiveNode() {
+	return {
+		id: OBJECTIVE_ID,
+		type: 'objective',
+		position: { x: OBJECTIVE.x, y: OBJECTIVE.y },
+		origin: [0, 0],
+		...FIXED,
+		data: { width: OBJECTIVE.width }
+	};
 }
 
 export function cardNode(card, position, note = '', id = newId('card')) {
@@ -59,6 +90,11 @@ export function isLinked(edges, sourceId, elementId) {
 	return edges.some((edge) => edge.source === sourceId && edge.target === elementId);
 }
 
+/** Nodes the user placed, as opposed to the fixed diagram. */
+export function isPlaced(node) {
+	return node.type === 'card' || node.type === 'note';
+}
+
 const DOCK_TOLERANCE = 24;
 
 /**
@@ -67,7 +103,7 @@ const DOCK_TOLERANCE = 24;
  * `exceptId` is the card being docked, which must not block its own spot.
  */
 export function freeDockPosition(nodes, elementId, exceptId = null) {
-	const placed = nodes.filter((node) => node.type !== 'element' && node.id !== exceptId);
+	const placed = nodes.filter((node) => isPlaced(node) && node.id !== exceptId);
 	for (let index = 0; ; index++) {
 		const spot = dockPosition(elementId, index);
 		const taken = placed.some(
@@ -83,54 +119,73 @@ export function scopeOf(nodes) {
 	return nodes.filter((node) => node.type === 'element' && node.data.inScope).map((node) => node.id);
 }
 
-export function toPlan({ title, nodes, edges }) {
+/** Nodes with exactly these elements in scope. */
+export function withScope(nodes, scope) {
+	const inScope = new Set(scope);
+	return nodes.map((node) =>
+		node.type !== 'element' || node.data.inScope === inScope.has(node.id)
+			? node
+			: { ...node, data: { ...node.data, inScope: inScope.has(node.id) } }
+	);
+}
+
+export function toPlan({ title, profile, nodes, edges }) {
 	return {
 		format: PLAN_FORMAT,
 		version: PLAN_VERSION,
 		saved: new Date().toISOString(),
 		title,
+		profile,
 		scope: scopeOf(nodes),
-		cards: nodes
-			.filter((node) => node.type === 'card' || node.type === 'note')
-			.map((node) => ({
-				id: node.id,
-				type: node.type,
-				ref: node.data.ref ?? null,
-				x: Math.round(node.position.x),
-				y: Math.round(node.position.y),
-				note: node.type === 'card' ? node.data.note : node.data.text
-			})),
+		cards: nodes.filter(isPlaced).map((node) => ({
+			id: node.id,
+			type: node.type,
+			ref: node.data.ref ?? null,
+			x: Math.round(node.position.x),
+			y: Math.round(node.position.y),
+			note: node.type === 'card' ? node.data.note : node.data.text
+		})),
 		links: edges.map((edge) => ({ from: edge.source, to: edge.target }))
 	};
 }
 
+function boardNodes(content, scope) {
+	return [...zoneLabelNodes(content), ...elementNodes(content, scope), objectiveNode()];
+}
+
 /**
  * Rebuild the board from a stored plan. Cards whose content has been removed
- * since the plan was saved are dropped, and so are their links.
+ * since the plan was saved are dropped with their links, and counted in
+ * `dropped`; plans from the first version of the planner keep only their
+ * notes, title and the elements that still exist.
  */
 export function fromPlan(plan, content) {
 	if (plan?.format !== PLAN_FORMAT) throw new Error('This file is not a Foodshed Planner plan.');
 	const cards = [];
+	let dropped = 0;
 	for (const saved of plan.cards ?? []) {
 		const position = { x: saved.x, y: saved.y };
 		if (saved.type === 'note') cards.push(noteNode(position, saved.note ?? '', saved.id));
 		else if (content.cardsById.has(saved.ref)) {
 			cards.push(cardNode(content.cardsById.get(saved.ref), position, saved.note ?? '', saved.id));
-		}
+		} else dropped++;
 	}
 	const sources = new Set(cards.map((node) => node.id));
 	const edges = (plan.links ?? [])
 		.filter((link) => sources.has(link.from) && content.elementsById.has(link.to))
 		.map((link) => linkEdge(link.from, link.to));
+	const scope = (plan.scope ?? []).filter((id) => content.elementsById.has(id));
 	return {
 		title: plan.title ?? '',
-		nodes: [...elementNodes(content, plan.scope ?? []), ...cards],
-		edges
+		profile: normaliseProfile(plan.profile, content),
+		nodes: [...boardNodes(content, scope), ...cards],
+		edges,
+		dropped
 	};
 }
 
 export function emptyPlan(content) {
-	return { title: '', nodes: elementNodes(content), edges: [] };
+	return { title: '', profile: emptyProfile(), nodes: boardNodes(content, []), edges: [] };
 }
 
 // Storage can be unavailable (private windows, blocked site data); the board

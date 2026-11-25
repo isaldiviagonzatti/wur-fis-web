@@ -1,38 +1,56 @@
 <!--
   ElementNode — a food-system element on the planner board. Fixed in place;
   clicking it opens its definition. A filled marker shows it is in the plan's
-  scope, and the count shows how many cards and notes are linked to it.
+  scope, a dashed ring that it is suggested for the plan, and the count
+  how many cards and notes are linked to it. Drivers are boxes that list
+  their drivers; every other element is a pill.
 -->
 <script>
 	import { Handle, Position, useNodeConnections } from '@xyflow/svelte';
 	import Check from '@lucide/svelte/icons/check';
+	import { getPlanner } from '$lib/planner/planner-context.js';
 
-	let { data, selected } = $props();
+	let { id, data, selected } = $props();
 
+	const planner = getPlanner();
 	const connections = useNodeConnections({ handleType: 'target' });
 	const linked = $derived(connections.current.length);
+	const suggested = $derived(!data.inScope && planner.suggested.has(id));
 </script>
 
 <div
-	class={['element', data.inScope && 'in-scope', selected && 'selected']}
+	class={[
+		'element',
+		data.items && 'box',
+		data.inScope && 'in-scope',
+		suggested && 'suggested',
+		selected && 'selected'
+	]}
 	style:width="{data.width}px"
-	style:--zone="var(--zone-{data.zone})"
+	style:--zone={data.accent ?? `var(--zone-${data.zone})`}
+	title={suggested ? 'Suggested for your plan' : undefined}
 >
-	<span class="marker">
-		{#if data.inScope}<Check size={10} strokeWidth={3} />{/if}
-	</span>
-	<span class="label">{data.label}</span>
-	{#if linked}
-		<span class="count" title="{linked} linked">{linked}</span>
+	<div class="head">
+		<span class="marker">
+			{#if data.inScope}<Check size={10} strokeWidth={3} />{/if}
+		</span>
+		<span class="label">{data.label}</span>
+		{#if linked}
+			<span class="count" title="{linked} linked">{linked}</span>
+		{/if}
+	</div>
+	{#if data.items}
+		<ul>
+			{#each data.items as item (item)}
+				<li>{item}</li>
+			{/each}
+		</ul>
 	{/if}
 	<Handle type="target" position={Position.Top} class="center-handle" isConnectable={false} />
 </div>
 
 <style>
 	.element {
-		display: flex;
-		align-items: center;
-		gap: 8px;
 		padding: 7px 12px 7px 9px;
 		border-radius: 999px;
 		background: var(--background);
@@ -47,6 +65,17 @@
 			box-shadow 120ms;
 	}
 
+	.element.box {
+		padding: 9px 12px 10px 10px;
+		border-radius: 14px;
+	}
+
+	.head {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
 	.element:hover {
 		border-color: var(--zone);
 	}
@@ -54,7 +83,15 @@
 	.element.in-scope {
 		background: color-mix(in oklab, var(--zone) 14%, var(--background));
 		border-color: var(--zone);
+	}
+
+	.in-scope .label {
 		font-weight: 500;
+	}
+
+	.element.suggested {
+		outline: 1.5px dashed var(--planner-recommended);
+		outline-offset: 3px;
 	}
 
 	.element.selected {
@@ -80,6 +117,10 @@
 		flex: 1;
 	}
 
+	.box .label {
+		font-weight: 600;
+	}
+
 	.count {
 		min-width: 18px;
 		padding: 0 5px;
@@ -90,5 +131,22 @@
 		font-weight: 600;
 		text-align: center;
 		font-variant-numeric: tabular-nums;
+	}
+
+	ul {
+		margin: 6px 0 0 22px;
+		padding: 0;
+		list-style: disc;
+		color: var(--muted-foreground);
+		font-size: 11.5px;
+		line-height: 1.35;
+	}
+
+	li + li {
+		margin-top: 2px;
+	}
+
+	li::marker {
+		color: color-mix(in oklab, var(--zone) 70%, var(--muted-foreground));
 	}
 </style>

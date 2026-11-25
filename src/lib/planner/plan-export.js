@@ -5,6 +5,7 @@
 import { getViewportForBounds } from '@xyflow/svelte';
 import interLatinUrl from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import { KIND_LABELS, papersFor } from './planner-data.js';
+import { isPlaced } from './plan-state.js';
 
 const PNG_WIDTH = 2400;
 const EXAMPLE_PAPERS = 3;
@@ -47,17 +48,18 @@ export async function readPlanFile(file) {
 
 const CSV_COLUMNS = [
 	['zone', 'Zone'],
+	['group', 'Group'],
 	['element', 'Food-system element'],
 	['in_scope', 'In scope'],
 	['type', 'Type'],
 	['item', 'Item'],
-	['group', 'Group'],
 	['description', 'Description'],
 	['note', 'Your note'],
-	['papers', 'Papers in review'],
-	['example_papers', 'Example papers'],
-	['sources', 'Example data sources']
+	['named', 'Variants or datasets'],
+	['example_papers', 'Example studies']
 ];
+
+const NAMED_EXAMPLES = 6;
 
 function csvCell(value) {
 	const text = String(value ?? '');
@@ -73,28 +75,31 @@ function itemColumns(content, node) {
 	return {
 		type: KIND_LABELS[card.kind],
 		item: card.label,
-		group: card.group,
 		description: card.description,
 		note: node.data.note,
-		papers: card.papers.length,
-		example_papers: examples.join(' | '),
-		sources: card.sources.map((s) => (s.url ? `${s.name} (${s.url})` : s.name)).join(' | ')
+		named: card.items
+			.slice(0, NAMED_EXAMPLES)
+			.map((item) => (item.url ? `${item.name} (${item.url})` : item.name))
+			.join(' | '),
+		example_papers: examples.join(' | ')
 	};
 }
 
 /**
- * One row per element-item link, ordered as the board reads: drivers,
- * activities, outcomes, resilience. Elements in scope without items still get
- * a row, and items not linked to any element come last.
+ * The objective first, if there is one, then one row per element-item link,
+ * ordered as the board reads: drivers, activities, outcomes, resilience.
+ * Elements in scope without items still get a row, and items not linked to
+ * any element come last.
  */
-export function planCsvRows(content, nodes, edges) {
+export function planCsvRows(content, nodes, edges, objective = '') {
 	const byId = new Map(nodes.map((node) => [node.id, node]));
 	const linked = new Set(edges.map((edge) => edge.source));
-	const rows = [];
+	const rows = objective.trim() ? [{ type: 'Objective', item: objective.trim() }] : [];
 	for (const element of content.elements) {
 		const node = byId.get(element.id);
 		const base = {
 			zone: content.zonesById.get(element.zone)?.label,
+			group: content.subzonesById.get(element.subzone)?.label,
 			element: element.label,
 			in_scope: node?.data.inScope ? 'yes' : 'no'
 		};
@@ -103,15 +108,15 @@ export function planCsvRows(content, nodes, edges) {
 		if (!links.length && node?.data.inScope) rows.push(base);
 	}
 	for (const node of nodes) {
-		if ((node.type === 'card' || node.type === 'note') && !linked.has(node.id)) {
+		if (isPlaced(node) && !linked.has(node.id)) {
 			rows.push({ element: 'Not linked to an element', in_scope: '', ...itemColumns(content, node) });
 		}
 	}
 	return rows;
 }
 
-export function downloadPlanCsv(content, { title, nodes, edges }) {
-	const rows = planCsvRows(content, nodes, edges);
+export function downloadPlanCsv(content, { title, profile, nodes, edges }) {
+	const rows = planCsvRows(content, nodes, edges, profile.objective);
 	const lines = [
 		CSV_COLUMNS.map(([, header]) => csvCell(header)).join(','),
 		...rows.map((row) => CSV_COLUMNS.map(([key]) => csvCell(row[key])).join(','))

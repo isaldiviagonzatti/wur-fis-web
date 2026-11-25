@@ -1,25 +1,21 @@
 <!--
-  PlannerToolbar — plan title, save status, and the plan's file actions:
-  start a new plan, open or save a plan file, and export the board. The
-  buttons at either end show or hide the library and the detail panel.
+  PlannerToolbar — plan title, save status, the opening questions, and the
+  plan's file actions: start a new plan, open or save a plan file, and export
+  the board. It fills the rest of the page intro's line.
 -->
 <script>
 	import FilePlus from '@lucide/svelte/icons/file-plus';
 	import FileSpreadsheet from '@lucide/svelte/icons/file-spreadsheet';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Image from '@lucide/svelte/icons/image';
-	import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
-	import PanelLeftOpen from '@lucide/svelte/icons/panel-left-open';
-	import PanelRightClose from '@lucide/svelte/icons/panel-right-close';
-	import PanelRightOpen from '@lucide/svelte/icons/panel-right-open';
+	import ListChecks from '@lucide/svelte/icons/list-checks';
 	import Save from '@lucide/svelte/icons/save';
 	import { Button } from '$lib/components/ui/button';
 
 	let {
 		title = $bindable(),
-		libraryOpen = $bindable(),
-		detailOpen = $bindable(),
 		status = '',
+		onquestions,
 		onnew,
 		onopen,
 		onsave,
@@ -37,31 +33,14 @@
 	}
 </script>
 
-{#snippet panelToggle(open, label, OpenIcon, CloseIcon, toggle)}
-	{@const action = `${open ? 'Hide' : 'Show'} ${label}`}
-	<Button
-		variant="ghost"
-		size="icon-sm"
-		class="cursor-pointer text-muted-foreground hover:text-foreground"
-		aria-label={action}
-		aria-pressed={open}
-		title={action}
-		onclick={toggle}
-	>
-		{#if open}<CloseIcon />{:else}<OpenIcon />{/if}
-	</Button>
-{/snippet}
-
-<div class="flex flex-wrap items-center gap-x-3 gap-y-2 py-2">
-	{@render panelToggle(libraryOpen, 'the library', PanelLeftOpen, PanelLeftClose, () => {
-		libraryOpen = !libraryOpen;
-	})}
+<!-- Shares the intro's line when 32rem are left on it, else takes a line of its own. -->
+<div class="flex min-w-0 flex-[1_1_32rem] flex-wrap items-center gap-x-3 gap-y-1">
 	<input
 		bind:value={title}
 		placeholder="Untitled plan"
 		aria-label="Plan title"
 		maxlength="80"
-		class="h-8 min-w-40 flex-1 rounded-md border border-transparent bg-transparent px-2 text-base font-semibold text-foreground outline-none placeholder:text-muted-foreground hover:border-border focus:border-foreground/40 sm:max-w-md"
+		class="-ml-2 h-8 min-w-40 flex-1 rounded-md border border-transparent bg-transparent px-2 text-base font-semibold text-foreground outline-none placeholder:text-muted-foreground hover:border-border focus:border-foreground/40 sm:max-w-md"
 	/>
 	<span class="text-xs text-muted-foreground">{status}</span>
 
@@ -80,6 +59,9 @@
 				>Cancel</Button
 			>
 		{:else}
+			<Button variant="ghost" size="sm" class="cursor-pointer" onclick={onquestions}>
+				<ListChecks />Questions
+			</Button>
 			<Button variant="ghost" size="sm" class="cursor-pointer" onclick={() => (confirmingNew = true)}>
 				<FilePlus />New
 			</Button>
@@ -97,9 +79,6 @@
 			</Button>
 		{/if}
 	</div>
-	{@render panelToggle(detailOpen, 'details', PanelRightOpen, PanelRightClose, () => {
-		detailOpen = !detailOpen;
-	})}
 	<input
 		bind:this={fileInput}
 		type="file"

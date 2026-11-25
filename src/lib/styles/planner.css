@@ -1,20 +1,32 @@
-/* Foodshed Planner board. Zone colours are the TOL muted palette, which the
-   site already uses for data; dark mode swaps to the lighter members of the
-   same palette so the zones stay legible. Everything else is neutral chrome. */
+/* Foodshed Planner. Zone colours are the TOL muted palette, which the site
+   already uses for data; dark mode swaps to the lighter members of the same
+   palette so the zones stay legible. The resilience zone is the brand slate,
+   so that its figure can carry the colours of the three capacities, as in the
+   review's figure: indigo (absorb), teal (adapt) and sand (transform).
+   Everything else is neutral chrome. */
 
 .planner {
 	--zone-drivers: #999933;
 	--zone-activities: #882255;
 	--zone-outcomes: #44aa99;
-	--zone-resilience: #332288;
+	--zone-resilience: var(--brand-accent);
+	--zone-feedbacks: var(--brand-accent);
+	--cap-reference: var(--foreground);
+	--cap-absorptive: #332288;
+	--cap-adaptive: #44aa99;
+	--cap-transformative: #ddcc77;
+	/* Sand is too light for text on white; its labels use a darker mix. */
+	--cap-transformative-text: color-mix(in oklab, #ddcc77 55%, #000);
 	--planner-line: color-mix(in oklab, var(--foreground) 32%, transparent);
+	--planner-recommended: var(--brand-accent);
 }
 
 .dark .planner {
 	--zone-drivers: #ddcc77;
 	--zone-activities: #cc6677;
 	--zone-outcomes: #44aa99;
-	--zone-resilience: #88ccee;
+	--cap-absorptive: #9988dd;
+	--cap-transformative-text: #ddcc77;
 }
 
 .planner .svelte-flow {
@@ -54,4 +66,11 @@
 	opacity: 0;
 	border: 0;
 	pointer-events: none;
+}
+
+/* Zone labels and the objective are part of the diagram: no selection ring. */
+.planner .svelte-flow__node-zone.selected,
+.planner .svelte-flow__node-objective.selected {
+	box-shadow: none;
+	outline: none;
 }

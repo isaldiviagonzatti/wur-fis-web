@@ -22,12 +22,10 @@ export const PAGES = {
 		title: 'Foodshed Planner',
 		menuTitle: 'Planner',
 		subtitle: 'Design a food-system analysis',
-		badge: 'Preview',
-		comingSoon: true,
 		// Off the header menu until it is ready; /foodshed/planner still opens it.
 		unlisted: true,
 		description:
-			'Pick the parts of the food system you want to study, then lay out foodshed methods, indicators and data on the board to help you plan your analysis.'
+			'Set out what your plan should achieve, then choose the parts of the food system to study and the methods, indicators and data to study them with.'
 	},
 	cropStatistics: {
 		href: '/data-explorer/crop-statistics',

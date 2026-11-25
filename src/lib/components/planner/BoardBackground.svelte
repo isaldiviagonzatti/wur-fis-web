@@ -1,29 +1,45 @@
 <!--
   BoardBackground — the food-system diagram drawn behind the planner's cards:
-  drivers, the ring of activities, outcomes, and the band of feedbacks and
-  resilience capacities. Rendered in flow coordinates under the edges, so it
-  pans and zooms with the board and is part of the PNG export.
+  the drivers, the ring of activities and the outcomes, the feedbacks arching
+  back over them, and below, resilience with its figure. Zone names, elements
+  and the objective are nodes on top. Rendered in flow coordinates under the
+  edges, so it pans and zooms with the board and is part of the PNG export.
 -->
 <script>
 	import { ViewportPortal } from '@xyflow/svelte';
+	import ResilienceFigure from './ResilienceFigure.svelte';
 	import { SITE_NAME } from '$lib/navigation.js';
 	import {
 		ACTIVITIES,
 		BOARD_BOUNDS as B,
 		DRIVERS,
-		FOOD_SECURITY,
+		FEEDBACK,
 		OUTCOMES,
 		RESILIENCE,
+		RESILIENCE_FIGURE,
+		SUBZONES,
 		TITLE,
 		ringArrows
 	} from '$lib/planner/board-layout.js';
 
-	let { title = '' } = $props();
+	let { title = '', byline = '', capacities = [] } = $props();
 
 	const arrows = ringArrows();
 	const flowY = ACTIVITIES.cy;
-	const feedbackY = RESILIENCE.y + RESILIENCE.height - 26;
+	const feedback = `M ${FEEDBACK.from.x} ${FEEDBACK.from.y} C ${FEEDBACK.from.x} ${FEEDBACK.peak}, ${FEEDBACK.to.x} ${FEEDBACK.peak}, ${FEEDBACK.to.x} ${FEEDBACK.to.y}`;
 </script>
+
+{#snippet zoneRect(zone, box, radius)}
+	<rect
+		class="zone"
+		style:--zone="var(--zone-{zone})"
+		x={box.x}
+		y={box.y}
+		width={box.width}
+		height={box.height}
+		rx={radius}
+	/>
+{/snippet}
 
 <ViewportPortal target="back">
 	<svg
@@ -51,20 +67,10 @@
 
 		<text x={TITLE.x} y={TITLE.y} class="title">{title || 'Untitled plan'}</text>
 		<text x={TITLE.x} y={TITLE.y + 26} class="subtitle">
-			Foodshed Planner · {SITE_NAME}
+			{[byline, 'Foodshed Planner', SITE_NAME].filter(Boolean).join(' · ')}
 		</text>
 
-		<g style:--zone="var(--zone-drivers)">
-			<rect
-				class="zone"
-				x={DRIVERS.x}
-				y={DRIVERS.y}
-				width={DRIVERS.width}
-				height={DRIVERS.height}
-				rx="28"
-			/>
-			<text class="zone-label" x={DRIVERS.x + 24} y={DRIVERS.y + 38}>Drivers</text>
-		</g>
+		{@render zoneRect('drivers', DRIVERS, 28)}
 
 		<g style:--zone="var(--zone-activities)">
 			<circle class="zone" cx={ACTIVITIES.cx} cy={ACTIVITIES.cy} r={ACTIVITIES.r} />
@@ -76,72 +82,35 @@
 					transform="translate({arrow.x} {arrow.y}) rotate({arrow.rotate})"
 				/>
 			{/each}
-			<text
-				class="zone-label"
-				x={ACTIVITIES.cx}
-				y={ACTIVITIES.cy - ACTIVITIES.r + 42}
-				text-anchor="middle">Activities</text
-			>
 		</g>
 
-		<g style:--zone="var(--zone-outcomes)">
-			<rect
-				class="zone"
-				x={OUTCOMES.x}
-				y={OUTCOMES.y}
-				width={OUTCOMES.width}
-				height={OUTCOMES.height}
-				rx="28"
-			/>
+		{@render zoneRect('outcomes', OUTCOMES, 28)}
+		{@render zoneRect('resilience', RESILIENCE, 28)}
+		{#each Object.entries(SUBZONES) as [id, box] (id)}
 			<rect
 				class="subzone"
-				x={FOOD_SECURITY.x}
-				y={FOOD_SECURITY.y}
-				width={FOOD_SECURITY.width}
-				height={FOOD_SECURITY.height}
-				rx="20"
+				style:--zone="var(--zone-{box.zone})"
+				x={box.x}
+				y={box.y}
+				width={box.width}
+				height={box.height}
+				rx="18"
 			/>
-			<text class="zone-label" x={OUTCOMES.x + 24} y={OUTCOMES.y + 38}>Outcomes</text>
-			<text class="subzone-label" x={FOOD_SECURITY.x + 18} y={FOOD_SECURITY.y + 30}>
-				Food security
-			</text>
-		</g>
+		{/each}
 
 		<path
 			class="flow-arrow"
-			d="M {DRIVERS.x + DRIVERS.width + 16} {flowY} L {ACTIVITIES.cx - ACTIVITIES.r - 16} {flowY}"
+			d="M {DRIVERS.x + DRIVERS.width + 14} {flowY} L {ACTIVITIES.cx - ACTIVITIES.r - 14} {flowY}"
 			marker-end="url(#planner-arrow)"
 		/>
 		<path
 			class="flow-arrow"
-			d="M {ACTIVITIES.cx + ACTIVITIES.r + 16} {flowY} L {OUTCOMES.x - 16} {flowY}"
+			d="M {ACTIVITIES.cx + ACTIVITIES.r + 14} {flowY} L {OUTCOMES.x - 14} {flowY}"
 			marker-end="url(#planner-arrow)"
 		/>
+		<path class="feedback-arrow" d={feedback} marker-end="url(#planner-arrow)" />
 
-		<g style:--zone="var(--zone-resilience)">
-			<rect
-				class="zone"
-				x={RESILIENCE.x}
-				y={RESILIENCE.y}
-				width={RESILIENCE.width}
-				height={RESILIENCE.height}
-				rx="28"
-			/>
-			<text class="zone-label" x={RESILIENCE.x + 24} y={RESILIENCE.y + 38}>
-				Feedbacks and resilience
-			</text>
-			<path
-				class="feedback-arrow"
-				d="M {RESILIENCE.x + RESILIENCE.width - 48} {feedbackY} L {RESILIENCE.x + 48} {feedbackY}"
-				marker-end="url(#planner-arrow)"
-			/>
-			<text
-				class="feedback-label"
-				x={RESILIENCE.x + RESILIENCE.width - 60}
-				y={feedbackY - 9}
-				text-anchor="end">Feedbacks to drivers and activities</text
-			>
-		</g>
+		<ResilienceFigure {...RESILIENCE_FIGURE} active={capacities} />
 	</svg>
 </ViewportPortal>
 
@@ -177,20 +146,6 @@
 		stroke-dasharray: 4 4;
 	}
 
-	.zone-label {
-		font-size: 13px;
-		font-weight: 600;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		fill: color-mix(in oklab, var(--zone) 80%, var(--foreground));
-	}
-
-	.subzone-label {
-		font-size: 12px;
-		font-weight: 500;
-		fill: color-mix(in oklab, var(--zone) 70%, var(--foreground));
-	}
-
 	.ring {
 		fill: none;
 		stroke: color-mix(in oklab, var(--zone) 45%, transparent);
@@ -209,16 +164,10 @@
 	}
 
 	.feedback-arrow {
-		stroke: color-mix(in oklab, var(--zone) 45%, transparent);
 		stroke-dasharray: 6 5;
 	}
 
-	.feedback-label {
-		font-size: 12px;
-		fill: color-mix(in oklab, var(--zone) 70%, var(--foreground));
-	}
-
-	:global(.planner .arrow-head) {
+	.arrow-head {
 		fill: var(--planner-line);
 	}
 </style>

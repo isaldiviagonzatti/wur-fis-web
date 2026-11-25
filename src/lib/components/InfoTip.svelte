@@ -3,13 +3,21 @@
   touch screens, which have no hover.
 
   With children, the term itself is the trigger and the icon follows it; without,
-  the icon stands alone next to a control that cannot contain a button.
+  the icon stands alone next to a control that cannot contain a button. A
+  `source` (where a definition comes from) is set on a line of its own.
 -->
 <script>
 	import { Tooltip } from 'bits-ui';
 	import Info from '@lucide/svelte/icons/info';
 
-	let { text, side = 'top', label = 'More information', class: className = '', children } = $props();
+	let {
+		text,
+		source = '',
+		side = 'top',
+		label = 'More information',
+		class: className = '',
+		children
+	} = $props();
 
 	let open = $state(false);
 	let touched = false;
@@ -41,6 +49,7 @@
 			class="bg-popover text-popover-foreground z-[9999] max-w-72 rounded-md border px-3 py-2 text-[13px] leading-snug font-normal shadow-md"
 		>
 			{text}
+			{#if source}<span class="mt-1.5 block text-xs text-muted-foreground">{source}</span>{/if}
 		</Tooltip.Content>
 	</Tooltip.Portal>
 </Tooltip.Root>
